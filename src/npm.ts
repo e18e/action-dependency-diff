@@ -32,9 +32,10 @@ export async function fetchPackageMetadata(
 
 export async function calculateTotalDependencySizeIncrease(
   newVersions: Array<{name: string; version: string}>
-): Promise<number | null> {
+): Promise<{totalSize: number; packageSizes: Map<string, number>} | null> {
   let totalSize = 0;
   const processedPackages = new Set<string>();
+  const packageSizes = new Map<string, number>();
 
   for (const dep of newVersions) {
     const packageKey = `${dep.name}@${dep.version}`;
@@ -51,6 +52,7 @@ export async function calculateTotalDependencySizeIncrease(
       }
 
       totalSize += metadata.dist.unpackedSize;
+      packageSizes.set(packageKey, metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
 
       core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
@@ -59,5 +61,5 @@ export async function calculateTotalDependencySizeIncrease(
     }
   }
 
-  return totalSize;
+  return {totalSize, packageSizes};
 }

@@ -24173,6 +24173,7 @@ async function fetchPackageMetadata(packageName, version) {
 async function calculateTotalDependencySizeIncrease(newVersions) {
   let totalSize = 0;
   const processedPackages = /* @__PURE__ */ new Set();
+  const packageSizes = /* @__PURE__ */ new Map();
   for (const dep of newVersions) {
     const packageKey = `${dep.name}@${dep.version}`;
     if (processedPackages.has(packageKey)) {
@@ -24184,13 +24185,14 @@ async function calculateTotalDependencySizeIncrease(newVersions) {
         return null;
       }
       totalSize += metadata.dist.unpackedSize;
+      packageSizes.set(packageKey, metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
       core2.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
     } catch {
       return null;
     }
   }
-  return totalSize;
+  return { totalSize, packageSizes };
 }
 
 // src/main.ts
@@ -24296,7 +24298,7 @@ async function run() {
         const lsCommand = getLsCommand(lockfilePath, packageName);
         duplicateWarnings.push(
           `\u{1F4E6} **${packageName}**: ${currentVersionSet.size} versions (${versions.join(", ")})${lsCommand ? `
-   \u2514\u2500 ${lsCommand}` : ""}`
+   \u2514\u2500 To find out what depends on these, run: \`${lsCommand}\`` : ""}`
         );
       }
     }
@@ -24323,10 +24325,15 @@ ${duplicateWarnings.join("\n")}`
     core3.info(`Found ${newVersions.length} new package versions`);
     if (newVersions.length > 0) {
       try {
-        const totalSizeIncrease = await calculateTotalDependencySizeIncrease(newVersions);
-        if (totalSizeIncrease !== null && totalSizeIncrease >= sizeThreshold) {
+        const sizeData = await calculateTotalDependencySizeIncrease(newVersions);
+        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
+          const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
           messages.push(
-            `\u26A0\uFE0F **Large Dependency Size Increase**: This PR adds ${formatBytes(totalSizeIncrease)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.`
+            `\u26A0\uFE0F **Large Dependency Size Increase**: This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
+
+| Package | Size |
+|---------|------|
+${packageRows}`
           );
         }
       } catch (err) {

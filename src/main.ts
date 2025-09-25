@@ -125,7 +125,7 @@ async function run(): Promise<void> {
         const versions = Array.from(currentVersionSet).sort();
         const lsCommand = getLsCommand(lockfilePath, packageName);
         duplicateWarnings.push(
-          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})${lsCommand ? `\n   └─ ${lsCommand}` : ''}`
+          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})${lsCommand ? `\n   └─ To find out what depends on these, run: \`${lsCommand}\`` : ''}`
         );
       }
     }
@@ -160,12 +160,17 @@ async function run(): Promise<void> {
 
     if (newVersions.length > 0) {
       try {
-        const totalSizeIncrease =
+        const sizeData =
           await calculateTotalDependencySizeIncrease(newVersions);
 
-        if (totalSizeIncrease !== null && totalSizeIncrease >= sizeThreshold) {
+        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
+          const packageRows = Array.from(sizeData.packageSizes.entries())
+            .sort(([, a], [, b]) => b - a)
+            .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
+            .join('\n');
+
           messages.push(
-            `⚠️ **Large Dependency Size Increase**: This PR adds ${formatBytes(totalSizeIncrease)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.`
+            `⚠️ **Large Dependency Size Increase**: This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.\n\n| Package | Size |\n|---------|------|\n${packageRows}`
           );
         }
       } catch (err) {
