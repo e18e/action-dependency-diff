@@ -78,6 +78,8 @@ function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+const COMMENT_TAG = '<!-- dependency-diff-action -->';
+
 async function run(): Promise<void> {
   try {
     const workspacePath = process.env.GITHUB_WORKSPACE || process.cwd();
@@ -146,10 +148,9 @@ async function run(): Promise<void> {
     const depIncrease = currentDepCount - baseDepCount;
 
     if (depIncrease >= dependencyThreshold) {
-      commentBody += `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependency installations (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.\n\n`;
+      commentBody += `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.\n\n`;
     }
 
-    // Find new or updated package versions for size checking
     const newVersions: Array<{
       name: string;
       version: string;
@@ -170,7 +171,6 @@ async function run(): Promise<void> {
       }
     }
 
-    // Check package sizes for new versions
     if (newVersions.length > 0) {
       const sizeWarnings: string[] = [];
 
@@ -199,12 +199,47 @@ async function run(): Promise<void> {
     }
 
     const octokit = github.getOctokit(token);
-    await octokit.rest.issues.createComment({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      issue_number: prNumber,
-      body: commentBody
-    });
+    let existingCommentId: number | undefined = undefined;
+
+    const perPage = 100;
+    for await (const {data: comments} of octokit.paginate.iterator(
+      octokit.rest.issues.listComments,
+      {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber,
+        per_page: perPage
+      }
+    )) {
+      // Search for the comment with the unique tag
+      const comment = comments.find((c) => c.body?.includes(COMMENT_TAG));
+      if (comment) {
+        existingCommentId = comment.id;
+        break;
+      }
+    }
+
+    const finalCommentBody = `${COMMENT_TAG}\n${commentBody}`;
+
+    if (existingCommentId) {
+      await octokit.rest.issues.updateComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        comment_id: existingCommentId,
+        body: finalCommentBody
+      });
+      core.info(
+        `Updated existing dependency diff comment #${existingCommentId}`
+      );
+    } else {
+      await octokit.rest.issues.createComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber,
+        body: finalCommentBody
+      });
+      core.info('Created new dependency diff comment');
+    }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
