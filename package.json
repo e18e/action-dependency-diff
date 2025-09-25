@@ -11,7 +11,8 @@
   ],
   "files": [
     "main.js",
-    "action.yml"
+    "action.yml",
+    "random-data.txt"
   ],
   "homepage": "https://github.com/e18e/action-dependency-diff#readme",
   "bugs": {
