@@ -123,16 +123,19 @@ async function run(): Promise<void> {
     for (const [packageName, currentVersionSet] of currentDeps) {
       if (currentVersionSet.size > duplicateThreshold) {
         const versions = Array.from(currentVersionSet).sort();
-        const lsCommand = getLsCommand(lockfilePath, packageName);
         duplicateWarnings.push(
-          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})${lsCommand ? `\n   └─ To find out what depends on these, run: \`${lsCommand}\`` : ''}`
+          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})`
         );
       }
     }
 
     if (duplicateWarnings.length > 0) {
+      const exampleCommand = getLsCommand(lockfilePath, 'example-package');
+      const helpMessage = exampleCommand
+        ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
+        : '';
       messages.push(
-        `⚠️ **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):\n\n${duplicateWarnings.join('\n')}`
+        `⚠️ **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):\n\n${duplicateWarnings.join('\n')}${helpMessage}`
       );
     }
 

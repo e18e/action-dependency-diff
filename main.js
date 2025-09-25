@@ -24295,18 +24295,20 @@ async function run() {
     for (const [packageName, currentVersionSet] of currentDeps) {
       if (currentVersionSet.size > duplicateThreshold) {
         const versions = Array.from(currentVersionSet).sort();
-        const lsCommand = getLsCommand(lockfilePath, packageName);
         duplicateWarnings.push(
-          `\u{1F4E6} **${packageName}**: ${currentVersionSet.size} versions (${versions.join(", ")})${lsCommand ? `
-   \u2514\u2500 To find out what depends on these, run: \`${lsCommand}\`` : ""}`
+          `\u{1F4E6} **${packageName}**: ${currentVersionSet.size} versions (${versions.join(", ")})`
         );
       }
     }
     if (duplicateWarnings.length > 0) {
+      const exampleCommand = getLsCommand(lockfilePath, "example-package");
+      const helpMessage = exampleCommand ? `
+
+\u{1F4A1} To find out what depends on a specific package, run: \`${exampleCommand}\`` : "";
       messages.push(
         `\u26A0\uFE0F **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):
 
-${duplicateWarnings.join("\n")}`
+${duplicateWarnings.join("\n")}${helpMessage}`
       );
     }
     const newVersions = [];
