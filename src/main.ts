@@ -69,6 +69,9 @@ async function run(): Promise<void> {
       10
     );
 
+    core.info(`Dependency threshold set to ${dependencyThreshold}`);
+    core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
+
     const messages: string[] = [];
 
     // Count total dependencies (all package-version combinations)
@@ -81,6 +84,10 @@ async function run(): Promise<void> {
       0
     );
     const depIncrease = currentDepCount - baseDepCount;
+
+    core.info(`Base dependency count: ${baseDepCount}`);
+    core.info(`Current dependency count: ${currentDepCount}`);
+    core.info(`Dependency count increase: ${depIncrease}`);
 
     if (depIncrease >= dependencyThreshold) {
       messages.push(
@@ -107,6 +114,8 @@ async function run(): Promise<void> {
         }
       }
     }
+
+    core.info(`Found ${newVersions.length} new package versions`);
 
     if (newVersions.length > 0) {
       const sizeWarnings: string[] = [];
