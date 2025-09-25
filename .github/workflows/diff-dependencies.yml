@@ -11,6 +11,6 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Create Diff
         uses: e18e/action-dependency-diff@main
