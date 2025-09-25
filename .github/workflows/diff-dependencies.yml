@@ -21,7 +21,7 @@ jobs:
         run: npm run build
       - name: Pack
         run: npm pack
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: base-packages
           path: '*.tgz'
@@ -40,7 +40,7 @@ jobs:
         run: npm run build
       - name: Pack
         run: npm pack
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: source-packages
           path: '*.tgz'
@@ -50,11 +50,11 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: base-packages
           path: ./base-packages
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
         with:
           name: source-packages
           path: ./source-packages
