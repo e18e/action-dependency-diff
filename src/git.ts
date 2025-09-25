@@ -14,8 +14,7 @@ export function getFileFromRef(
       stdio: 'pipe'
     });
     return content;
-  } catch (err) {
-    core.info(`Could not get ${filePath} from ${ref}: ${err}`);
+  } catch {
     return null;
   }
 }
