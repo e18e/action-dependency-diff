@@ -57,9 +57,10 @@ jobs:
 
 ## Supported package managers
 
-- npm (package.json)
-- Yarn (package.json)
-- pnpm (package.json)
+- npm (package-lock.json)
+- Yarn (yarn.lock)
+- pnpm (pnpm-lock.yaml)
+- bun (bun.lock)
 
 ## Permissions
 
