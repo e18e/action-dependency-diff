@@ -2,7 +2,7 @@ import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {parseLockfile, detectLockfile} from './lockfile.js';
-import {getFileFromRef, getBaseRef, getCurrentRef} from './git.js';
+import {getFileFromRef, getBaseRef} from './git.js';
 import {fetchPackageMetadata} from './npm.js';
 
 function formatBytes(bytes: number): string {
@@ -19,7 +19,7 @@ async function run(): Promise<void> {
   try {
     const workspacePath = process.env.GITHUB_WORKSPACE || process.cwd();
     const baseRef = getBaseRef();
-    const currentRef = getCurrentRef();
+    const currentRef = github.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
