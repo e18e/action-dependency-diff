@@ -24147,10 +24147,12 @@ function getFileFromRef(ref, filePath, cwd2) {
 function getBaseRef() {
   const inputBaseRef = core.getInput("base-ref");
   if (inputBaseRef) {
+    core.info("Found input base ref: " + inputBaseRef);
     return inputBaseRef.includes("/") ? inputBaseRef : `origin/${inputBaseRef}`;
   }
   const githubBaseRef = github.context.payload.pull_request?.base.ref;
   if (githubBaseRef) {
+    core.info("Found github base ref: " + githubBaseRef);
     return `origin/${githubBaseRef}`;
   }
   return "origin/main";
