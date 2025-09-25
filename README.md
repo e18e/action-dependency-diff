@@ -28,6 +28,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Create Diff
         uses: e18e/action-dependency-diff@main
 ```
