@@ -28,8 +28,6 @@ inputs:
     required: false
     default: '100000'
 
-outputs:
-
 runs:
   using: node24
   main: main.js
