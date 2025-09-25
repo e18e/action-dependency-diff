@@ -4266,18 +4266,18 @@ var require_webidl = __commonJS({
     webidl.errors.exception = function(message) {
       return new TypeError(`${message.header}: ${message.message}`);
     };
-    webidl.errors.conversionFailed = function(context2) {
-      const plural = context2.types.length === 1 ? "" : " one of";
-      const message = `${context2.argument} could not be converted to${plural}: ${context2.types.join(", ")}.`;
+    webidl.errors.conversionFailed = function(context3) {
+      const plural = context3.types.length === 1 ? "" : " one of";
+      const message = `${context3.argument} could not be converted to${plural}: ${context3.types.join(", ")}.`;
       return webidl.errors.exception({
-        header: context2.prefix,
+        header: context3.prefix,
         message
       });
     };
-    webidl.errors.invalidArgument = function(context2) {
+    webidl.errors.invalidArgument = function(context3) {
       return webidl.errors.exception({
-        header: context2.prefix,
-        message: `"${context2.value}" is an invalid ${context2.type}.`
+        header: context3.prefix,
+        message: `"${context3.value}" is an invalid ${context3.type}.`
       });
     };
     webidl.brandCheck = function(V, I, opts = void 0) {
@@ -9603,15 +9603,15 @@ var require_api_request = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context2) {
+      onConnect(abort, context3) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context2;
+        this.context = context3;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { callback, opaque, abort, context: context2, responseHeaders, highWaterMark } = this;
+        const { callback, opaque, abort, context: context3, responseHeaders, highWaterMark } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -9638,7 +9638,7 @@ var require_api_request = __commonJS({
               trailers: this.trailers,
               opaque,
               body,
-              context: context2
+              context: context3
             });
           }
         }
@@ -9758,15 +9758,15 @@ var require_api_stream = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context2) {
+      onConnect(abort, context3) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context2;
+        this.context = context3;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { factory, opaque, context: context2, callback, responseHeaders } = this;
+        const { factory, opaque, context: context3, callback, responseHeaders } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -9794,7 +9794,7 @@ var require_api_stream = __commonJS({
             statusCode,
             headers,
             opaque,
-            context: context2
+            context: context3
           });
           if (!res || typeof res.write !== "function" || typeof res.end !== "function" || typeof res.on !== "function") {
             throw new InvalidReturnValueError("expected Writable");
@@ -9986,17 +9986,17 @@ var require_api_pipeline = __commonJS({
         this.res = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context2) {
+      onConnect(abort, context3) {
         const { ret, res } = this;
         assert(!res, "pipeline cannot be retried");
         if (ret.destroyed) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context2;
+        this.context = context3;
       }
       onHeaders(statusCode, rawHeaders, resume) {
-        const { opaque, handler, context: context2 } = this;
+        const { opaque, handler, context: context3 } = this;
         if (statusCode < 200) {
           if (this.onInfo) {
             const headers = this.responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
@@ -10014,7 +10014,7 @@ var require_api_pipeline = __commonJS({
             headers,
             opaque,
             body: this.res,
-            context: context2
+            context: context3
           });
         } catch (err) {
           this.res.on("error", util.nop);
@@ -10098,7 +10098,7 @@ var require_api_upgrade = __commonJS({
         this.context = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context2) {
+      onConnect(abort, context3) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
@@ -10109,7 +10109,7 @@ var require_api_upgrade = __commonJS({
         throw new SocketError("bad upgrade", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context2 } = this;
+        const { callback, opaque, context: context3 } = this;
         assert.strictEqual(statusCode, 101);
         removeSignal(this);
         this.callback = null;
@@ -10118,7 +10118,7 @@ var require_api_upgrade = __commonJS({
           headers,
           socket,
           opaque,
-          context: context2
+          context: context3
         });
       }
       onError(err) {
@@ -10186,18 +10186,18 @@ var require_api_connect = __commonJS({
         this.abort = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context2) {
+      onConnect(abort, context3) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context2;
+        this.context = context3;
       }
       onHeaders() {
         throw new SocketError("bad connect", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context2 } = this;
+        const { callback, opaque, context: context3 } = this;
         removeSignal(this);
         this.callback = null;
         let headers = rawHeaders;
@@ -10209,7 +10209,7 @@ var require_api_connect = __commonJS({
           headers,
           socket,
           opaque,
-          context: context2
+          context: context3
         });
       }
       onError(err) {
@@ -17586,12 +17586,12 @@ var require_lib = __commonJS({
             throw new Error("Client has already been disposed.");
           }
           const parsedUrl = new URL(requestUrl);
-          let info2 = this._prepareRequest(verb, parsedUrl, headers);
+          let info4 = this._prepareRequest(verb, parsedUrl, headers);
           const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
           let numTries = 0;
           let response;
           do {
-            response = yield this.requestRaw(info2, data);
+            response = yield this.requestRaw(info4, data);
             if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
               let authenticationHandler;
               for (const handler of this.handlers) {
@@ -17601,7 +17601,7 @@ var require_lib = __commonJS({
                 }
               }
               if (authenticationHandler) {
-                return authenticationHandler.handleAuthentication(this, info2, data);
+                return authenticationHandler.handleAuthentication(this, info4, data);
               } else {
                 return response;
               }
@@ -17624,8 +17624,8 @@ var require_lib = __commonJS({
                   }
                 }
               }
-              info2 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-              response = yield this.requestRaw(info2, data);
+              info4 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+              response = yield this.requestRaw(info4, data);
               redirectsRemaining--;
             }
             if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -17654,7 +17654,7 @@ var require_lib = __commonJS({
        * @param info
        * @param data
        */
-      requestRaw(info2, data) {
+      requestRaw(info4, data) {
         return __awaiter(this, void 0, void 0, function* () {
           return new Promise((resolve, reject) => {
             function callbackForResult(err, res) {
@@ -17666,7 +17666,7 @@ var require_lib = __commonJS({
                 resolve(res);
               }
             }
-            this.requestRawWithCallback(info2, data, callbackForResult);
+            this.requestRawWithCallback(info4, data, callbackForResult);
           });
         });
       }
@@ -17676,12 +17676,12 @@ var require_lib = __commonJS({
        * @param data
        * @param onResult
        */
-      requestRawWithCallback(info2, data, onResult) {
+      requestRawWithCallback(info4, data, onResult) {
         if (typeof data === "string") {
-          if (!info2.options.headers) {
-            info2.options.headers = {};
+          if (!info4.options.headers) {
+            info4.options.headers = {};
           }
-          info2.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+          info4.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
         }
         let callbackCalled = false;
         function handleResult(err, res) {
@@ -17690,7 +17690,7 @@ var require_lib = __commonJS({
             onResult(err, res);
           }
         }
-        const req = info2.httpModule.request(info2.options, (msg) => {
+        const req = info4.httpModule.request(info4.options, (msg) => {
           const res = new HttpClientResponse(msg);
           handleResult(void 0, res);
         });
@@ -17702,7 +17702,7 @@ var require_lib = __commonJS({
           if (socket) {
             socket.end();
           }
-          handleResult(new Error(`Request timeout: ${info2.options.path}`));
+          handleResult(new Error(`Request timeout: ${info4.options.path}`));
         });
         req.on("error", function(err) {
           handleResult(err);
@@ -17738,27 +17738,27 @@ var require_lib = __commonJS({
         return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
       }
       _prepareRequest(method, requestUrl, headers) {
-        const info2 = {};
-        info2.parsedUrl = requestUrl;
-        const usingSsl = info2.parsedUrl.protocol === "https:";
-        info2.httpModule = usingSsl ? https : http;
+        const info4 = {};
+        info4.parsedUrl = requestUrl;
+        const usingSsl = info4.parsedUrl.protocol === "https:";
+        info4.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
-        info2.options = {};
-        info2.options.host = info2.parsedUrl.hostname;
-        info2.options.port = info2.parsedUrl.port ? parseInt(info2.parsedUrl.port) : defaultPort;
-        info2.options.path = (info2.parsedUrl.pathname || "") + (info2.parsedUrl.search || "");
-        info2.options.method = method;
-        info2.options.headers = this._mergeHeaders(headers);
+        info4.options = {};
+        info4.options.host = info4.parsedUrl.hostname;
+        info4.options.port = info4.parsedUrl.port ? parseInt(info4.parsedUrl.port) : defaultPort;
+        info4.options.path = (info4.parsedUrl.pathname || "") + (info4.parsedUrl.search || "");
+        info4.options.method = method;
+        info4.options.headers = this._mergeHeaders(headers);
         if (this.userAgent != null) {
-          info2.options.headers["user-agent"] = this.userAgent;
+          info4.options.headers["user-agent"] = this.userAgent;
         }
-        info2.options.agent = this._getAgent(info2.parsedUrl);
+        info4.options.agent = this._getAgent(info4.parsedUrl);
         if (this.handlers) {
           for (const handler of this.handlers) {
-            handler.prepareRequest(info2.options);
+            handler.prepareRequest(info4.options);
           }
         }
-        return info2;
+        return info4;
       }
       _mergeHeaders(headers) {
         if (this.requestOptions && this.requestOptions.headers) {
@@ -19679,7 +19679,7 @@ var require_core = __commonJS({
       process.env["PATH"] = `${inputPath}${path.delimiter}${process.env["PATH"]}`;
     }
     exports.addPath = addPath;
-    function getInput2(name, options) {
+    function getInput3(name, options) {
       const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
       if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
@@ -19689,9 +19689,9 @@ var require_core = __commonJS({
       }
       return val.trim();
     }
-    exports.getInput = getInput2;
+    exports.getInput = getInput3;
     function getMultilineInput(name, options) {
-      const inputs = getInput2(name, options).split("\n").filter((x) => x !== "");
+      const inputs = getInput3(name, options).split("\n").filter((x) => x !== "");
       if (options && options.trimWhitespace === false) {
         return inputs;
       }
@@ -19701,7 +19701,7 @@ var require_core = __commonJS({
     function getBooleanInput(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
-      const val = getInput2(name, options);
+      const val = getInput3(name, options);
       if (trueValue.includes(val))
         return true;
       if (falseValue.includes(val))
@@ -19748,10 +19748,10 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     exports.notice = notice;
-    function info2(message) {
+    function info4(message) {
       process.stdout.write(message + os.EOL);
     }
-    exports.info = info2;
+    exports.info = info4;
     function startGroup(name) {
       (0, command_1.issue)("group", name);
     }
@@ -20292,8 +20292,8 @@ var require_dist_node2 = __commonJS({
     function isKeyOperator(operator) {
       return operator === ";" || operator === "&" || operator === "?";
     }
-    function getValues(context2, operator, key, modifier) {
-      var value = context2[key], result = [];
+    function getValues(context3, operator, key, modifier) {
+      var value = context3[key], result = [];
       if (isDefined(value) && value !== "") {
         if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
           value = value.toString();
@@ -20357,7 +20357,7 @@ var require_dist_node2 = __commonJS({
         expand: expand.bind(null, template)
       };
     }
-    function expand(template, context2) {
+    function expand(template, context3) {
       var operators = ["+", "#", ".", "/", ";", "?", "&"];
       template = template.replace(
         /\{([^\{\}]+)\}|([^\{\}]+)/g,
@@ -20371,7 +20371,7 @@ var require_dist_node2 = __commonJS({
             }
             expression.split(/,/g).forEach(function(variable) {
               var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
-              values.push(getValues(context2, operator, tmp[1], tmp[2] || tmp[3]));
+              values.push(getValues(context3, operator, tmp[1], tmp[2] || tmp[3]));
             });
             if (operator && operator !== "+") {
               var separator = ",";
@@ -23883,9 +23883,8 @@ var require_github = __commonJS({
 });
 
 // src/main.ts
-var core = __toESM(require_core(), 1);
-var github = __toESM(require_github(), 1);
-import { execFileSync } from "child_process";
+var core3 = __toESM(require_core(), 1);
+var github2 = __toESM(require_github(), 1);
 import * as process2 from "process";
 
 // src/lockfile.ts
@@ -23963,11 +23962,11 @@ function parsePnpmLock(content) {
     if (key.startsWith('"') && key.endsWith('"') || key.startsWith("'") && key.endsWith("'")) {
       key = key.slice(1, -1);
     }
-    const core2 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
-    const at = core2.lastIndexOf("@");
+    const core4 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
+    const at = core4.lastIndexOf("@");
     if (at <= 0) continue;
-    const name = core2.slice(0, at);
-    const version = core2.slice(at + 1).trim();
+    const name = core4.slice(0, at);
+    const version = core4.slice(at + 1).trim();
     if (!version) continue;
     addVersion(result, name, version);
   }
@@ -24124,7 +24123,22 @@ function addVersion(map, name, version) {
   set.add(version);
 }
 
-// src/main.ts
+// src/git.ts
+var core = __toESM(require_core(), 1);
+var github = __toESM(require_github(), 1);
+import { execFileSync } from "child_process";
+function getFileFromRef(ref, filePath, cwd2) {
+  try {
+    const content = execFileSync("git", ["show", `${ref}:${filePath}`], {
+      encoding: "utf8",
+      cwd: cwd2
+    });
+    return content;
+  } catch (err) {
+    core.info(`Could not get ${filePath} from ${ref}: ${err}`);
+    return null;
+  }
+}
 function getBaseRef() {
   const inputBaseRef = core.getInput("base-ref");
   if (inputBaseRef) {
@@ -24139,18 +24153,9 @@ function getBaseRef() {
 function getCurrentRef() {
   return github.context.sha ?? "HEAD";
 }
-function getFileFromRef(ref, filePath, cwd2) {
-  try {
-    const content = execFileSync("git", ["show", `${ref}:${filePath}`], {
-      encoding: "utf8",
-      cwd: cwd2
-    });
-    return content;
-  } catch (err) {
-    core.info(`Could not get ${filePath} from ${ref}: ${err}`);
-    return null;
-  }
-}
+
+// src/npm.ts
+var core2 = __toESM(require_core(), 1);
 async function fetchPackageMetadata(packageName, version) {
   try {
     const url = `https://registry.npmjs.org/${packageName}/${version}`;
@@ -24160,10 +24165,12 @@ async function fetchPackageMetadata(packageName, version) {
     }
     return await response.json();
   } catch (err) {
-    core.info(`Failed to fetch metadata for ${packageName}@${version}: ${err}`);
+    core2.info(`Failed to fetch metadata for ${packageName}@${version}: ${err}`);
     return null;
   }
 }
+
+// src/main.ts
 function formatBytes(bytes) {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -24178,17 +24185,17 @@ async function run() {
     const baseRef = getBaseRef();
     const currentRef = getCurrentRef();
     const lockfilePath = detectLockfile(workspacePath);
-    const token = core.getInput("github-token", { required: true });
-    const prNumber = parseInt(core.getInput("pr-number", { required: true }), 10);
+    const token = core3.getInput("github-token", { required: true });
+    const prNumber = parseInt(core3.getInput("pr-number", { required: true }), 10);
     if (Number.isNaN(prNumber) || prNumber < 1) {
-      core.info("No valid pull request number was found. Skipping.");
+      core3.info("No valid pull request number was found. Skipping.");
       return;
     }
     if (!lockfilePath) {
-      core.info("No lockfile detected in the workspace. Exiting.");
+      core3.info("No lockfile detected in the workspace. Exiting.");
       return;
     }
-    core.info(
+    core3.info(
       `Comparing package-lock.json between ${baseRef} and ${currentRef}`
     );
     const basePackageLock = getFileFromRef(
@@ -24197,7 +24204,7 @@ async function run() {
       workspacePath
     );
     if (!basePackageLock) {
-      core.info("No package-lock.json found in base ref");
+      core3.info("No package-lock.json found in base ref");
       return;
     }
     const currentPackageLock = getFileFromRef(
@@ -24206,20 +24213,20 @@ async function run() {
       workspacePath
     );
     if (!currentPackageLock) {
-      core.info("No package-lock.json found in current ref");
+      core3.info("No package-lock.json found in current ref");
       return;
     }
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
     const dependencyThreshold = parseInt(
-      core.getInput("dependency-threshold") || "10",
+      core3.getInput("dependency-threshold") || "10",
       10
     );
     const sizeThreshold = parseInt(
-      core.getInput("size-threshold") || "100000",
+      core3.getInput("size-threshold") || "100000",
       10
     );
-    let commentBody = "";
+    const messages = [];
     const currentDepCount = Array.from(currentDeps.values()).reduce(
       (sum, versions) => sum + versions.size,
       0
@@ -24230,9 +24237,7 @@ async function run() {
     );
     const depIncrease = currentDepCount - baseDepCount;
     if (depIncrease >= dependencyThreshold) {
-      commentBody += `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.
-
-`;
+      messages.push(`\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`);
     }
     const newVersions = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
@@ -24259,27 +24264,29 @@ async function run() {
             );
           }
         } catch (err) {
-          core.info(
+          core3.info(
             `Failed to check size for ${dep.name}@${dep.version}: ${err}`
           );
         }
       }
       if (sizeWarnings.length > 0) {
-        commentBody += `\u26A0\uFE0F **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):
+        messages.push(`\u26A0\uFE0F **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):
 
-${sizeWarnings.join("\n")}
-
-`;
+${sizeWarnings.join("\n")}`);
       }
     }
-    const octokit = github.getOctokit(token);
+    if (messages.length === 0) {
+      core3.info("No dependency warnings found. Skipping comment creation.");
+      return;
+    }
+    const octokit = github2.getOctokit(token);
     let existingCommentId = void 0;
     const perPage = 100;
     for await (const { data: comments } of octokit.paginate.iterator(
       octokit.rest.issues.listComments,
       {
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
+        owner: github2.context.repo.owner,
+        repo: github2.context.repo.repo,
         issue_number: prNumber,
         per_page: perPage
       }
@@ -24291,31 +24298,31 @@ ${sizeWarnings.join("\n")}
       }
     }
     const finalCommentBody = `${COMMENT_TAG}
-${commentBody}`;
+${messages.join("\n\n")}`;
     if (existingCommentId) {
       await octokit.rest.issues.updateComment({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
+        owner: github2.context.repo.owner,
+        repo: github2.context.repo.repo,
         comment_id: existingCommentId,
         body: finalCommentBody
       });
-      core.info(
+      core3.info(
         `Updated existing dependency diff comment #${existingCommentId}`
       );
     } else {
       await octokit.rest.issues.createComment({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
+        owner: github2.context.repo.owner,
+        repo: github2.context.repo.repo,
         issue_number: prNumber,
         body: finalCommentBody
       });
-      core.info("Created new dependency diff comment");
+      core3.info("Created new dependency diff comment");
     }
   } catch (error) {
     if (error instanceof Error) {
-      core.setFailed(error.message);
+      core3.setFailed(error.message);
     } else {
-      core.setFailed("An unknown error occurred.");
+      core3.setFailed("An unknown error occurred.");
     }
   }
 }

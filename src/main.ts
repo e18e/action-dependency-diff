@@ -69,7 +69,7 @@ async function run(): Promise<void> {
       10
     );
 
-    let commentBody = '';
+    const messages: string[] = [];
 
     // Count total dependencies (all package-version combinations)
     const currentDepCount = Array.from(currentDeps.values()).reduce(
@@ -83,7 +83,9 @@ async function run(): Promise<void> {
     const depIncrease = currentDepCount - baseDepCount;
 
     if (depIncrease >= dependencyThreshold) {
-      commentBody += `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.\n\n`;
+      messages.push(
+        `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
+      );
     }
 
     const newVersions: Array<{
@@ -129,8 +131,16 @@ async function run(): Promise<void> {
       }
 
       if (sizeWarnings.length > 0) {
-        commentBody += `⚠️ **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):\n\n${sizeWarnings.join('\n')}\n\n`;
+        messages.push(
+          `⚠️ **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):\n\n${sizeWarnings.join('\n')}`
+        );
       }
+    }
+
+    // Skip comment creation/update if there are no messages
+    if (messages.length === 0) {
+      core.info('No dependency warnings found. Skipping comment creation.');
+      return;
     }
 
     const octokit = github.getOctokit(token);
@@ -154,7 +164,7 @@ async function run(): Promise<void> {
       }
     }
 
-    const finalCommentBody = `${COMMENT_TAG}\n${commentBody}`;
+    const finalCommentBody = `${COMMENT_TAG}\n${messages.join('\n\n')}`;
 
     if (existingCommentId) {
       await octokit.rest.issues.updateComment({
