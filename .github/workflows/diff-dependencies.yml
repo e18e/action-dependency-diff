@@ -46,6 +46,7 @@ jobs:
           path: '*.tgz'
   diff_dependencies:
     runs-on: ubuntu-latest
+    needs: [build-main, build-pr]
     permissions:
       pull-requests: write
     steps:
