@@ -1,69 +1,9 @@
-import {execFileSync} from 'child_process';
 import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {parseLockfile, detectLockfile} from './lockfile.js';
-
-function getBaseRef(): string {
-  const inputBaseRef = core.getInput('base-ref');
-  if (inputBaseRef) {
-    return inputBaseRef;
-  }
-
-  const githubBaseRef = github.context.payload.pull_request?.base.ref;
-
-  if (githubBaseRef) {
-    return `origin/${githubBaseRef}`;
-  }
-
-  return 'origin/main';
-}
-
-function getCurrentRef(): string {
-  return github.context.sha ?? 'HEAD';
-}
-
-function getFileFromRef(
-  ref: string,
-  filePath: string,
-  cwd: string
-): string | null {
-  try {
-    const content = execFileSync('git', ['show', `${ref}:${filePath}`], {
-      encoding: 'utf8',
-      cwd
-    });
-    return content;
-  } catch (err) {
-    core.info(`Could not get ${filePath} from ${ref}: ${err}`);
-    return null;
-  }
-}
-
-interface PackageMetadata {
-  name: string;
-  version: string;
-  dist?: {
-    unpackedSize?: number;
-  };
-}
-
-async function fetchPackageMetadata(
-  packageName: string,
-  version: string
-): Promise<PackageMetadata | null> {
-  try {
-    const url = `https://registry.npmjs.org/${packageName}/${version}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      return null;
-    }
-    return await response.json();
-  } catch (err) {
-    core.info(`Failed to fetch metadata for ${packageName}@${version}: ${err}`);
-    return null;
-  }
-}
+import {getFileFromRef, getBaseRef, getCurrentRef} from './git.js';
+import {fetchPackageMetadata} from './npm.js';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
