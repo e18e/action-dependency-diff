@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {parseLockfile, detectLockfile} from './lockfile.js';
 import {getFileFromRef, getBaseRef} from './git.js';
-import {fetchPackageMetadata} from './npm.js';
+import {calculateTotalDependencySizeIncrease} from './npm.js';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -14,6 +14,25 @@ function formatBytes(bytes: number): string {
 }
 
 const COMMENT_TAG = '<!-- dependency-diff-action -->';
+
+function getLsCommand(
+  lockfilePath: string,
+  packageName: string
+): string | undefined {
+  if (lockfilePath.endsWith('package-lock.json')) {
+    return `npm ls ${packageName}`;
+  }
+  if (lockfilePath.endsWith('pnpm-lock.yaml')) {
+    return `pnpm why ${packageName}`;
+  }
+  if (lockfilePath.endsWith('yarn.lock')) {
+    return `yarn why ${packageName}`;
+  }
+  if (lockfilePath.endsWith('bun.lock')) {
+    return `bun pm ls ${packageName}`;
+  }
+  return undefined;
+}
 
 async function run(): Promise<void> {
   try {
@@ -68,9 +87,14 @@ async function run(): Promise<void> {
       core.getInput('size-threshold') || '100000',
       10
     );
+    const duplicateThreshold = parseInt(
+      core.getInput('duplicate-threshold') || '1',
+      10
+    );
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
+    core.info(`Duplicate threshold set to ${duplicateThreshold}`);
 
     const messages: string[] = [];
 
@@ -92,6 +116,26 @@ async function run(): Promise<void> {
     if (depIncrease >= dependencyThreshold) {
       messages.push(
         `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
+      );
+    }
+
+    const duplicateWarnings: string[] = [];
+    for (const [packageName, currentVersionSet] of currentDeps) {
+      if (currentVersionSet.size > duplicateThreshold) {
+        const versions = Array.from(currentVersionSet).sort();
+        duplicateWarnings.push(
+          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})`
+        );
+      }
+    }
+
+    if (duplicateWarnings.length > 0) {
+      const exampleCommand = getLsCommand(lockfilePath, 'example-package');
+      const helpMessage = exampleCommand
+        ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
+        : '';
+      messages.push(
+        `⚠️ **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):\n\n${duplicateWarnings.join('\n')}${helpMessage}`
       );
     }
 
@@ -118,31 +162,22 @@ async function run(): Promise<void> {
     core.info(`Found ${newVersions.length} new package versions`);
 
     if (newVersions.length > 0) {
-      const sizeWarnings: string[] = [];
+      try {
+        const sizeData =
+          await calculateTotalDependencySizeIncrease(newVersions);
 
-      for (const dep of newVersions) {
-        try {
-          const metadata = await fetchPackageMetadata(dep.name, dep.version);
-          if (
-            metadata?.dist?.unpackedSize &&
-            metadata.dist.unpackedSize >= sizeThreshold
-          ) {
-            const label = dep.isNewPackage ? 'new package' : 'new version';
-            sizeWarnings.push(
-              `📦 **${dep.name}@${dep.version}** (${label}): ${formatBytes(metadata.dist.unpackedSize)}`
-            );
-          }
-        } catch (err) {
-          core.info(
-            `Failed to check size for ${dep.name}@${dep.version}: ${err}`
+        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
+          const packageRows = Array.from(sizeData.packageSizes.entries())
+            .sort(([, a], [, b]) => b - a)
+            .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
+            .join('\n');
+
+          messages.push(
+            `⚠️ **Large Dependency Size Increase**: This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.\n\n| Package | Size |\n|---------|------|\n${packageRows}`
           );
         }
-      }
-
-      if (sizeWarnings.length > 0) {
-        messages.push(
-          `⚠️ **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):\n\n${sizeWarnings.join('\n')}`
-        );
+      } catch (err) {
+        core.info(`Failed to calculate total dependency size increase: ${err}`);
       }
     }
 
