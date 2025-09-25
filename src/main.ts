@@ -2,6 +2,7 @@ import {execFileSync} from 'child_process';
 import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import {parseLockfile, detectLockfile} from './lockfile.js';
 
 function getBaseRef(): string {
   const inputBaseRef = core.getInput('base-ref');
@@ -38,12 +39,6 @@ function getFileFromRef(
     return null;
   }
 }
-
-declare function detectLockfile(workspacePath: string): string | undefined;
-declare function parseLockFile(
-  lockfilePath: string,
-  contents: string
-): Map<string, Set<string>>;
 
 interface PackageMetadata {
   name: string;
@@ -122,8 +117,8 @@ async function run(): Promise<void> {
       return;
     }
 
-    const currentDeps = parseLockFile(lockfilePath, currentPackageLock);
-    const baseDeps = parseLockFile(lockfilePath, basePackageLock);
+    const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
+    const baseDeps = parseLockfile(lockfilePath, basePackageLock);
 
     const dependencyThreshold = parseInt(
       core.getInput('dependency-threshold') || '10',

@@ -23887,6 +23887,244 @@ var core = __toESM(require_core(), 1);
 var github = __toESM(require_github(), 1);
 import { execFileSync } from "child_process";
 import * as process2 from "process";
+
+// src/lockfile.ts
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+var supportedLockfiles = [
+  "pnpm-lock.yaml",
+  "package-lock.json",
+  "yarn.lock",
+  "bun.lock"
+];
+function detectLockfile(workspacePath) {
+  for (const c of supportedLockfiles) {
+    if (existsSync(join(workspacePath, c))) return c;
+  }
+  return void 0;
+}
+function parseLockfile(lockfilePath, content) {
+  if (lockfilePath.endsWith("package-lock.json")) return parseNpmLock(content);
+  if (lockfilePath.endsWith("pnpm-lock.yaml")) return parsePnpmLock(content);
+  if (lockfilePath.endsWith("yarn.lock")) {
+    if (content.includes("yarn lockfile v1")) return parseYarnV1Lock(content);
+    return parseYarnBerryLock(content);
+  }
+  if (lockfilePath.endsWith("bun.lock")) return parseBunLock(content);
+  return /* @__PURE__ */ new Map();
+}
+function parseNpmLock(content) {
+  const result = /* @__PURE__ */ new Map();
+  let json;
+  try {
+    json = JSON.parse(content);
+  } catch {
+    return result;
+  }
+  const packages = json.packages || {};
+  for (const key of Object.keys(packages)) {
+    const entry = packages[key];
+    const version = entry && entry.version;
+    if (!version) continue;
+    if (key === "") continue;
+    let name = entry.name;
+    if (!name) {
+      const parts = key.split("node_modules/").filter(Boolean);
+      if (parts.length > 0) {
+        const last = parts[parts.length - 1].replace(/\/$/, "");
+        name = last;
+      }
+    }
+    if (!name) continue;
+    addVersion(result, name, version);
+  }
+  return result;
+}
+function parsePnpmLock(content) {
+  const result = /* @__PURE__ */ new Map();
+  const lines = content.split(/\r?\n/);
+  let inPackages = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!inPackages) {
+      if (/^packages:\s*$/.test(line)) {
+        inPackages = true;
+      }
+      continue;
+    }
+    if (/^\S.*:$/.test(line)) {
+      inPackages = /^packages:\s*$/.test(line);
+      continue;
+    }
+    const m = /^\s{2}(\S.*?):\s*$/.exec(line);
+    if (!m) continue;
+    let key = m[1];
+    if (key.startsWith("/")) key = key.slice(1);
+    if (key.startsWith('"') && key.endsWith('"') || key.startsWith("'") && key.endsWith("'")) {
+      key = key.slice(1, -1);
+    }
+    const core2 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
+    const at = core2.lastIndexOf("@");
+    if (at <= 0) continue;
+    const name = core2.slice(0, at);
+    const version = core2.slice(at + 1).trim();
+    if (!version) continue;
+    addVersion(result, name, version);
+  }
+  return result;
+}
+function parseYarnV1Lock(content) {
+  const result = /* @__PURE__ */ new Map();
+  const lines = content.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
+    if (!line || /^\s/.test(line)) {
+      i++;
+      continue;
+    }
+    if (!line.trimEnd().endsWith(":")) {
+      i++;
+      continue;
+    }
+    const headerLines = [];
+    while (i < lines.length) {
+      const hl = lines[i];
+      headerLines.push(hl);
+      i++;
+      if (!lines[i] || lines[i].startsWith("  ")) break;
+    }
+    const specifiers = headerLines.join("\n").split(",\n").map((s) => s.trim()).map((s) => s.replace(/:$/, "")).map((s) => s.replace(/^"|"$/g, ""));
+    let version;
+    while (i < lines.length) {
+      line = lines[i];
+      if (!line || !line.startsWith(" ") && line.trimEnd().endsWith(":"))
+        break;
+      const vm = /^\s{2}version\s+"([^"]+)"/.exec(line);
+      if (vm) version = vm[1];
+      i++;
+    }
+    if (!version) continue;
+    for (const spec of specifiers) {
+      const name = yarnV1SpecifierToName(spec);
+      if (name) addVersion(result, name, version);
+    }
+  }
+  return result;
+}
+function parseYarnBerryLock(content) {
+  const result = /* @__PURE__ */ new Map();
+  const lines = content.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    let line = lines[i];
+    if (!line || line.trimStart().startsWith("#")) {
+      i++;
+      continue;
+    }
+    if (!line.startsWith('"') && !line.startsWith("'")) {
+      i++;
+      continue;
+    }
+    if (!line.trimEnd().endsWith(":")) {
+      i++;
+      continue;
+    }
+    const headerLine = line.trim();
+    const specifiers = headerLine.split(",").map((s) => s.trim()).map((s) => s.replace(/:$/, "")).map((s) => s.replace(/^"|"$/g, "").replace(/^'|'$/g, ""));
+    i++;
+    let version;
+    while (i < lines.length) {
+      line = lines[i];
+      if (!line) break;
+      if (!line.startsWith(" ")) break;
+      const vm = /^\s{2}version:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))/.exec(
+        line
+      );
+      if (vm) version = vm[1] || vm[2] || vm[3];
+      i++;
+    }
+    if (!version) continue;
+    for (const spec of specifiers) {
+      const name = yarnBerrySpecifierToName(spec);
+      if (name) addVersion(result, name, version);
+    }
+  }
+  return result;
+}
+function parseBunLock(content) {
+  const result = /* @__PURE__ */ new Map();
+  let json;
+  try {
+    json = JSON.parse(content);
+  } catch {
+    try {
+      const withoutLineComments = content.split(/\r?\n/).map((l) => l.replace(/(^|\s)\/\/.*$/, "$1")).join("\n");
+      json = JSON.parse(withoutLineComments);
+    } catch {
+      return result;
+    }
+  }
+  const pkgs = json && json.packages;
+  if (!pkgs) return result;
+  if (Array.isArray(pkgs)) {
+    for (const entry of pkgs) {
+      if (!entry) continue;
+      const name = entry.name;
+      const version = entry.version;
+      if (name && version) addVersion(result, name, version);
+    }
+    return result;
+  }
+  if (typeof pkgs === "object") {
+    for (const key of Object.keys(pkgs)) {
+      const entry = pkgs[key];
+      const version = entry && entry.version;
+      if (!version) continue;
+      let name = entry && entry.name;
+      if (!name) {
+        const spec = String(key);
+        if (spec.startsWith("@")) {
+          const at2 = spec.indexOf("@", 1);
+          if (at2 > 0) name = spec.slice(0, at2);
+        } else {
+          const at1 = spec.indexOf("@");
+          if (at1 > 0) name = spec.slice(0, at1);
+        }
+      }
+      if (!name) continue;
+      addVersion(result, name, version);
+    }
+    return result;
+  }
+  return result;
+}
+function yarnV1SpecifierToName(spec) {
+  const at = spec.lastIndexOf("@");
+  if (at <= 0) return void 0;
+  return spec.slice(0, at);
+}
+function yarnBerrySpecifierToName(spec) {
+  const s = spec.replace(/^"|"$/g, "").replace(/^'|'$/g, "");
+  if (s.startsWith("@")) {
+    const at2 = s.indexOf("@", 1);
+    if (at2 <= 0) return void 0;
+    return s.slice(0, at2);
+  }
+  const at1 = s.indexOf("@");
+  if (at1 <= 0) return void 0;
+  return s.slice(0, at1);
+}
+function addVersion(map, name, version) {
+  let set = map.get(name);
+  if (!set) {
+    set = /* @__PURE__ */ new Set();
+    map.set(name, set);
+  }
+  set.add(version);
+}
+
+// src/main.ts
 function getBaseRef() {
   const inputBaseRef = core.getInput("base-ref");
   if (inputBaseRef) {
@@ -23933,6 +24171,7 @@ function formatBytes(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
+var COMMENT_TAG = "<!-- dependency-diff-action -->";
 async function run() {
   try {
     const workspacePath = process2.env.GITHUB_WORKSPACE || process2.cwd();
@@ -23970,8 +24209,8 @@ async function run() {
       core.info("No package-lock.json found in current ref");
       return;
     }
-    const currentDeps = parseLockFile(lockfilePath, currentPackageLock);
-    const baseDeps = parseLockFile(lockfilePath, basePackageLock);
+    const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
+    const baseDeps = parseLockfile(lockfilePath, basePackageLock);
     const dependencyThreshold = parseInt(
       core.getInput("dependency-threshold") || "10",
       10
@@ -23991,7 +24230,7 @@ async function run() {
     );
     const depIncrease = currentDepCount - baseDepCount;
     if (depIncrease >= dependencyThreshold) {
-      commentBody += `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependency installations (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.
+      commentBody += `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.
 
 `;
     }
@@ -24034,12 +24273,44 @@ ${sizeWarnings.join("\n")}
       }
     }
     const octokit = github.getOctokit(token);
-    await octokit.rest.issues.createComment({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      issue_number: prNumber,
-      body: commentBody
-    });
+    let existingCommentId = void 0;
+    const perPage = 100;
+    for await (const { data: comments } of octokit.paginate.iterator(
+      octokit.rest.issues.listComments,
+      {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber,
+        per_page: perPage
+      }
+    )) {
+      const comment = comments.find((c) => c.body?.includes(COMMENT_TAG));
+      if (comment) {
+        existingCommentId = comment.id;
+        break;
+      }
+    }
+    const finalCommentBody = `${COMMENT_TAG}
+${commentBody}`;
+    if (existingCommentId) {
+      await octokit.rest.issues.updateComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        comment_id: existingCommentId,
+        body: finalCommentBody
+      });
+      core.info(
+        `Updated existing dependency diff comment #${existingCommentId}`
+      );
+    } else {
+      await octokit.rest.issues.createComment({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: prNumber,
+        body: finalCommentBody
+      });
+      core.info("Created new dependency diff comment");
+    }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
