@@ -22,6 +22,7 @@ export function getFileFromRef(
 
 export function getBaseRef(): string {
   const inputBaseRef = core.getInput('base-ref');
+
   if (inputBaseRef) {
     return inputBaseRef.includes('/') ? inputBaseRef : `origin/${inputBaseRef}`;
   }
