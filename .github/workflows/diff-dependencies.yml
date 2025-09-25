@@ -1,0 +1,16 @@
+name: Dependency Diff
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  diff_dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Create Diff
+        uses: e18e/action-dependency-diff@main

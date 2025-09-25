@@ -1,0 +1,48 @@
+{
+  "name": "@e18e/action-dependency-diff",
+  "version": "0.0.1",
+  "description": "A GitHub action to summarise the difference between dependency updates.",
+  "keywords": [
+    "action",
+    "github",
+    "workflow",
+    "provenance",
+    "diff"
+  ],
+  "homepage": "https://github.com/e18e/action-dependency-diff#readme",
+  "bugs": {
+    "url": "https://github.com/e18e/action-dependency-diff/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e18e/action-dependency-diff.git"
+  },
+  "license": "MIT",
+  "author": "James Garbutt (https://github.com/43081j)",
+  "type": "module",
+  "main": "src/main.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=main.js --format=esm --platform=node --target=node24",
+    "format": "prettier --write src test",
+    "lint": "npm run lint:format && npm run lint:js && npm run lint:types",
+    "lint:format": "prettier --check src test",
+    "lint:js": "eslint src test",
+    "lint:types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.1",
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^24.5.2",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.36.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.1",
+    "vitest": "^3.2.4"
+  }
+}

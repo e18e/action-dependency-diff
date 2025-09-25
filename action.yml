@@ -1,0 +1,35 @@
+name: Dependency Diff
+description: Summarise differences between dependency versions when upgrading.
+author: James Garbutt (@43081j)
+
+branding:
+  icon: zap
+  color: 'gray-dark'
+
+inputs:
+  base-ref:
+    description: 'Base ref to compare against (defaults to main or PR target)'
+    required: true
+    default: 'main'
+  github-token:
+    description: 'The GitHub token for authentication.'
+    required: true
+    default: ${{ github.token }}
+  pr-number:
+    description: 'The number of the pull request to comment on.'
+    required: true
+    default: ${{ github.event.pull_request.number }}
+  dependency-threshold:
+    description: 'Threshold for warning about significant increase in number of dependencies'
+    required: false
+    default: '10'
+  size-threshold:
+    description: 'Threshold (in bytes) for warning about significant increase in package size'
+    required: false
+    default: '100000'
+
+outputs:
+
+runs:
+  using: node24
+  main: main.js
