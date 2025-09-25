@@ -24170,6 +24170,28 @@ async function fetchPackageMetadata(packageName, version) {
     return null;
   }
 }
+async function calculateTotalDependencySizeIncrease(newVersions) {
+  let totalSize = 0;
+  const processedPackages = /* @__PURE__ */ new Set();
+  for (const dep of newVersions) {
+    const packageKey = `${dep.name}@${dep.version}`;
+    if (processedPackages.has(packageKey)) {
+      continue;
+    }
+    try {
+      const metadata = await fetchPackageMetadata(dep.name, dep.version);
+      if (!metadata || metadata.dist?.unpackedSize === void 0) {
+        return null;
+      }
+      totalSize += metadata.dist.unpackedSize;
+      processedPackages.add(packageKey);
+      core2.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
+    } catch {
+      return null;
+    }
+  }
+  return totalSize;
+}
 
 // src/main.ts
 function formatBytes(bytes) {
@@ -24180,6 +24202,21 @@ function formatBytes(bytes) {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 var COMMENT_TAG = "<!-- dependency-diff-action -->";
+function getLsCommand(lockfilePath, packageName) {
+  if (lockfilePath.endsWith("package-lock.json")) {
+    return `npm ls ${packageName}`;
+  }
+  if (lockfilePath.endsWith("pnpm-lock.yaml")) {
+    return `pnpm why ${packageName}`;
+  }
+  if (lockfilePath.endsWith("yarn.lock")) {
+    return `yarn why ${packageName}`;
+  }
+  if (lockfilePath.endsWith("bun.lock")) {
+    return `bun pm ls ${packageName}`;
+  }
+  return void 0;
+}
 async function run() {
   try {
     const workspacePath = process2.env.GITHUB_WORKSPACE || process2.cwd();
@@ -24227,8 +24264,13 @@ async function run() {
       core3.getInput("size-threshold") || "100000",
       10
     );
+    const duplicateThreshold = parseInt(
+      core3.getInput("duplicate-threshold") || "1",
+      10
+    );
     core3.info(`Dependency threshold set to ${dependencyThreshold}`);
     core3.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
+    core3.info(`Duplicate threshold set to ${duplicateThreshold}`);
     const messages = [];
     const currentDepCount = Array.from(currentDeps.values()).reduce(
       (sum, versions) => sum + versions.size,
@@ -24247,6 +24289,24 @@ async function run() {
         `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
       );
     }
+    const duplicateWarnings = [];
+    for (const [packageName, currentVersionSet] of currentDeps) {
+      if (currentVersionSet.size > duplicateThreshold) {
+        const versions = Array.from(currentVersionSet).sort();
+        const lsCommand = getLsCommand(lockfilePath, packageName);
+        duplicateWarnings.push(
+          `\u{1F4E6} **${packageName}**: ${currentVersionSet.size} versions (${versions.join(", ")})${lsCommand ? `
+   \u2514\u2500 ${lsCommand}` : ""}`
+        );
+      }
+    }
+    if (duplicateWarnings.length > 0) {
+      messages.push(
+        `\u26A0\uFE0F **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):
+
+${duplicateWarnings.join("\n")}`
+      );
+    }
     const newVersions = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
       const baseVersionSet = baseDeps.get(packageName);
@@ -24262,28 +24322,15 @@ async function run() {
     }
     core3.info(`Found ${newVersions.length} new package versions`);
     if (newVersions.length > 0) {
-      const sizeWarnings = [];
-      for (const dep of newVersions) {
-        try {
-          const metadata = await fetchPackageMetadata(dep.name, dep.version);
-          if (metadata?.dist?.unpackedSize && metadata.dist.unpackedSize >= sizeThreshold) {
-            const label = dep.isNewPackage ? "new package" : "new version";
-            sizeWarnings.push(
-              `\u{1F4E6} **${dep.name}@${dep.version}** (${label}): ${formatBytes(metadata.dist.unpackedSize)}`
-            );
-          }
-        } catch (err) {
-          core3.info(
-            `Failed to check size for ${dep.name}@${dep.version}: ${err}`
+      try {
+        const totalSizeIncrease = await calculateTotalDependencySizeIncrease(newVersions);
+        if (totalSizeIncrease !== null && totalSizeIncrease >= sizeThreshold) {
+          messages.push(
+            `\u26A0\uFE0F **Large Dependency Size Increase**: This PR adds ${formatBytes(totalSizeIncrease)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.`
           );
         }
-      }
-      if (sizeWarnings.length > 0) {
-        messages.push(
-          `\u26A0\uFE0F **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):
-
-${sizeWarnings.join("\n")}`
-        );
+      } catch (err) {
+        core3.info(`Failed to calculate total dependency size increase: ${err}`);
       }
     }
     if (messages.length === 0) {
