@@ -24227,6 +24227,8 @@ async function run() {
       core3.getInput("size-threshold") || "100000",
       10
     );
+    core3.info(`Dependency threshold set to ${dependencyThreshold}`);
+    core3.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     const messages = [];
     const currentDepCount = Array.from(currentDeps.values()).reduce(
       (sum, versions) => sum + versions.size,
@@ -24237,6 +24239,9 @@ async function run() {
       0
     );
     const depIncrease = currentDepCount - baseDepCount;
+    core3.info(`Base dependency count: ${baseDepCount}`);
+    core3.info(`Current dependency count: ${currentDepCount}`);
+    core3.info(`Dependency count increase: ${depIncrease}`);
     if (depIncrease >= dependencyThreshold) {
       messages.push(
         `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
@@ -24255,6 +24260,7 @@ async function run() {
         }
       }
     }
+    core3.info(`Found ${newVersions.length} new package versions`);
     if (newVersions.length > 0) {
       const sizeWarnings = [];
       for (const dep of newVersions) {
