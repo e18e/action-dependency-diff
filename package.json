@@ -9,6 +9,10 @@
     "provenance",
     "diff"
   ],
+  "files": [
+    "main.js",
+    "action.yml"
+  ],
   "homepage": "https://github.com/e18e/action-dependency-diff#readme",
   "bugs": {
     "url": "https://github.com/e18e/action-dependency-diff/issues"
@@ -20,7 +24,7 @@
   "license": "MIT",
   "author": "James Garbutt (https://github.com/43081j)",
   "type": "module",
-  "main": "src/main.ts",
+  "main": "main.js",
   "directories": {
     "test": "test"
   },

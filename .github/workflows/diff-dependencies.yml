@@ -4,14 +4,65 @@ on:
   pull_request:
 
 jobs:
+  build-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: main
+      - name: Use Node v${{ matrix.node-version }}
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24.x
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Pack
+        run: npm pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: base-packages
+          path: '*.tgz'
+  build-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Use Node v${{ matrix.node-version }}
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24.x
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Pack
+        run: npm pack
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-packages
+          path: '*.tgz'
   diff_dependencies:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: base-packages
+          path: ./base-packages
+      - uses: actions/download-artifact@v3
+        with:
+          name: source-packages
+          path: ./source-packages
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
       - name: Create Diff
         uses: ./
+        with:
+          base-packages: ./base-packages/*.tgz
+          source-packages: ./source-packages/*.tgz

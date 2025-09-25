@@ -4,6 +4,7 @@ import * as github from '@actions/github';
 import {parseLockfile, detectLockfile} from './lockfile.js';
 import {getFileFromRef, getBaseRef} from './git.js';
 import {calculateTotalDependencySizeIncrease} from './npm.js';
+import {getPacksFromPattern, comparePackSizes} from './packs.js';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -91,10 +92,15 @@ async function run(): Promise<void> {
       core.getInput('duplicate-threshold') || '1',
       10
     );
+    const packSizeThreshold = parseInt(
+      core.getInput('pack-size-threshold') || '50000',
+      10
+    );
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     core.info(`Duplicate threshold set to ${duplicateThreshold}`);
+    core.info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
 
     const messages: string[] = [];
 
@@ -178,6 +184,57 @@ async function run(): Promise<void> {
         }
       } catch (err) {
         core.info(`Failed to calculate total dependency size increase: ${err}`);
+      }
+    }
+
+    // Compare pack sizes if patterns are provided
+    const basePackagesPattern = core.getInput('base-packages');
+    const sourcePackagesPattern = core.getInput('source-packages');
+
+    if (basePackagesPattern && sourcePackagesPattern) {
+      try {
+        core.info(
+          `Comparing pack sizes between patterns: ${basePackagesPattern} and ${sourcePackagesPattern}`
+        );
+
+        const basePacks = await getPacksFromPattern(basePackagesPattern);
+        const sourcePacks = await getPacksFromPattern(sourcePackagesPattern);
+
+        core.info(
+          `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
+        );
+
+        if (basePacks.length > 0 || sourcePacks.length > 0) {
+          const comparison = comparePackSizes(
+            basePacks,
+            sourcePacks,
+            packSizeThreshold
+          );
+          const packWarnings = comparison.packChanges.filter(
+            (change) => change.exceedsThreshold && change.sizeChange > 0
+          );
+
+          if (packWarnings.length > 0) {
+            const packRows = packWarnings
+              .map((change) => {
+                const baseSize = change.baseSize
+                  ? formatBytes(change.baseSize)
+                  : 'New';
+                const sourceSize = change.sourceSize
+                  ? formatBytes(change.sourceSize)
+                  : 'Removed';
+                const sizeChange = formatBytes(change.sizeChange);
+                return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
+              })
+              .join('\n');
+
+            messages.push(
+              `⚠️ **Package Size Increase Warning**: These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:\n\n| Package | Base Size | Source Size | Size Change |\n|---------|-----------|-------------|-------------|\n${packRows}`
+            );
+          }
+        }
+      } catch (err) {
+        core.info(`Failed to compare pack sizes: ${err}`);
       }
     }
 

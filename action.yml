@@ -26,6 +26,16 @@ inputs:
     description: 'Threshold (in bytes) for warning about significant increase in package size'
     required: false
     default: '100000'
+  base-packages:
+    description: 'Glob pattern for base branch pack files (e.g., "./base-packs/*.tgz")'
+    required: false
+  source-packages:
+    description: 'Glob pattern for source branch pack files (e.g., "./source-packs/*.tgz")'
+    required: false
+  pack-size-threshold:
+    description: 'Threshold (in bytes) for warning about significant increase in total pack size'
+    required: false
+    default: '50000'
 
 runs:
   using: node24
