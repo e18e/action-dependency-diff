@@ -1,9 +1,7 @@
-
-      import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'node:url';
       import { createRequire as topLevelCreateRequire } from 'node:module';
       import { dirname as topLevelDirname } from 'path';
       const require = topLevelCreateRequire(import.meta.url);
-    
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

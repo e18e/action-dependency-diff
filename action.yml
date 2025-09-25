@@ -10,7 +10,7 @@ inputs:
   base-ref:
     description: 'Base ref to compare against (defaults to main or PR target)'
     required: true
-    default: 'main'
+    default: 'origin/main'
   github-token:
     description: 'The GitHub token for authentication.'
     required: true

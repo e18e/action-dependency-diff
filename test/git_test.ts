@@ -1,9 +1,9 @@
 import {describe, it, expect, beforeEach, vi} from 'vitest';
 import * as git from '../src/git.js';
 import * as github from '@actions/github';
-import process from 'process';
+import * as process from 'process';
 import {fileURLToPath} from 'node:url';
-import path from 'node:path';
+import * as path from 'node:path';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(currentDir, '..');
@@ -11,9 +11,19 @@ const rootDir = path.join(currentDir, '..');
 describe('getBaseRef', () => {
   it('should return input base ref if provided', () => {
     try {
+      process.env['INPUT_BASE-REF'] = 'origin/feature-branch';
+      const baseRef = git.getBaseRef();
+      expect(baseRef).toBe('origin/feature-branch');
+    } finally {
+      delete process.env['INPUT_BASE-REF'];
+    }
+  });
+
+  it('should prepend origin if not set', () => {
+    try {
       process.env['INPUT_BASE-REF'] = 'feature-branch';
       const baseRef = git.getBaseRef();
-      expect(baseRef).toBe('feature-branch');
+      expect(baseRef).toBe('origin/feature-branch');
     } finally {
       delete process.env['INPUT_BASE-REF'];
     }
