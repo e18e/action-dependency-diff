@@ -10,7 +10,8 @@ export function getFileFromRef(
   try {
     const content = execFileSync('git', ['show', `${ref}:${filePath}`], {
       encoding: 'utf8',
-      cwd
+      cwd,
+      stdio: 'pipe'
     });
     return content;
   } catch (err) {
@@ -32,8 +33,4 @@ export function getBaseRef(): string {
   }
 
   return 'origin/main';
-}
-
-export function getCurrentRef(): string {
-  return github.context.sha ?? 'HEAD';
 }

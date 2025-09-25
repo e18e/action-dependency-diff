@@ -24131,7 +24131,8 @@ function getFileFromRef(ref, filePath, cwd2) {
   try {
     const content = execFileSync("git", ["show", `${ref}:${filePath}`], {
       encoding: "utf8",
-      cwd: cwd2
+      cwd: cwd2,
+      stdio: "pipe"
     });
     return content;
   } catch (err) {
@@ -24149,9 +24150,6 @@ function getBaseRef() {
     return `origin/${githubBaseRef}`;
   }
   return "origin/main";
-}
-function getCurrentRef() {
-  return github.context.sha ?? "HEAD";
 }
 
 // src/npm.ts
@@ -24183,7 +24181,7 @@ async function run() {
   try {
     const workspacePath = process2.env.GITHUB_WORKSPACE || process2.cwd();
     const baseRef = getBaseRef();
-    const currentRef = getCurrentRef();
+    const currentRef = github2.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
     const token = core3.getInput("github-token", { required: true });
     const prNumber = parseInt(core3.getInput("pr-number", { required: true }), 10);
@@ -24237,7 +24235,9 @@ async function run() {
     );
     const depIncrease = currentDepCount - baseDepCount;
     if (depIncrease >= dependencyThreshold) {
-      messages.push(`\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`);
+      messages.push(
+        `\u26A0\uFE0F **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
+      );
     }
     const newVersions = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
@@ -24270,9 +24270,11 @@ async function run() {
         }
       }
       if (sizeWarnings.length > 0) {
-        messages.push(`\u26A0\uFE0F **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):
+        messages.push(
+          `\u26A0\uFE0F **Large Package Warnings** (threshold: ${formatBytes(sizeThreshold)}):
 
-${sizeWarnings.join("\n")}`);
+${sizeWarnings.join("\n")}`
+        );
       }
     }
     if (messages.length === 0) {
