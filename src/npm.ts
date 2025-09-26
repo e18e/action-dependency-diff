@@ -5,6 +5,15 @@ export interface PackageMetadata {
   version: string;
   dist?: {
     unpackedSize?: number;
+    attestations?: {
+      url: string;
+      provenance?: unknown;
+    };
+  };
+  _npmUser: {
+    name: string;
+    email: string;
+    trustedPublisher?: unknown;
   };
   dependencies?: Record<string, string>;
 }
@@ -13,7 +22,72 @@ export interface PackageIndex {
   versions: Record<string, PackageMetadata>;
 }
 
-export async function fetchPackageMetadata(
+export type ProvenanceStatus = 'trusted' | 'provenance' | 'none';
+
+export function getProvenance(meta: PackageMetadata): ProvenanceStatus {
+  if (meta._npmUser?.trustedPublisher) {
+    return 'trusted';
+  }
+  if (meta.dist?.attestations?.provenance) {
+    return 'provenance';
+  }
+  return 'none';
+}
+
+export function getTrustLevel(status: ProvenanceStatus): number {
+  switch (status) {
+    case 'trusted':
+      return 2;
+    case 'provenance':
+      return 1;
+    case 'none':
+      return 0;
+    default:
+      return 0;
+  }
+}
+
+export async function getProvenanceForPackageVersions(
+  packageName: string,
+  versions: Set<string>
+): Promise<Map<string, ProvenanceStatus>> {
+  const result = new Map<string, ProvenanceStatus>();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, getProvenance(metadata));
+    }
+  }
+  return result;
+}
+
+export interface MinTrustLevelResult {
+  level: number;
+  status: ProvenanceStatus;
+}
+
+export function getMinTrustLevel(
+  statuses: Iterable<ProvenanceStatus>
+): MinTrustLevelResult {
+  const result: MinTrustLevelResult = {level: 2, status: 'trusted'};
+  for (const status of statuses) {
+    const level = getTrustLevel(status);
+    if (level < result.level) {
+      result.level = level;
+      result.status = status;
+    }
+  }
+  return result;
+}
+
+type MaybePromise<T> = T | Promise<T>;
+
+export const metaCache = new Map<
+  string,
+  MaybePromise<PackageMetadata | null>
+>();
+
+async function fetchPackageMetadataImmediate(
   packageName: string,
   version: string
 ): Promise<PackageMetadata | null> {
@@ -28,6 +102,22 @@ export async function fetchPackageMetadata(
     core.info(`Failed to fetch metadata for ${packageName}@${version}: ${err}`);
     return null;
   }
+}
+
+export async function fetchPackageMetadata(
+  packageName: string,
+  version: string
+): Promise<PackageMetadata | null> {
+  const cacheKey = `${packageName}@${version}`;
+  const cached = metaCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  const meta = fetchPackageMetadataImmediate(packageName, version);
+  metaCache.set(cacheKey, meta);
+  const result = await meta;
+  metaCache.set(cacheKey, result);
+  return result;
 }
 
 export async function calculateTotalDependencySizeIncrease(

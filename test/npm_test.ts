@@ -8,7 +8,7 @@ import {
   type MockInstance,
   expect
 } from 'vitest';
-import {fetchPackageMetadata} from '../src/npm.js';
+import {fetchPackageMetadata, metaCache} from '../src/npm.js';
 
 describe('fetchPackageMetadata', () => {
   let fetchMock: MockInstance<typeof globalThis.fetch>;
@@ -28,6 +28,7 @@ describe('fetchPackageMetadata', () => {
   afterEach(() => {
     fetchMock.mockRestore();
     vi.clearAllMocks();
+    metaCache.clear();
   });
 
   it('should return null if request fails', async () => {
