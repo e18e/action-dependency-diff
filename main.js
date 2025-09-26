@@ -24475,16 +24475,16 @@ async function run() {
 This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
       );
     }
-    const duplicateWarnings = [];
+    const duplicateRows = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
       if (currentVersionSet.size > duplicateThreshold) {
         const versions = Array.from(currentVersionSet).sort();
-        duplicateWarnings.push(
-          `\u{1F4E6} **${packageName}**: ${currentVersionSet.size} versions (${versions.join(", ")})`
+        duplicateRows.push(
+          `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(", ")} |`
         );
       }
     }
-    if (duplicateWarnings.length > 0) {
+    if (duplicateRows.length > 0) {
       const exampleCommand = getLsCommand(lockfilePath, "example-package");
       const helpMessage = exampleCommand ? `
 
@@ -24492,7 +24492,9 @@ This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDe
       messages.push(
         `## \u26A0\uFE0F Duplicate Dependencies (threshold: ${duplicateThreshold})
 
-${duplicateWarnings.join("\n")}${helpMessage}`
+| \u{1F4E6} Package | \u{1F522} Version Count | \u{1F4CB} Versions |
+| --- | --- | --- |
+${duplicateRows.join("\n")}${helpMessage}`
       );
     }
     const newVersions = [];
@@ -24519,8 +24521,8 @@ ${duplicateWarnings.join("\n")}${helpMessage}`
 
 This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
 
-| Package | Size |
-|---------|------|
+| \u{1F4E6} Package | \u{1F4CF} Size |
+| --- | --- |
 ${packageRows}`
           );
         }
@@ -24528,7 +24530,7 @@ ${packageRows}`
         core4.info(`Failed to calculate total dependency size increase: ${err}`);
       }
     }
-    const provenanceWarnings = [];
+    const provenanceRows = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
       const baseVersionSet = baseDeps.get(packageName);
       if (!baseVersionSet || baseVersionSet.size === 0) {
@@ -24552,24 +24554,24 @@ ${packageRows}`
         const minBaseTrust = getMinTrustLevel(baseProvenances.values());
         const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
         if (minCurrentTrust.level < minBaseTrust.level) {
-          provenanceWarnings.push(
-            `\u{1F512} **${packageName}**: trust level decreased (${minBaseTrust.status} \u2192 ${minCurrentTrust.status})`
+          provenanceRows.push(
+            `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
           );
         }
       } catch (err) {
         core4.info(`Failed to check provenance for ${packageName}: ${err}`);
       }
     }
-    if (provenanceWarnings.length > 0) {
+    if (provenanceRows.length > 0) {
       messages.push(
         `## \u26A0\uFE0F Package Trust Level Decreased
 
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
 
-These packages have decreased trust levels:
-
-${provenanceWarnings.join("\n")}`
+| \u{1F4E6} Package | \u{1F512} Before | \u{1F513} After |
+| --- | --- | --- |
+${provenanceRows.join("\n")}`
       );
     }
     const basePackagesPattern = core4.getInput("base-packages");
@@ -24605,8 +24607,8 @@ ${provenanceWarnings.join("\n")}`
 
 These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
 
-| Package | Base Size | Source Size | Size Change |
-|---------|-----------|-------------|-------------|
+| \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
+| --- | --- | --- | --- |
 ${packRows}`
             );
           }
