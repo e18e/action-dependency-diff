@@ -19,7 +19,6 @@ name: Dependency Diff
 
 on:
   pull_request:
-    types: [opened]
 
 jobs:
   diff_dependencies:
