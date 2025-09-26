@@ -36,6 +36,10 @@ inputs:
     description: 'Threshold (in bytes) for warning about significant increase in total pack size'
     required: false
     default: '50000'
+  duplicate-threshold:
+    description: 'Threshold for warning about packages with multiple versions'
+    required: false
+    default: '1'
 
 runs:
   using: node24
