@@ -24553,7 +24553,7 @@ ${packageRows}`
         const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
         if (minCurrentTrust.level < minBaseTrust.level) {
           provenanceWarnings.push(
-            `\u{1F4E6} **${packageName}**: trust level decreased (${minBaseTrust.status} \u2192 ${minCurrentTrust.status})`
+            `\u{1F512} **${packageName}**: trust level decreased (${minBaseTrust.status} \u2192 ${minCurrentTrust.status})`
           );
         }
       } catch (err) {
@@ -24563,6 +24563,9 @@ ${packageRows}`
     if (provenanceWarnings.length > 0) {
       messages.push(
         `## \u26A0\uFE0F Package Trust Level Decreased
+
+> [!CAUTION]
+> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
 
 These packages have decreased trust levels:
 

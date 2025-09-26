@@ -232,7 +232,7 @@ ${packageRows}`
 
         if (minCurrentTrust.level < minBaseTrust.level) {
           provenanceWarnings.push(
-            `🛡️ **${packageName}**: trust level decreased (${minBaseTrust.status} → ${minCurrentTrust.status})`
+            `🔒 **${packageName}**: trust level decreased (${minBaseTrust.status} → ${minCurrentTrust.status})`
           );
         }
       } catch (err) {
