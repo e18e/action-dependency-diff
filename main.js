@@ -6874,7 +6874,7 @@ var require_client = __commonJS({
     var assert = __require("assert");
     var net = __require("net");
     var http = __require("http");
-    var { pipeline } = __require("stream");
+    var { pipeline: pipeline2 } = __require("stream");
     var util = require_util();
     var timers = require_timers();
     var Request = require_request();
@@ -8292,7 +8292,7 @@ upgrade: ${upgrade}\r
         let onPipeData = function(chunk) {
           request.onBodySent(chunk);
         };
-        const pipe = pipeline(
+        const pipe = pipeline2(
           body,
           h2stream,
           (err) => {
@@ -10060,7 +10060,7 @@ var require_api_pipeline = __commonJS({
         util.destroy(ret, err);
       }
     };
-    function pipeline(opts, handler) {
+    function pipeline2(opts, handler) {
       try {
         const pipelineHandler = new PipelineHandler(opts, handler);
         this.dispatch({ ...opts, body: pipelineHandler.req }, pipelineHandler);
@@ -10069,7 +10069,7 @@ var require_api_pipeline = __commonJS({
         return new PassThrough().destroy(err);
       }
     }
-    module.exports = pipeline;
+    module.exports = pipeline2;
   }
 });
 
@@ -13014,7 +13014,7 @@ var require_fetch = __commonJS({
     } = require_constants2();
     var { kHeadersList } = require_symbols();
     var EE = __require("events");
-    var { Readable, pipeline } = __require("stream");
+    var { Readable, pipeline: pipeline2 } = __require("stream");
     var { addAbortListener, isErrored, isReadable, nodeMajor, nodeMinor } = require_util();
     var { dataURLProcessor, serializeAMimeType } = require_dataURL();
     var { TransformStream } = __require("stream/web");
@@ -13933,7 +13933,7 @@ var require_fetch = __commonJS({
                 status,
                 statusText,
                 headersList: headers[kHeadersList],
-                body: decoders.length ? pipeline(this.body, ...decoders, () => {
+                body: decoders.length ? pipeline2(this.body, ...decoders, () => {
                 }) : this.body.on("error", () => {
                 })
               });
@@ -24199,14 +24199,80 @@ async function calculateTotalDependencySizeIncrease(newVersions) {
 var core3 = __toESM(require_core(), 1);
 import * as fs from "node:fs/promises";
 import * as path from "path";
+import { createReadStream } from "node:fs";
+import { createGunzip } from "node:zlib";
+import { pipeline } from "node:stream/promises";
+import { Buffer as Buffer2 } from "node:buffer";
+function parseTarHeader(buffer, offset) {
+  if (offset + 512 > buffer.length) {
+    return null;
+  }
+  const header = buffer.subarray(offset, offset + 512);
+  if (header.every((byte) => byte === 0)) {
+    return null;
+  }
+  const name = header.subarray(0, 100).toString("utf8").replace(/\0.*$/, "");
+  const sizeStr = header.subarray(124, 136).toString("utf8").replace(/\0.*$/, "");
+  const type = header.subarray(156, 157).toString("utf8");
+  const size = parseInt(sizeStr.trim(), 8) || 0;
+  return { name, size, type };
+}
+async function extractPackageNameFromTgz(filePath) {
+  try {
+    const stream = createReadStream(filePath);
+    const gunzip = createGunzip();
+    let buffer = Buffer2.alloc(0);
+    let offset = 0;
+    gunzip.on("data", (chunk) => {
+      buffer = Buffer2.concat([buffer, chunk]);
+    });
+    await pipeline(stream, gunzip);
+    while (offset < buffer.length) {
+      const header = parseTarHeader(buffer, offset);
+      if (!header) break;
+      offset += 512;
+      if (header.name === "package/package.json" && header.type === "0") {
+        const contentEnd = offset + header.size;
+        if (contentEnd <= buffer.length) {
+          const packageJsonContent = buffer.subarray(offset, contentEnd).toString("utf8");
+          try {
+            const packageJson = JSON.parse(packageJsonContent);
+            return packageJson.name ?? null;
+          } catch (err) {
+            core3.info(`Failed to parse package.json in ${filePath}: ${err}`);
+            return null;
+          }
+        }
+        break;
+      }
+      const paddedSize = Math.ceil(header.size / 512) * 512;
+      offset += paddedSize;
+    }
+    return null;
+  } catch (err) {
+    core3.info(`Failed to extract package name from ${filePath}: ${err}`);
+    return null;
+  }
+}
 async function getPacksFromPattern(pattern) {
   try {
     const packs = [];
     for await (const filePath of fs.glob(pattern)) {
+      if (!filePath.endsWith(".tgz") && !filePath.endsWith(".tar.gz")) {
+        continue;
+      }
       const stats = await fs.stat(filePath);
       const name = path.basename(filePath);
+      const packageName = await extractPackageNameFromTgz(filePath);
+      if (!packageName) {
+        core3.info(
+          `Warning: Skipping ${name} - could not extract package name from tgz file`
+        );
+        continue;
+      }
       packs.push({
         name,
+        packageName,
         path: filePath,
         size: stats.size
       });
@@ -24218,11 +24284,15 @@ async function getPacksFromPattern(pattern) {
   }
 }
 function comparePackSizes(basePacks, sourcePacks, threshold) {
-  const basePacksMap = new Map(basePacks.map((pack) => [pack.name, pack]));
-  const sourcePacksMap = new Map(sourcePacks.map((pack) => [pack.name, pack]));
+  const basePacksMap = new Map(
+    basePacks.map((pack) => [pack.packageName, pack])
+  );
+  const sourcePacksMap = new Map(
+    sourcePacks.map((pack) => [pack.packageName, pack])
+  );
   const allPackNames = /* @__PURE__ */ new Set([
-    ...basePacks.map((p) => p.name),
-    ...sourcePacks.map((p) => p.name)
+    ...basePacks.map((p) => p.packageName),
+    ...sourcePacks.map((p) => p.packageName)
   ]);
   const packChanges = [];
   for (const packName of allPackNames) {
