@@ -1,4 +1,4 @@
-# @e18e/action-dependency-diff
+# e18e/action-dependency-diff
 
 > A GitHub action for reporting differences in dependencies between two branches or commits.
 
