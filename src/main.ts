@@ -131,17 +131,17 @@ This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCo
       );
     }
 
-    const duplicateWarnings: string[] = [];
+    const duplicateRows: string[] = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
       if (currentVersionSet.size > duplicateThreshold) {
         const versions = Array.from(currentVersionSet).sort();
-        duplicateWarnings.push(
-          `📦 **${packageName}**: ${currentVersionSet.size} versions (${versions.join(', ')})`
+        duplicateRows.push(
+          `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(', ')} |`
         );
       }
     }
 
-    if (duplicateWarnings.length > 0) {
+    if (duplicateRows.length > 0) {
       const exampleCommand = getLsCommand(lockfilePath, 'example-package');
       const helpMessage = exampleCommand
         ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
@@ -149,7 +149,9 @@ This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCo
       messages.push(
         `## ⚠️ Duplicate Dependencies (threshold: ${duplicateThreshold})
 
-${duplicateWarnings.join('\n')}${helpMessage}`
+| Package | Version Count | Versions |
+| --- | --- | --- |
+${duplicateRows.join('\n')}${helpMessage}`
       );
     }
 
@@ -191,7 +193,8 @@ ${duplicateWarnings.join('\n')}${helpMessage}`
 
 This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
 
-| Package | Size |\n|---------|------|
+| Package | Size |
+| --- | --- |
 ${packageRows}`
           );
         }
@@ -200,7 +203,7 @@ ${packageRows}`
       }
     }
 
-    const provenanceWarnings: string[] = [];
+    const provenanceRows: string[] = [];
 
     for (const [packageName, currentVersionSet] of currentDeps) {
       const baseVersionSet = baseDeps.get(packageName);
@@ -231,8 +234,8 @@ ${packageRows}`
         const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
 
         if (minCurrentTrust.level < minBaseTrust.level) {
-          provenanceWarnings.push(
-            `🔒 **${packageName}**: trust level decreased (${minBaseTrust.status} → ${minCurrentTrust.status})`
+          provenanceRows.push(
+            `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
           );
         }
       } catch (err) {
@@ -240,16 +243,16 @@ ${packageRows}`
       }
     }
 
-    if (provenanceWarnings.length > 0) {
+    if (provenanceRows.length > 0) {
       messages.push(
         `## ⚠️ Package Trust Level Decreased
 
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
 
-These packages have decreased trust levels:
-
-${provenanceWarnings.join('\n')}`
+| Package | Before | After |
+| --- | --- | --- |
+${provenanceRows.join('\n')}`
       );
     }
 
@@ -299,7 +302,8 @@ ${provenanceWarnings.join('\n')}`
 
 These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
 
-| Package | Base Size | Source Size | Size Change |\n|---------|-----------|-------------|-------------|
+| Package | Base Size | Source Size | Size Change |
+| --- | --- | --- | --- |
 ${packRows}`
             );
           }
