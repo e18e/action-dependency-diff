@@ -3,7 +3,11 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 import {parseLockfile, detectLockfile} from './lockfile.js';
 import {getFileFromRef, getBaseRef} from './git.js';
-import {calculateTotalDependencySizeIncrease} from './npm.js';
+import {
+  calculateTotalDependencySizeIncrease,
+  getMinTrustLevel,
+  getProvenanceForPackageVersions
+} from './npm.js';
 import {getPacksFromPattern, comparePackSizes} from './packs.js';
 
 function formatBytes(bytes: number): string {
@@ -194,6 +198,59 @@ ${packageRows}`
       } catch (err) {
         core.info(`Failed to calculate total dependency size increase: ${err}`);
       }
+    }
+
+    const provenanceWarnings: string[] = [];
+
+    for (const [packageName, currentVersionSet] of currentDeps) {
+      const baseVersionSet = baseDeps.get(packageName);
+
+      if (!baseVersionSet || baseVersionSet.size === 0) {
+        continue;
+      }
+
+      if (baseVersionSet.isSubsetOf(currentVersionSet)) {
+        continue;
+      }
+
+      try {
+        const baseProvenances = await getProvenanceForPackageVersions(
+          packageName,
+          baseVersionSet
+        );
+        const currentProvenances = await getProvenanceForPackageVersions(
+          packageName,
+          currentVersionSet
+        );
+
+        if (baseProvenances.size === 0 || currentProvenances.size === 0) {
+          continue;
+        }
+
+        const minBaseTrust = getMinTrustLevel(baseProvenances.values());
+        const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
+
+        if (minCurrentTrust.level < minBaseTrust.level) {
+          provenanceWarnings.push(
+            `🛡️ **${packageName}**: trust level decreased (${minBaseTrust.status} → ${minCurrentTrust.status})`
+          );
+        }
+      } catch (err) {
+        core.info(`Failed to check provenance for ${packageName}: ${err}`);
+      }
+    }
+
+    if (provenanceWarnings.length > 0) {
+      messages.push(
+        `## ⚠️ Package Trust Level Decreased
+
+> [!CAUTION]
+> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
+
+These packages have decreased trust levels:
+
+${provenanceWarnings.join('\n')}`
+      );
     }
 
     // Compare pack sizes if patterns are provided

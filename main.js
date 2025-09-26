@@ -24157,7 +24157,50 @@ function getBaseRef() {
 
 // src/npm.ts
 var core2 = __toESM(require_core(), 1);
-async function fetchPackageMetadata(packageName, version) {
+function getProvenance(meta) {
+  if (meta._npmUser?.trustedPublisher) {
+    return "trusted";
+  }
+  if (meta.dist?.attestations?.provenance) {
+    return "provenance";
+  }
+  return "none";
+}
+function getTrustLevel(status) {
+  switch (status) {
+    case "trusted":
+      return 2;
+    case "provenance":
+      return 1;
+    case "none":
+      return 0;
+    default:
+      return 0;
+  }
+}
+async function getProvenanceForPackageVersions(packageName, versions) {
+  const result = /* @__PURE__ */ new Map();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, getProvenance(metadata));
+    }
+  }
+  return result;
+}
+function getMinTrustLevel(statuses) {
+  const result = { level: 2, status: "trusted" };
+  for (const status of statuses) {
+    const level = getTrustLevel(status);
+    if (level < result.level) {
+      result.level = level;
+      result.status = status;
+    }
+  }
+  return result;
+}
+var metaCache = /* @__PURE__ */ new Map();
+async function fetchPackageMetadataImmediate(packageName, version) {
   try {
     const url = `https://registry.npmjs.org/${packageName}/${version}`;
     const response = await fetch(url);
@@ -24169,6 +24212,18 @@ async function fetchPackageMetadata(packageName, version) {
     core2.info(`Failed to fetch metadata for ${packageName}@${version}: ${err}`);
     return null;
   }
+}
+async function fetchPackageMetadata(packageName, version) {
+  const cacheKey = `${packageName}@${version}`;
+  const cached = metaCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  const meta = fetchPackageMetadataImmediate(packageName, version);
+  metaCache.set(cacheKey, meta);
+  const result = await meta;
+  metaCache.set(cacheKey, result);
+  return result;
 }
 async function calculateTotalDependencySizeIncrease(newVersions) {
   let totalSize = 0;
@@ -24472,6 +24527,47 @@ ${packageRows}`
       } catch (err) {
         core4.info(`Failed to calculate total dependency size increase: ${err}`);
       }
+    }
+    const provenanceWarnings = [];
+    for (const [packageName, currentVersionSet] of currentDeps) {
+      const baseVersionSet = baseDeps.get(packageName);
+      if (!baseVersionSet || baseVersionSet.size === 0) {
+        continue;
+      }
+      if (baseVersionSet.isSubsetOf(currentVersionSet)) {
+        continue;
+      }
+      try {
+        const baseProvenances = await getProvenanceForPackageVersions(
+          packageName,
+          baseVersionSet
+        );
+        const currentProvenances = await getProvenanceForPackageVersions(
+          packageName,
+          currentVersionSet
+        );
+        if (baseProvenances.size === 0 || currentProvenances.size === 0) {
+          continue;
+        }
+        const minBaseTrust = getMinTrustLevel(baseProvenances.values());
+        const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
+        if (minCurrentTrust.level < minBaseTrust.level) {
+          provenanceWarnings.push(
+            `\u{1F4E6} **${packageName}**: trust level decreased (${minBaseTrust.status} \u2192 ${minCurrentTrust.status})`
+          );
+        }
+      } catch (err) {
+        core4.info(`Failed to check provenance for ${packageName}: ${err}`);
+      }
+    }
+    if (provenanceWarnings.length > 0) {
+      messages.push(
+        `## \u26A0\uFE0F Package Trust Level Decreased
+
+These packages have decreased trust levels:
+
+${provenanceWarnings.join("\n")}`
+      );
     }
     const basePackagesPattern = core4.getInput("base-packages");
     const sourcePackagesPattern = core4.getInput("source-packages");
