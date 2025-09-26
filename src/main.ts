@@ -121,7 +121,9 @@ async function run(): Promise<void> {
 
     if (depIncrease >= dependencyThreshold) {
       messages.push(
-        `⚠️ **Dependency Count Warning**: This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
+        `## ⚠️ Dependency Count
+
+This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
       );
     }
 
@@ -141,7 +143,9 @@ async function run(): Promise<void> {
         ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
         : '';
       messages.push(
-        `⚠️ **Duplicate Dependencies Warning** (threshold: ${duplicateThreshold}):\n\n${duplicateWarnings.join('\n')}${helpMessage}`
+        `## ⚠️ Duplicate Dependencies (threshold: ${duplicateThreshold})
+
+${duplicateWarnings.join('\n')}${helpMessage}`
       );
     }
 
@@ -179,7 +183,12 @@ async function run(): Promise<void> {
             .join('\n');
 
           messages.push(
-            `⚠️ **Large Dependency Size Increase**: This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.\n\n| Package | Size |\n|---------|------|\n${packageRows}`
+            `## ⚠️ Large Dependency Size Increase
+
+This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
+
+| Package | Size |\n|---------|------|
+${packageRows}`
           );
         }
       } catch (err) {
@@ -229,7 +238,12 @@ async function run(): Promise<void> {
               .join('\n');
 
             messages.push(
-              `⚠️ **Package Size Increase Warning**: These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:\n\n| Package | Base Size | Source Size | Size Change |\n|---------|-----------|-------------|-------------|\n${packRows}`
+              `## ⚠️ Package Size Increase
+
+These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
+
+| Package | Base Size | Source Size | Size Change |\n|---------|-----------|-------------|-------------|
+${packRows}`
             );
           }
         }
