@@ -30,7 +30,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Create Diff
-        uses: e18e/action-dependency-diff@main
+        uses: e18e/action-dependency-diff@v1
 ```
 
 ## Inputs
@@ -51,7 +51,7 @@ jobs:
 
 ```yaml
 - name: Create Diff
-  uses: e18e/action-dependency-diff@main
+  uses: e18e/action-dependency-diff@v1
   with:
     base-ref: 'develop'
     dependency-threshold: '5'
@@ -136,7 +136,7 @@ jobs:
           name: source-packages
           path: ./source-packages
       - name: Create Diff
-        uses: e18e/action-dependency-diff@main
+        uses: e18e/action-dependency-diff@v1
         with:
           base-packages: ./base-packages/*.tgz
           source-packages: ./source-packages/*.tgz
