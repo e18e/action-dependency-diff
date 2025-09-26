@@ -58,6 +58,13 @@ jobs:
     size-threshold: '50000'
 ```
 
+## Example Workflows
+
+See the [`recipes/`](./recipes/) directory for complete workflow examples:
+
+- [`basic.yml`](./recipes/basic.yml) - Basic dependency diff on pull requests
+- [`bundle-diff.yml`](./recipes/bundle-diff.yml) - Advanced workflow with package bundle size analysis
+
 ## Package Bundle Analysis
 
 In addition to analyzing dependency changes, this action can optionally compare the actual bundle sizes of your packages by examining `npm pack` outputs. This provides insights into the **bundle size** (what gets published) rather than just the **install size** (what gets installed with dependencies).
