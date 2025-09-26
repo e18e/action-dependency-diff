@@ -212,7 +212,7 @@ ${packageRows}`
         continue;
       }
 
-      if (baseVersionSet.isSubsetOf(currentVersionSet)) {
+      if (currentVersionSet.isSubsetOf(baseVersionSet)) {
         continue;
       }
 

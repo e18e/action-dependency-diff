@@ -22,11 +22,14 @@ export interface PackageIndex {
   versions: Record<string, PackageMetadata>;
 }
 
-export type ProvenanceStatus = 'trusted' | 'provenance' | 'none';
+export type ProvenanceStatus =
+  | 'trusted-with-provenance'
+  | 'provenance'
+  | 'none';
 
 export function getProvenance(meta: PackageMetadata): ProvenanceStatus {
   if (meta._npmUser?.trustedPublisher) {
-    return 'trusted';
+    return 'trusted-with-provenance';
   }
   if (meta.dist?.attestations?.provenance) {
     return 'provenance';
@@ -36,7 +39,7 @@ export function getProvenance(meta: PackageMetadata): ProvenanceStatus {
 
 export function getTrustLevel(status: ProvenanceStatus): number {
   switch (status) {
-    case 'trusted':
+    case 'trusted-with-provenance':
       return 2;
     case 'provenance':
       return 1;
@@ -69,13 +72,15 @@ export interface MinTrustLevelResult {
 export function getMinTrustLevel(
   statuses: Iterable<ProvenanceStatus>
 ): MinTrustLevelResult {
-  const result: MinTrustLevelResult = {level: 2, status: 'trusted'};
+  let result: MinTrustLevelResult | null = null;
   for (const status of statuses) {
     const level = getTrustLevel(status);
-    if (level < result.level) {
-      result.level = level;
-      result.status = status;
+    if (result === null || level < result.level) {
+      result = {level, status};
     }
+  }
+  if (!result) {
+    return {level: 0, status: 'none'};
   }
   return result;
 }

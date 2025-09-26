@@ -24159,7 +24159,7 @@ function getBaseRef() {
 var core2 = __toESM(require_core(), 1);
 function getProvenance(meta) {
   if (meta._npmUser?.trustedPublisher) {
-    return "trusted";
+    return "trusted-with-provenance";
   }
   if (meta.dist?.attestations?.provenance) {
     return "provenance";
@@ -24168,7 +24168,7 @@ function getProvenance(meta) {
 }
 function getTrustLevel(status) {
   switch (status) {
-    case "trusted":
+    case "trusted-with-provenance":
       return 2;
     case "provenance":
       return 1;
@@ -24189,13 +24189,15 @@ async function getProvenanceForPackageVersions(packageName, versions) {
   return result;
 }
 function getMinTrustLevel(statuses) {
-  const result = { level: 2, status: "trusted" };
+  let result = null;
   for (const status of statuses) {
     const level = getTrustLevel(status);
-    if (level < result.level) {
-      result.level = level;
-      result.status = status;
+    if (result === null || level < result.level) {
+      result = { level, status };
     }
+  }
+  if (!result) {
+    return { level: 0, status: "none" };
   }
   return result;
 }
@@ -24536,7 +24538,7 @@ ${packageRows}`
       if (!baseVersionSet || baseVersionSet.size === 0) {
         continue;
       }
-      if (baseVersionSet.isSubsetOf(currentVersionSet)) {
+      if (currentVersionSet.isSubsetOf(baseVersionSet)) {
         continue;
       }
       try {
