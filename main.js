@@ -24492,7 +24492,7 @@ This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDe
       messages.push(
         `## \u26A0\uFE0F Duplicate Dependencies (threshold: ${duplicateThreshold})
 
-| Package | Version Count | Versions |
+| \u{1F4E6} Package | \u{1F522} Version Count | \u{1F4CB} Versions |
 | --- | --- | --- |
 ${duplicateRows.join("\n")}${helpMessage}`
       );
@@ -24521,7 +24521,7 @@ ${duplicateRows.join("\n")}${helpMessage}`
 
 This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
 
-| Package | Size |
+| \u{1F4E6} Package | \u{1F4CF} Size |
 | --- | --- |
 ${packageRows}`
           );
@@ -24569,7 +24569,7 @@ ${packageRows}`
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
 
-| Package | Before | After |
+| \u{1F4E6} Package | \u{1F512} Before | \u{1F513} After |
 | --- | --- | --- |
 ${provenanceRows.join("\n")}`
       );
@@ -24607,7 +24607,7 @@ ${provenanceRows.join("\n")}`
 
 These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
 
-| Package | Base Size | Source Size | Size Change |
+| \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
             );

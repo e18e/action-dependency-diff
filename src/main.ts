@@ -149,7 +149,7 @@ This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCo
       messages.push(
         `## ⚠️ Duplicate Dependencies (threshold: ${duplicateThreshold})
 
-| Package | Version Count | Versions |
+| 📦 Package | 🔢 Version Count | 📋 Versions |
 | --- | --- | --- |
 ${duplicateRows.join('\n')}${helpMessage}`
       );
@@ -193,7 +193,7 @@ ${duplicateRows.join('\n')}${helpMessage}`
 
 This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
 
-| Package | Size |
+| 📦 Package | 📏 Size |
 | --- | --- |
 ${packageRows}`
           );
@@ -250,7 +250,7 @@ ${packageRows}`
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
 
-| Package | Before | After |
+| 📦 Package | 🔒 Before | 🔓 After |
 | --- | --- | --- |
 ${provenanceRows.join('\n')}`
       );
@@ -302,7 +302,7 @@ ${provenanceRows.join('\n')}`
 
 These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
 
-| Package | Base Size | Source Size | Size Change |
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
             );
