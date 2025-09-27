@@ -19,6 +19,22 @@ export function getFileFromRef(
   }
 }
 
+export function tryGetJSONFromRef<T>(
+  ref: string,
+  filePath: string,
+  cwd: string
+): T | null {
+  const content = getFileFromRef(ref, filePath, cwd);
+  if (content) {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 export function getBaseRef(): string {
   const inputBaseRef = core.getInput('base-ref');
 

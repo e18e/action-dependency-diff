@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import type {PackageJson} from 'pkg-types';
 
 export interface PackageMetadata {
   name: string;
@@ -157,4 +158,36 @@ export async function calculateTotalDependencySizeIncrease(
   }
 
   return {totalSize, packageSizes};
+}
+
+export type DependencyType = 'prod' | 'dev' | 'optional' | 'peer';
+
+const dependencyTypeMap = {
+  prod: 'dependencies',
+  dev: 'devDependencies',
+  optional: 'optionalDependencies',
+  peer: 'peerDependencies'
+} satisfies Record<DependencyType, keyof PackageJson>;
+
+export function getDependenciesFromPackageJson(
+  pkg: PackageJson,
+  types: DependencyType[]
+): Map<string, string> {
+  const result = new Map<string, string>();
+
+  for (const type of types) {
+    const value = pkg[dependencyTypeMap[type]];
+    if (value === undefined) {
+      continue;
+    }
+
+    for (const [name, version] of Object.entries(value)) {
+      if (typeof version !== 'string') {
+        continue;
+      }
+      result.set(name, version);
+    }
+  }
+
+  return result;
 }

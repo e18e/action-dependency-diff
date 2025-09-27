@@ -1,12 +1,16 @@
 import * as process from 'process';
 import * as core from '@actions/core';
+import * as path from 'path';
 import * as github from '@actions/github';
+import * as replacements from 'module-replacements';
+import type {PackageJson} from 'pkg-types';
 import {parseLockfile, detectLockfile} from './lockfile.js';
-import {getFileFromRef, getBaseRef} from './git.js';
+import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
 import {
   calculateTotalDependencySizeIncrease,
   getMinTrustLevel,
-  getProvenanceForPackageVersions
+  getProvenanceForPackageVersions,
+  getDependenciesFromPackageJson
 } from './npm.js';
 import {getPacksFromPattern, comparePackSizes} from './packs.js';
 
@@ -45,8 +49,26 @@ async function run(): Promise<void> {
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
+    const packageFilePath = path.join(workspacePath, 'package.json');
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
+    const detectReplacements = core.getBooleanInput('detect-replacements');
+    const dependencyThreshold = parseInt(
+      core.getInput('dependency-threshold') || '10',
+      10
+    );
+    const sizeThreshold = parseInt(
+      core.getInput('size-threshold') || '100000',
+      10
+    );
+    const duplicateThreshold = parseInt(
+      core.getInput('duplicate-threshold') || '1',
+      10
+    );
+    const packSizeThreshold = parseInt(
+      core.getInput('pack-size-threshold') || '50000',
+      10
+    );
 
     if (Number.isNaN(prNumber) || prNumber < 1) {
       core.info('No valid pull request number was found. Skipping.');
@@ -71,6 +93,7 @@ async function run(): Promise<void> {
       core.info('No package-lock.json found in base ref');
       return;
     }
+
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
@@ -81,25 +104,19 @@ async function run(): Promise<void> {
       return;
     }
 
+    const basePackageJson = tryGetJSONFromRef<PackageJson>(
+      baseRef,
+      packageFilePath,
+      workspacePath
+    );
+    const currentPackageJson = tryGetJSONFromRef<PackageJson>(
+      currentRef,
+      packageFilePath,
+      workspacePath
+    );
+
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
-
-    const dependencyThreshold = parseInt(
-      core.getInput('dependency-threshold') || '10',
-      10
-    );
-    const sizeThreshold = parseInt(
-      core.getInput('size-threshold') || '100000',
-      10
-    );
-    const duplicateThreshold = parseInt(
-      core.getInput('duplicate-threshold') || '1',
-      10
-    );
-    const packSizeThreshold = parseInt(
-      core.getInput('pack-size-threshold') || '50000',
-      10
-    );
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
@@ -310,6 +327,87 @@ ${packRows}`
         }
       } catch (err) {
         core.info(`Failed to compare pack sizes: ${err}`);
+      }
+    }
+
+    if (detectReplacements) {
+      if (!basePackageJson || !currentPackageJson) {
+        core.setFailed(
+          'detect-replacements requires both base and current package.json to be present'
+        );
+        return;
+      }
+
+      const replacementMessages: string[] = [];
+
+      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+        'optional',
+        'peer',
+        'dev',
+        'prod'
+      ]);
+      const currentDependencies = getDependenciesFromPackageJson(
+        currentPackageJson,
+        ['optional', 'peer', 'dev', 'prod']
+      );
+
+      for (const [name] of currentDependencies) {
+        if (!baseDependencies.has(name)) {
+          const replacement = replacements.all.moduleReplacements.find(
+            (modReplacement) => modReplacement.moduleName === name
+          );
+
+          if (replacement) {
+            switch (replacement.type) {
+              case 'none':
+                replacementMessages.push(
+                  `| ${name} | This package is no longer necessary |`
+                );
+                break;
+              case 'native': {
+                const mdnUrl = replacement.mdnPath
+                  ? `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/${replacement.mdnPath}`
+                  : '';
+                const nativeReplacement = mdnUrl
+                  ? `[${replacement.replacement}](${mdnUrl})`
+                  : replacement.replacement;
+                replacementMessages.push(
+                  `| ${name} | Use ${nativeReplacement} |`
+                );
+                break;
+              }
+              case 'simple':
+                replacementMessages.push(
+                  `| ${name} | ${replacement.replacement} |`
+                );
+                break;
+              case 'documented': {
+                const docUrl = `https://github.com/es-tooling/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
+                replacementMessages.push(
+                  `| ${name} | [See documentation](${docUrl}) |`
+                );
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (replacementMessages.length > 0) {
+        messages.push(
+          `## ⚠️ Recommended Package Replacements
+
+The following new packages or versions have community recommended replacements:
+
+| 📦 Package | 💡 Recommendation |
+| --- | --- |
+${replacementMessages.join('\n')}
+
+> [!NOTE]
+> These recommendations have been defined by the [e18e](https://e18e.dev) community.
+> They may not always be a straightforward migration, so please review carefully
+> and use the exclusion feature if you want to ignore any of them in future.
+`
+        );
       }
     }
 
