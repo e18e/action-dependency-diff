@@ -19744,10 +19744,10 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("error", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     exports.error = error;
-    function warning(message, properties = {}) {
+    function warning2(message, properties = {}) {
       (0, command_1.issueCommand)("warning", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
-    exports.warning = warning;
+    exports.warning = warning2;
     function notice(message, properties = {}) {
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
@@ -24406,6 +24406,23 @@ async function run() {
     const lockfilePath = detectLockfile(workspacePath);
     const token = core4.getInput("github-token", { required: true });
     const prNumber = parseInt(core4.getInput("pr-number", { required: true }), 10);
+    const dependencyThreshold = parseInt(
+      core4.getInput("dependency-threshold") || "10",
+      10
+    );
+    const sizeThreshold = parseInt(
+      core4.getInput("size-threshold") || "100000",
+      10
+    );
+    const duplicateThreshold = parseInt(
+      core4.getInput("duplicate-threshold") || "1",
+      10
+    );
+    const packSizeThreshold = parseInt(
+      core4.getInput("pack-size-threshold") || "50000",
+      10
+    );
+    const excludePackages = core4.getInput("exclude-packages");
     if (Number.isNaN(prNumber) || prNumber < 1) {
       core4.info("No valid pull request number was found. Skipping.");
       return;
@@ -24437,22 +24454,26 @@ async function run() {
     }
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
-    const dependencyThreshold = parseInt(
-      core4.getInput("dependency-threshold") || "10",
-      10
-    );
-    const sizeThreshold = parseInt(
-      core4.getInput("size-threshold") || "100000",
-      10
-    );
-    const duplicateThreshold = parseInt(
-      core4.getInput("duplicate-threshold") || "1",
-      10
-    );
-    const packSizeThreshold = parseInt(
-      core4.getInput("pack-size-threshold") || "50000",
-      10
-    );
+    if (excludePackages) {
+      try {
+        const excludeRegex = new RegExp(excludePackages);
+        core4.info(`Excluding packages matching pattern: ${excludePackages}`);
+        for (const packageName of currentDeps.keys()) {
+          if (excludeRegex.test(packageName)) {
+            currentDeps.delete(packageName);
+          }
+        }
+        for (const packageName of baseDeps.keys()) {
+          if (excludeRegex.test(packageName)) {
+            baseDeps.delete(packageName);
+          }
+        }
+      } catch (err) {
+        core4.warning(
+          `Invalid exclude-packages regex pattern: ${excludePackages}`
+        );
+      }
+    }
     core4.info(`Dependency threshold set to ${dependencyThreshold}`);
     core4.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     core4.info(`Duplicate threshold set to ${duplicateThreshold}`);
