@@ -44,6 +44,7 @@ jobs:
 | `dependency-threshold` | Threshold for warning about significant increase in number of dependencies | No | `10` |
 | `size-threshold` | Threshold (in bytes) for warning about significant increase in package size | No | `100000` |
 | `duplicate-threshold` | Threshold for warning about packages with multiple versions | No | `1` |
+| `exclude-packages` | Regular expression pattern to exclude packages from analysis | No | None |
 | `base-packages` | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`) | No | None |
 | `source-packages` | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`) | No | None |
 | `pack-size-threshold` | Threshold (in bytes) for warning about significant increase in total pack size | No | `50000` |

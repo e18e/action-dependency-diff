@@ -47,6 +47,23 @@ async function run(): Promise<void> {
     const lockfilePath = detectLockfile(workspacePath);
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
+    const dependencyThreshold = parseInt(
+      core.getInput('dependency-threshold') || '10',
+      10
+    );
+    const sizeThreshold = parseInt(
+      core.getInput('size-threshold') || '100000',
+      10
+    );
+    const duplicateThreshold = parseInt(
+      core.getInput('duplicate-threshold') || '1',
+      10
+    );
+    const packSizeThreshold = parseInt(
+      core.getInput('pack-size-threshold') || '50000',
+      10
+    );
+    const excludePackages = core.getInput('exclude-packages');
 
     if (Number.isNaN(prNumber) || prNumber < 1) {
       core.info('No valid pull request number was found. Skipping.');
@@ -84,22 +101,28 @@ async function run(): Promise<void> {
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
 
-    const dependencyThreshold = parseInt(
-      core.getInput('dependency-threshold') || '10',
-      10
-    );
-    const sizeThreshold = parseInt(
-      core.getInput('size-threshold') || '100000',
-      10
-    );
-    const duplicateThreshold = parseInt(
-      core.getInput('duplicate-threshold') || '1',
-      10
-    );
-    const packSizeThreshold = parseInt(
-      core.getInput('pack-size-threshold') || '50000',
-      10
-    );
+    // Filter out excluded packages if pattern is provided
+    if (excludePackages) {
+      try {
+        const excludeRegex = new RegExp(excludePackages);
+        core.info(`Excluding packages matching pattern: ${excludePackages}`);
+
+        for (const packageName of currentDeps.keys()) {
+          if (excludeRegex.test(packageName)) {
+            currentDeps.delete(packageName);
+          }
+        }
+        for (const packageName of baseDeps.keys()) {
+          if (excludeRegex.test(packageName)) {
+            baseDeps.delete(packageName);
+          }
+        }
+      } catch (err) {
+        core.warning(
+          `Invalid exclude-packages regex pattern: ${excludePackages}`
+        );
+      }
+    }
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);

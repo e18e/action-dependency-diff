@@ -40,6 +40,9 @@ inputs:
     description: 'Threshold for warning about packages with multiple versions'
     required: false
     default: '1'
+  exclude-packages:
+    description: 'Regular expression pattern to exclude packages from analysis'
+    required: false
 
 runs:
   using: node24
