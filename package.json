@@ -10,7 +10,7 @@
     "diff"
   ],
   "files": [
-    "main.js",
+    "build",
     "action.yml"
   ],
   "homepage": "https://github.com/e18e/action-dependency-diff#readme",

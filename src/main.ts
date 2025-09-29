@@ -2,7 +2,6 @@ import * as process from 'process';
 import * as core from '@actions/core';
 import * as path from 'path';
 import * as github from '@actions/github';
-import * as replacements from 'module-replacements';
 import type {PackageJson} from 'pkg-types';
 import {parseLockfile, detectLockfile} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
@@ -13,6 +12,7 @@ import {
   getDependenciesFromPackageJson
 } from './npm.js';
 import {getPacksFromPattern, comparePackSizes} from './packs.js';
+import {scanForReplacements} from './replacements.js';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -338,8 +338,6 @@ ${packRows}`
         return;
       }
 
-      const replacementMessages: string[] = [];
-
       const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
         'optional',
         'peer',
@@ -351,64 +349,7 @@ ${packRows}`
         ['optional', 'peer', 'dev', 'prod']
       );
 
-      for (const [name] of currentDependencies) {
-        if (!baseDependencies.has(name)) {
-          const replacement = replacements.all.moduleReplacements.find(
-            (modReplacement) => modReplacement.moduleName === name
-          );
-
-          if (replacement) {
-            switch (replacement.type) {
-              case 'none':
-                replacementMessages.push(
-                  `| ${name} | This package is no longer necessary |`
-                );
-                break;
-              case 'native': {
-                const mdnUrl = replacement.mdnPath
-                  ? `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/${replacement.mdnPath}`
-                  : '';
-                const nativeReplacement = mdnUrl
-                  ? `[${replacement.replacement}](${mdnUrl})`
-                  : replacement.replacement;
-                replacementMessages.push(
-                  `| ${name} | Use ${nativeReplacement} |`
-                );
-                break;
-              }
-              case 'simple':
-                replacementMessages.push(
-                  `| ${name} | ${replacement.replacement} |`
-                );
-                break;
-              case 'documented': {
-                const docUrl = `https://github.com/es-tooling/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
-                replacementMessages.push(
-                  `| ${name} | [See documentation](${docUrl}) |`
-                );
-                break;
-              }
-            }
-          }
-        }
-      }
-      if (replacementMessages.length > 0) {
-        messages.push(
-          `## ⚠️ Recommended Package Replacements
-
-The following new packages or versions have community recommended replacements:
-
-| 📦 Package | 💡 Recommendation |
-| --- | --- |
-${replacementMessages.join('\n')}
-
-> [!NOTE]
-> These recommendations have been defined by the [e18e](https://e18e.dev) community.
-> They may not always be a straightforward migration, so please review carefully
-> and use the exclusion feature if you want to ignore any of them in future.
-`
-        );
-      }
+      scanForReplacements(messages, baseDependencies, currentDependencies);
     }
 
     // Skip comment creation/update if there are no messages
