@@ -58,6 +58,12 @@ export async function scanForDependencySize(
       removedVersions
     );
 
+    core.info(
+      `Total dependency size increase: ${
+        sizeData ? formatBytes(sizeData.totalSize) : 'unknown'
+      }`
+    );
+
     if (sizeData !== null && sizeData.totalSize >= threshold) {
       const packageRows = Array.from(sizeData.packageSizes.entries())
         .sort(([, a], [, b]) => b - a)

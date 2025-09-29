@@ -24604,6 +24604,9 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps)
       newVersions,
       removedVersions
     );
+    core5.info(
+      `Total dependency size increase: ${sizeData ? formatBytes(sizeData.totalSize) : "unknown"}`
+    );
     if (sizeData !== null && sizeData.totalSize >= threshold) {
       const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
       messages.push(
