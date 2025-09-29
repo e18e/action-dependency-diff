@@ -127,7 +127,8 @@ export async function fetchPackageMetadata(
 }
 
 export async function calculateTotalDependencySizeIncrease(
-  newVersions: Array<{name: string; version: string}>
+  newVersions: Array<{name: string; version: string}>,
+  removedVersions: Array<{name: string; version: string}>
 ): Promise<{totalSize: number; packageSizes: Map<string, number>} | null> {
   let totalSize = 0;
   const processedPackages = new Set<string>();
@@ -152,6 +153,32 @@ export async function calculateTotalDependencySizeIncrease(
       processedPackages.add(packageKey);
 
       core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
+    } catch {
+      return null;
+    }
+  }
+
+  for (const dep of removedVersions) {
+    const packageKey = `${dep.name}@${dep.version}`;
+
+    if (processedPackages.has(packageKey)) {
+      continue;
+    }
+
+    try {
+      const metadata = await fetchPackageMetadata(dep.name, dep.version);
+
+      if (!metadata || metadata.dist?.unpackedSize === undefined) {
+        return null;
+      }
+
+      totalSize -= metadata.dist.unpackedSize;
+      packageSizes.set(packageKey, -metadata.dist.unpackedSize);
+      processedPackages.add(packageKey);
+
+      core.info(
+        `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+      );
     } catch {
       return null;
     }

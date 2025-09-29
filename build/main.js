@@ -24237,7 +24237,7 @@ async function fetchPackageMetadata(packageName, version) {
   metaCache.set(cacheKey, result);
   return result;
 }
-async function calculateTotalDependencySizeIncrease(newVersions) {
+async function calculateTotalDependencySizeIncrease(newVersions, removedVersions) {
   let totalSize = 0;
   const processedPackages = /* @__PURE__ */ new Set();
   const packageSizes = /* @__PURE__ */ new Map();
@@ -24255,6 +24255,26 @@ async function calculateTotalDependencySizeIncrease(newVersions) {
       packageSizes.set(packageKey, metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
       core2.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
+    } catch {
+      return null;
+    }
+  }
+  for (const dep of removedVersions) {
+    const packageKey = `${dep.name}@${dep.version}`;
+    if (processedPackages.has(packageKey)) {
+      continue;
+    }
+    try {
+      const metadata = await fetchPackageMetadata(dep.name, dep.version);
+      if (!metadata || metadata.dist?.unpackedSize === void 0) {
+        return null;
+      }
+      totalSize -= metadata.dist.unpackedSize;
+      packageSizes.set(packageKey, -metadata.dist.unpackedSize);
+      processedPackages.add(packageKey);
+      core2.info(
+        `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+      );
     } catch {
       return null;
     }
@@ -24548,12 +24568,42 @@ function formatBytes(bytes) {
 }
 
 // src/checks/dependency-size.ts
-async function scanForDependencySize(messages, threshold, newVersions) {
-  if (newVersions.length === 0) {
+async function scanForDependencySize(messages, threshold, currentDeps, baseDeps) {
+  const newVersions = [];
+  const removedVersions = [];
+  for (const [packageName, currentVersionSet] of currentDeps) {
+    const baseVersionSet = baseDeps.get(packageName);
+    for (const version of currentVersionSet) {
+      if (!baseVersionSet || !baseVersionSet.has(version)) {
+        newVersions.push({
+          name: packageName,
+          version,
+          isNewPackage: !baseVersionSet
+        });
+      }
+    }
+  }
+  for (const [packageName, baseVersionSet] of baseDeps) {
+    const currentVersionSet = currentDeps.get(packageName);
+    for (const version of baseVersionSet) {
+      if (!currentVersionSet || !currentVersionSet.has(version)) {
+        removedVersions.push({
+          name: packageName,
+          version
+        });
+      }
+    }
+  }
+  core5.info(`Found ${newVersions.length} new package versions`);
+  core5.info(`Found ${removedVersions.length} removed package versions.`);
+  if (newVersions.length === 0 && removedVersions.length === 0) {
     return;
   }
   try {
-    const sizeData = await calculateTotalDependencySizeIncrease(newVersions);
+    const sizeData = await calculateTotalDependencySizeIncrease(
+      newVersions,
+      removedVersions
+    );
     if (sizeData !== null && sizeData.totalSize >= threshold) {
       const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
       messages.push(
@@ -24728,21 +24778,7 @@ async function run() {
       baseDeps
     );
     scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
-    const newVersions = [];
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-      for (const version of currentVersionSet) {
-        if (!baseVersionSet || !baseVersionSet.has(version)) {
-          newVersions.push({
-            name: packageName,
-            version,
-            isNewPackage: !baseVersionSet
-          });
-        }
-      }
-    }
-    core7.info(`Found ${newVersions.length} new package versions`);
-    await scanForDependencySize(messages, sizeThreshold, newVersions);
+    await scanForDependencySize(messages, sizeThreshold, currentDeps, baseDeps);
     await scanForProvenance(messages, currentDeps, baseDeps);
     const basePackagesPattern = core7.getInput("base-packages");
     const sourcePackagesPattern = core7.getInput("source-packages");
