@@ -105,29 +105,7 @@ async function run(): Promise<void> {
     );
     scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
 
-    const newVersions: Array<{
-      name: string;
-      version: string;
-      isNewPackage: boolean;
-    }> = [];
-
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-
-      for (const version of currentVersionSet) {
-        if (!baseVersionSet || !baseVersionSet.has(version)) {
-          newVersions.push({
-            name: packageName,
-            version: version,
-            isNewPackage: !baseVersionSet
-          });
-        }
-      }
-    }
-
-    core.info(`Found ${newVersions.length} new package versions`);
-
-    await scanForDependencySize(messages, sizeThreshold, newVersions);
+    await scanForDependencySize(messages, sizeThreshold, currentDeps, baseDeps);
     await scanForProvenance(messages, currentDeps, baseDeps);
 
     const basePackagesPattern = core.getInput('base-packages');
