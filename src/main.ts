@@ -4,43 +4,17 @@ import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
 import {parseLockfile, detectLockfile} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
-import {
-  calculateTotalDependencySizeIncrease,
-  getMinTrustLevel,
-  getProvenanceForPackageVersions,
-  getDependenciesFromPackageJson
-} from './npm.js';
-import {getPacksFromPattern, comparePackSizes} from './packs.js';
-import {scanForReplacements} from './replacements.js';
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1000;
-  const sizes = ['B', 'kB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
+import {getDependenciesFromPackageJson} from './npm.js';
+import {getPacksFromPattern} from './packs.js';
+import {scanForReplacements} from './checks/replacements.js';
+import {scanForDuplicates} from './checks/duplicates.js';
+import {scanForDependencyCount} from './checks/dependency-count.js';
+import {scanForDependencySize} from './checks/dependency-size.js';
+import {scanForProvenance} from './checks/provenance.js';
+import {scanForBundleSize} from './checks/bundle-size.js';
+import {formatBytes} from './common.js';
 
 const COMMENT_TAG = '<!-- dependency-diff-action -->';
-
-function getLsCommand(
-  lockfilePath: string,
-  packageName: string
-): string | undefined {
-  if (lockfilePath.endsWith('package-lock.json')) {
-    return `npm ls ${packageName}`;
-  }
-  if (lockfilePath.endsWith('pnpm-lock.yaml')) {
-    return `pnpm why ${packageName}`;
-  }
-  if (lockfilePath.endsWith('yarn.lock')) {
-    return `yarn why ${packageName}`;
-  }
-  if (lockfilePath.endsWith('bun.lock')) {
-    return `bun pm ls ${packageName}`;
-  }
-  return undefined;
-}
 
 async function run(): Promise<void> {
   try {
@@ -123,52 +97,13 @@ async function run(): Promise<void> {
 
     const messages: string[] = [];
 
-    // Count total dependencies (all package-version combinations)
-    const currentDepCount = Array.from(currentDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
+    scanForDependencyCount(
+      messages,
+      dependencyThreshold,
+      currentDeps,
+      baseDeps
     );
-    const baseDepCount = Array.from(baseDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
-    );
-    const depIncrease = currentDepCount - baseDepCount;
-
-    core.info(`Base dependency count: ${baseDepCount}`);
-    core.info(`Current dependency count: ${currentDepCount}`);
-    core.info(`Dependency count increase: ${depIncrease}`);
-
-    if (depIncrease >= dependencyThreshold) {
-      messages.push(
-        `## ⚠️ Dependency Count
-
-This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
-      );
-    }
-
-    const duplicateRows: string[] = [];
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      if (currentVersionSet.size > duplicateThreshold) {
-        const versions = Array.from(currentVersionSet).sort();
-        duplicateRows.push(
-          `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(', ')} |`
-        );
-      }
-    }
-
-    if (duplicateRows.length > 0) {
-      const exampleCommand = getLsCommand(lockfilePath, 'example-package');
-      const helpMessage = exampleCommand
-        ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
-        : '';
-      messages.push(
-        `## ⚠️ Duplicate Dependencies (threshold: ${duplicateThreshold})
-
-| 📦 Package | 🔢 Version Count | 📋 Versions |
-| --- | --- | --- |
-${duplicateRows.join('\n')}${helpMessage}`
-      );
-    }
+    scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
 
     const newVersions: Array<{
       name: string;
@@ -192,86 +127,9 @@ ${duplicateRows.join('\n')}${helpMessage}`
 
     core.info(`Found ${newVersions.length} new package versions`);
 
-    if (newVersions.length > 0) {
-      try {
-        const sizeData =
-          await calculateTotalDependencySizeIncrease(newVersions);
+    await scanForDependencySize(messages, sizeThreshold, newVersions);
+    await scanForProvenance(messages, currentDeps, baseDeps);
 
-        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
-          const packageRows = Array.from(sizeData.packageSizes.entries())
-            .sort(([, a], [, b]) => b - a)
-            .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
-            .join('\n');
-
-          messages.push(
-            `## ⚠️ Large Dependency Size Increase
-
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
-
-| 📦 Package | 📏 Size |
-| --- | --- |
-${packageRows}`
-          );
-        }
-      } catch (err) {
-        core.info(`Failed to calculate total dependency size increase: ${err}`);
-      }
-    }
-
-    const provenanceRows: string[] = [];
-
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-
-      if (!baseVersionSet || baseVersionSet.size === 0) {
-        continue;
-      }
-
-      if (currentVersionSet.isSubsetOf(baseVersionSet)) {
-        continue;
-      }
-
-      try {
-        const baseProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          baseVersionSet
-        );
-        const currentProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          currentVersionSet
-        );
-
-        if (baseProvenances.size === 0 || currentProvenances.size === 0) {
-          continue;
-        }
-
-        const minBaseTrust = getMinTrustLevel(baseProvenances.values());
-        const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
-
-        if (minCurrentTrust.level < minBaseTrust.level) {
-          provenanceRows.push(
-            `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
-          );
-        }
-      } catch (err) {
-        core.info(`Failed to check provenance for ${packageName}: ${err}`);
-      }
-    }
-
-    if (provenanceRows.length > 0) {
-      messages.push(
-        `## ⚠️ Package Trust Level Decreased
-
-> [!CAUTION]
-> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
-
-| 📦 Package | 🔒 Before | 🔓 After |
-| --- | --- | --- |
-${provenanceRows.join('\n')}`
-      );
-    }
-
-    // Compare pack sizes if patterns are provided
     const basePackagesPattern = core.getInput('base-packages');
     const sourcePackagesPattern = core.getInput('source-packages');
 
@@ -288,41 +146,12 @@ ${provenanceRows.join('\n')}`
           `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
         );
 
-        if (basePacks.length > 0 || sourcePacks.length > 0) {
-          const comparison = comparePackSizes(
-            basePacks,
-            sourcePacks,
-            packSizeThreshold
-          );
-          const packWarnings = comparison.packChanges.filter(
-            (change) => change.exceedsThreshold && change.sizeChange > 0
-          );
-
-          if (packWarnings.length > 0) {
-            const packRows = packWarnings
-              .map((change) => {
-                const baseSize = change.baseSize
-                  ? formatBytes(change.baseSize)
-                  : 'New';
-                const sourceSize = change.sourceSize
-                  ? formatBytes(change.sourceSize)
-                  : 'Removed';
-                const sizeChange = formatBytes(change.sizeChange);
-                return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
-              })
-              .join('\n');
-
-            messages.push(
-              `## ⚠️ Package Size Increase
-
-These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
-
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
-| --- | --- | --- | --- |
-${packRows}`
-            );
-          }
-        }
+        await scanForBundleSize(
+          messages,
+          basePacks,
+          sourcePacks,
+          packSizeThreshold
+        );
       } catch (err) {
         core.info(`Failed to compare pack sizes: ${err}`);
       }

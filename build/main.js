@@ -17589,12 +17589,12 @@ var require_lib = __commonJS({
             throw new Error("Client has already been disposed.");
           }
           const parsedUrl = new URL(requestUrl);
-          let info4 = this._prepareRequest(verb, parsedUrl, headers);
+          let info7 = this._prepareRequest(verb, parsedUrl, headers);
           const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb) ? this._maxRetries + 1 : 1;
           let numTries = 0;
           let response;
           do {
-            response = yield this.requestRaw(info4, data);
+            response = yield this.requestRaw(info7, data);
             if (response && response.message && response.message.statusCode === HttpCodes.Unauthorized) {
               let authenticationHandler;
               for (const handler of this.handlers) {
@@ -17604,7 +17604,7 @@ var require_lib = __commonJS({
                 }
               }
               if (authenticationHandler) {
-                return authenticationHandler.handleAuthentication(this, info4, data);
+                return authenticationHandler.handleAuthentication(this, info7, data);
               } else {
                 return response;
               }
@@ -17627,8 +17627,8 @@ var require_lib = __commonJS({
                   }
                 }
               }
-              info4 = this._prepareRequest(verb, parsedRedirectUrl, headers);
-              response = yield this.requestRaw(info4, data);
+              info7 = this._prepareRequest(verb, parsedRedirectUrl, headers);
+              response = yield this.requestRaw(info7, data);
               redirectsRemaining--;
             }
             if (!response.message.statusCode || !HttpResponseRetryCodes.includes(response.message.statusCode)) {
@@ -17657,7 +17657,7 @@ var require_lib = __commonJS({
        * @param info
        * @param data
        */
-      requestRaw(info4, data) {
+      requestRaw(info7, data) {
         return __awaiter(this, void 0, void 0, function* () {
           return new Promise((resolve, reject) => {
             function callbackForResult(err, res) {
@@ -17669,7 +17669,7 @@ var require_lib = __commonJS({
                 resolve(res);
               }
             }
-            this.requestRawWithCallback(info4, data, callbackForResult);
+            this.requestRawWithCallback(info7, data, callbackForResult);
           });
         });
       }
@@ -17679,12 +17679,12 @@ var require_lib = __commonJS({
        * @param data
        * @param onResult
        */
-      requestRawWithCallback(info4, data, onResult) {
+      requestRawWithCallback(info7, data, onResult) {
         if (typeof data === "string") {
-          if (!info4.options.headers) {
-            info4.options.headers = {};
+          if (!info7.options.headers) {
+            info7.options.headers = {};
           }
-          info4.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
+          info7.options.headers["Content-Length"] = Buffer.byteLength(data, "utf8");
         }
         let callbackCalled = false;
         function handleResult(err, res) {
@@ -17693,7 +17693,7 @@ var require_lib = __commonJS({
             onResult(err, res);
           }
         }
-        const req = info4.httpModule.request(info4.options, (msg) => {
+        const req = info7.httpModule.request(info7.options, (msg) => {
           const res = new HttpClientResponse(msg);
           handleResult(void 0, res);
         });
@@ -17705,7 +17705,7 @@ var require_lib = __commonJS({
           if (socket) {
             socket.end();
           }
-          handleResult(new Error(`Request timeout: ${info4.options.path}`));
+          handleResult(new Error(`Request timeout: ${info7.options.path}`));
         });
         req.on("error", function(err) {
           handleResult(err);
@@ -17741,27 +17741,27 @@ var require_lib = __commonJS({
         return this._getProxyAgentDispatcher(parsedUrl, proxyUrl);
       }
       _prepareRequest(method, requestUrl, headers) {
-        const info4 = {};
-        info4.parsedUrl = requestUrl;
-        const usingSsl = info4.parsedUrl.protocol === "https:";
-        info4.httpModule = usingSsl ? https : http;
+        const info7 = {};
+        info7.parsedUrl = requestUrl;
+        const usingSsl = info7.parsedUrl.protocol === "https:";
+        info7.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
-        info4.options = {};
-        info4.options.host = info4.parsedUrl.hostname;
-        info4.options.port = info4.parsedUrl.port ? parseInt(info4.parsedUrl.port) : defaultPort;
-        info4.options.path = (info4.parsedUrl.pathname || "") + (info4.parsedUrl.search || "");
-        info4.options.method = method;
-        info4.options.headers = this._mergeHeaders(headers);
+        info7.options = {};
+        info7.options.host = info7.parsedUrl.hostname;
+        info7.options.port = info7.parsedUrl.port ? parseInt(info7.parsedUrl.port) : defaultPort;
+        info7.options.path = (info7.parsedUrl.pathname || "") + (info7.parsedUrl.search || "");
+        info7.options.method = method;
+        info7.options.headers = this._mergeHeaders(headers);
         if (this.userAgent != null) {
-          info4.options.headers["user-agent"] = this.userAgent;
+          info7.options.headers["user-agent"] = this.userAgent;
         }
-        info4.options.agent = this._getAgent(info4.parsedUrl);
+        info7.options.agent = this._getAgent(info7.parsedUrl);
         if (this.handlers) {
           for (const handler of this.handlers) {
-            handler.prepareRequest(info4.options);
+            handler.prepareRequest(info7.options);
           }
         }
-        return info4;
+        return info7;
       }
       _mergeHeaders(headers) {
         if (this.requestOptions && this.requestOptions.headers) {
@@ -19751,10 +19751,10 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       (0, command_1.issueCommand)("notice", (0, utils_1.toCommandProperties)(properties), message instanceof Error ? message.toString() : message);
     }
     exports.notice = notice;
-    function info4(message) {
+    function info7(message) {
       process.stdout.write(message + os.EOL);
     }
-    exports.info = info4;
+    exports.info = info7;
     function startGroup(name) {
       (0, command_1.issue)("group", name);
     }
@@ -23886,7 +23886,7 @@ var require_github = __commonJS({
 });
 
 // src/main.ts
-var core4 = __toESM(require_core(), 1);
+var core7 = __toESM(require_core(), 1);
 var github2 = __toESM(require_github(), 1);
 import * as process2 from "process";
 
@@ -23965,11 +23965,11 @@ function parsePnpmLock(content) {
     if (key.startsWith('"') && key.endsWith('"') || key.startsWith("'") && key.endsWith("'")) {
       key = key.slice(1, -1);
     }
-    const core5 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
-    const at = core5.lastIndexOf("@");
+    const core8 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
+    const at = core8.lastIndexOf("@");
     if (at <= 0) continue;
-    const name = core5.slice(0, at);
-    const version = core5.slice(at + 1).trim();
+    const name = core8.slice(0, at);
+    const version = core8.slice(at + 1).trim();
     if (!version) continue;
     addVersion(result, name, version);
   }
@@ -24406,7 +24406,7 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
   };
 }
 
-// src/replacements.ts
+// src/checks/replacements.ts
 import nativeManifest from "./native-O77SEK3D.json" with { type: "json" };
 import microUtilsManifest from "./micro-utilities-74AZJTCK.json" with { type: "json" };
 import preferredManifest from "./preferred-UDJHBJAQ.json" with { type: "json" };
@@ -24470,15 +24470,7 @@ ${replacementMessages.join("\n")}
   }
 }
 
-// src/main.ts
-function formatBytes(bytes) {
-  if (bytes === 0) return "0 B";
-  const k = 1e3;
-  const sizes = ["B", "kB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
-var COMMENT_TAG = "<!-- dependency-diff-action -->";
+// src/checks/duplicates.ts
 function getLsCommand(lockfilePath, packageName) {
   if (lockfilePath.endsWith("package-lock.json")) {
     return `npm ls ${packageName}`;
@@ -24494,40 +24486,204 @@ function getLsCommand(lockfilePath, packageName) {
   }
   return void 0;
 }
+function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath) {
+  const duplicateRows = [];
+  for (const [packageName, currentVersionSet] of dependencyMap) {
+    if (currentVersionSet.size > threshold) {
+      const versions = Array.from(currentVersionSet).sort();
+      duplicateRows.push(
+        `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(", ")} |`
+      );
+    }
+  }
+  if (duplicateRows.length > 0) {
+    const exampleCommand = getLsCommand(lockfilePath, "example-package");
+    const helpMessage = exampleCommand ? `
+
+\u{1F4A1} To find out what depends on a specific package, run: \`${exampleCommand}\`` : "";
+    messages.push(
+      `## \u26A0\uFE0F Duplicate Dependencies (threshold: ${threshold})
+
+| \u{1F4E6} Package | \u{1F522} Version Count | \u{1F4CB} Versions |
+| --- | --- | --- |
+${duplicateRows.join("\n")}${helpMessage}`
+    );
+  }
+}
+
+// src/checks/dependency-count.ts
+var core4 = __toESM(require_core(), 1);
+function scanForDependencyCount(messages, threshold, currentDeps, baseDeps) {
+  const currentDepCount = Array.from(currentDeps.values()).reduce(
+    (sum, versions) => sum + versions.size,
+    0
+  );
+  const baseDepCount = Array.from(baseDeps.values()).reduce(
+    (sum, versions) => sum + versions.size,
+    0
+  );
+  const depIncrease = currentDepCount - baseDepCount;
+  core4.info(`Base dependency count: ${baseDepCount}`);
+  core4.info(`Current dependency count: ${currentDepCount}`);
+  core4.info(`Dependency count increase: ${depIncrease}`);
+  if (depIncrease >= threshold) {
+    messages.push(
+      `## \u26A0\uFE0F Dependency Count
+
+This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${threshold}.`
+    );
+  }
+}
+
+// src/checks/dependency-size.ts
+var core5 = __toESM(require_core(), 1);
+
+// src/common.ts
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  const k = 1e3;
+  const sizes = ["B", "kB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+// src/checks/dependency-size.ts
+async function scanForDependencySize(messages, threshold, newVersions) {
+  if (newVersions.length === 0) {
+    return;
+  }
+  try {
+    const sizeData = await calculateTotalDependencySizeIncrease(newVersions);
+    if (sizeData !== null && sizeData.totalSize >= threshold) {
+      const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
+      messages.push(
+        `## \u26A0\uFE0F Large Dependency Size Increase
+
+This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
+
+| \u{1F4E6} Package | \u{1F4CF} Size |
+| --- | --- |
+${packageRows}`
+      );
+    }
+  } catch (err) {
+    core5.info(`Failed to calculate total dependency size increase: ${err}`);
+  }
+}
+
+// src/checks/provenance.ts
+var core6 = __toESM(require_core(), 1);
+async function scanForProvenance(messages, currentDeps, baseDeps) {
+  const provenanceRows = [];
+  for (const [packageName, currentVersionSet] of currentDeps) {
+    const baseVersionSet = baseDeps.get(packageName);
+    if (!baseVersionSet || baseVersionSet.size === 0) {
+      continue;
+    }
+    if (currentVersionSet.isSubsetOf(baseVersionSet)) {
+      continue;
+    }
+    try {
+      const baseProvenances = await getProvenanceForPackageVersions(
+        packageName,
+        baseVersionSet
+      );
+      const currentProvenances = await getProvenanceForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+      if (baseProvenances.size === 0 || currentProvenances.size === 0) {
+        continue;
+      }
+      const minBaseTrust = getMinTrustLevel(baseProvenances.values());
+      const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
+      if (minCurrentTrust.level < minBaseTrust.level) {
+        provenanceRows.push(
+          `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
+        );
+      }
+    } catch (err) {
+      core6.info(`Failed to check provenance for ${packageName}: ${err}`);
+    }
+  }
+  if (provenanceRows.length > 0) {
+    messages.push(
+      `## \u26A0\uFE0F Package Trust Level Decreased
+
+> [!CAUTION]
+> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
+
+| \u{1F4E6} Package | \u{1F512} Before | \u{1F513} After |
+| --- | --- | --- |
+${provenanceRows.join("\n")}`
+    );
+  }
+}
+
+// src/checks/bundle-size.ts
+async function scanForBundleSize(messages, basePacks, sourcePacks, threshold) {
+  if (basePacks.length === 0 && sourcePacks.length === 0) {
+    return;
+  }
+  const comparison = comparePackSizes(basePacks, sourcePacks, threshold);
+  const packWarnings = comparison.packChanges.filter(
+    (change) => change.exceedsThreshold && change.sizeChange > 0
+  );
+  if (packWarnings.length > 0) {
+    const packRows = packWarnings.map((change) => {
+      const baseSize = change.baseSize ? formatBytes(change.baseSize) : "New";
+      const sourceSize = change.sourceSize ? formatBytes(change.sourceSize) : "Removed";
+      const sizeChange = formatBytes(change.sizeChange);
+      return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
+    }).join("\n");
+    messages.push(
+      `## \u26A0\uFE0F Package Size Increase
+
+These packages exceed the size increase threshold of ${formatBytes(threshold)}:
+
+| \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
+| --- | --- | --- | --- |
+${packRows}`
+    );
+  }
+}
+
+// src/main.ts
+var COMMENT_TAG = "<!-- dependency-diff-action -->";
 async function run() {
   try {
     const workspacePath = process2.env.GITHUB_WORKSPACE || process2.cwd();
     const baseRef = getBaseRef();
     const currentRef = github2.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
-    const token = core4.getInput("github-token", { required: true });
-    const prNumber = parseInt(core4.getInput("pr-number", { required: true }), 10);
-    const detectReplacements = core4.getBooleanInput("detect-replacements");
+    const token = core7.getInput("github-token", { required: true });
+    const prNumber = parseInt(core7.getInput("pr-number", { required: true }), 10);
+    const detectReplacements = core7.getBooleanInput("detect-replacements");
     const dependencyThreshold = parseInt(
-      core4.getInput("dependency-threshold") || "10",
+      core7.getInput("dependency-threshold") || "10",
       10
     );
     const sizeThreshold = parseInt(
-      core4.getInput("size-threshold") || "100000",
+      core7.getInput("size-threshold") || "100000",
       10
     );
     const duplicateThreshold = parseInt(
-      core4.getInput("duplicate-threshold") || "1",
+      core7.getInput("duplicate-threshold") || "1",
       10
     );
     const packSizeThreshold = parseInt(
-      core4.getInput("pack-size-threshold") || "50000",
+      core7.getInput("pack-size-threshold") || "50000",
       10
     );
     if (Number.isNaN(prNumber) || prNumber < 1) {
-      core4.info("No valid pull request number was found. Skipping.");
+      core7.info("No valid pull request number was found. Skipping.");
       return;
     }
     if (!lockfilePath) {
-      core4.info("No lockfile detected in the workspace. Exiting.");
+      core7.info("No lockfile detected in the workspace. Exiting.");
       return;
     }
-    core4.info(
+    core7.info(
       `Comparing package-lock.json between ${baseRef} and ${currentRef}`
     );
     const basePackageLock = getFileFromRef(
@@ -24536,7 +24692,7 @@ async function run() {
       workspacePath
     );
     if (!basePackageLock) {
-      core4.info("No package-lock.json found in base ref");
+      core7.info("No package-lock.json found in base ref");
       return;
     }
     const currentPackageLock = getFileFromRef(
@@ -24545,7 +24701,7 @@ async function run() {
       workspacePath
     );
     if (!currentPackageLock) {
-      core4.info("No package-lock.json found in current ref");
+      core7.info("No package-lock.json found in current ref");
       return;
     }
     const basePackageJson = tryGetJSONFromRef(
@@ -24560,52 +24716,18 @@ async function run() {
     );
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
-    core4.info(`Dependency threshold set to ${dependencyThreshold}`);
-    core4.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
-    core4.info(`Duplicate threshold set to ${duplicateThreshold}`);
-    core4.info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
+    core7.info(`Dependency threshold set to ${dependencyThreshold}`);
+    core7.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
+    core7.info(`Duplicate threshold set to ${duplicateThreshold}`);
+    core7.info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
     const messages = [];
-    const currentDepCount = Array.from(currentDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
+    scanForDependencyCount(
+      messages,
+      dependencyThreshold,
+      currentDeps,
+      baseDeps
     );
-    const baseDepCount = Array.from(baseDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
-    );
-    const depIncrease = currentDepCount - baseDepCount;
-    core4.info(`Base dependency count: ${baseDepCount}`);
-    core4.info(`Current dependency count: ${currentDepCount}`);
-    core4.info(`Dependency count increase: ${depIncrease}`);
-    if (depIncrease >= dependencyThreshold) {
-      messages.push(
-        `## \u26A0\uFE0F Dependency Count
-
-This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
-      );
-    }
-    const duplicateRows = [];
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      if (currentVersionSet.size > duplicateThreshold) {
-        const versions = Array.from(currentVersionSet).sort();
-        duplicateRows.push(
-          `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(", ")} |`
-        );
-      }
-    }
-    if (duplicateRows.length > 0) {
-      const exampleCommand = getLsCommand(lockfilePath, "example-package");
-      const helpMessage = exampleCommand ? `
-
-\u{1F4A1} To find out what depends on a specific package, run: \`${exampleCommand}\`` : "";
-      messages.push(
-        `## \u26A0\uFE0F Duplicate Dependencies (threshold: ${duplicateThreshold})
-
-| \u{1F4E6} Package | \u{1F522} Version Count | \u{1F4CB} Versions |
-| --- | --- | --- |
-${duplicateRows.join("\n")}${helpMessage}`
-      );
-    }
+    scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
     const newVersions = [];
     for (const [packageName, currentVersionSet] of currentDeps) {
       const baseVersionSet = baseDeps.get(packageName);
@@ -24619,116 +24741,34 @@ ${duplicateRows.join("\n")}${helpMessage}`
         }
       }
     }
-    core4.info(`Found ${newVersions.length} new package versions`);
-    if (newVersions.length > 0) {
-      try {
-        const sizeData = await calculateTotalDependencySizeIncrease(newVersions);
-        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
-          const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
-          messages.push(
-            `## \u26A0\uFE0F Large Dependency Size Increase
-
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
-
-| \u{1F4E6} Package | \u{1F4CF} Size |
-| --- | --- |
-${packageRows}`
-          );
-        }
-      } catch (err) {
-        core4.info(`Failed to calculate total dependency size increase: ${err}`);
-      }
-    }
-    const provenanceRows = [];
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-      if (!baseVersionSet || baseVersionSet.size === 0) {
-        continue;
-      }
-      if (currentVersionSet.isSubsetOf(baseVersionSet)) {
-        continue;
-      }
-      try {
-        const baseProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          baseVersionSet
-        );
-        const currentProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          currentVersionSet
-        );
-        if (baseProvenances.size === 0 || currentProvenances.size === 0) {
-          continue;
-        }
-        const minBaseTrust = getMinTrustLevel(baseProvenances.values());
-        const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
-        if (minCurrentTrust.level < minBaseTrust.level) {
-          provenanceRows.push(
-            `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
-          );
-        }
-      } catch (err) {
-        core4.info(`Failed to check provenance for ${packageName}: ${err}`);
-      }
-    }
-    if (provenanceRows.length > 0) {
-      messages.push(
-        `## \u26A0\uFE0F Package Trust Level Decreased
-
-> [!CAUTION]
-> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
-
-| \u{1F4E6} Package | \u{1F512} Before | \u{1F513} After |
-| --- | --- | --- |
-${provenanceRows.join("\n")}`
-      );
-    }
-    const basePackagesPattern = core4.getInput("base-packages");
-    const sourcePackagesPattern = core4.getInput("source-packages");
+    core7.info(`Found ${newVersions.length} new package versions`);
+    await scanForDependencySize(messages, sizeThreshold, newVersions);
+    await scanForProvenance(messages, currentDeps, baseDeps);
+    const basePackagesPattern = core7.getInput("base-packages");
+    const sourcePackagesPattern = core7.getInput("source-packages");
     if (basePackagesPattern && sourcePackagesPattern) {
       try {
-        core4.info(
+        core7.info(
           `Comparing pack sizes between patterns: ${basePackagesPattern} and ${sourcePackagesPattern}`
         );
         const basePacks = await getPacksFromPattern(basePackagesPattern);
         const sourcePacks = await getPacksFromPattern(sourcePackagesPattern);
-        core4.info(
+        core7.info(
           `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
         );
-        if (basePacks.length > 0 || sourcePacks.length > 0) {
-          const comparison = comparePackSizes(
-            basePacks,
-            sourcePacks,
-            packSizeThreshold
-          );
-          const packWarnings = comparison.packChanges.filter(
-            (change) => change.exceedsThreshold && change.sizeChange > 0
-          );
-          if (packWarnings.length > 0) {
-            const packRows = packWarnings.map((change) => {
-              const baseSize = change.baseSize ? formatBytes(change.baseSize) : "New";
-              const sourceSize = change.sourceSize ? formatBytes(change.sourceSize) : "Removed";
-              const sizeChange = formatBytes(change.sizeChange);
-              return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
-            }).join("\n");
-            messages.push(
-              `## \u26A0\uFE0F Package Size Increase
-
-These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
-
-| \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
-| --- | --- | --- | --- |
-${packRows}`
-            );
-          }
-        }
+        await scanForBundleSize(
+          messages,
+          basePacks,
+          sourcePacks,
+          packSizeThreshold
+        );
       } catch (err) {
-        core4.info(`Failed to compare pack sizes: ${err}`);
+        core7.info(`Failed to compare pack sizes: ${err}`);
       }
     }
     if (detectReplacements) {
       if (!basePackageJson || !currentPackageJson) {
-        core4.setFailed(
+        core7.setFailed(
           "detect-replacements requires both base and current package.json to be present"
         );
         return;
@@ -24746,7 +24786,7 @@ ${packRows}`
       scanForReplacements(messages, baseDependencies, currentDependencies);
     }
     if (messages.length === 0) {
-      core4.info("No dependency warnings found. Skipping comment creation.");
+      core7.info("No dependency warnings found. Skipping comment creation.");
       return;
     }
     const octokit = github2.getOctokit(token);
@@ -24776,7 +24816,7 @@ ${messages.join("\n\n")}`;
         comment_id: existingCommentId,
         body: finalCommentBody
       });
-      core4.info(
+      core7.info(
         `Updated existing dependency diff comment #${existingCommentId}`
       );
     } else {
@@ -24786,13 +24826,13 @@ ${messages.join("\n\n")}`;
         issue_number: prNumber,
         body: finalCommentBody
       });
-      core4.info("Created new dependency diff comment");
+      core7.info("Created new dependency diff comment");
     }
   } catch (error) {
     if (error instanceof Error) {
-      core4.setFailed(error.message);
+      core7.setFailed(error.message);
     } else {
-      core4.setFailed("An unknown error occurred.");
+      core7.setFailed("An unknown error occurred.");
     }
   }
 }
