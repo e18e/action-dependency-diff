@@ -48,6 +48,7 @@ jobs:
 | `base-packages` | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`) | No | None |
 | `source-packages` | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`) | No | None |
 | `pack-size-threshold` | Threshold (in bytes) for warning about significant increase in total pack size | No | `50000` |
+| `detect-replacements` | Detect modules which have community suggested alternatives | No | `true` |
 
 ## Example with custom inputs
 
