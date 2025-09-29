@@ -114,6 +114,22 @@ permissions:
   pull-requests: write # To comment on pull requests
 ```
 
+## Trust levels of packages
+
+The following levels are considered when evaluating package trust:
+
+- **Trusted Publisher (with provenance)** (highest)
+- **Provenance**
+- **None**
+
+When a package's trust level decreases (e.g., from Trusted Publisher to Provenance), it is flagged in the report.
+
+### `provenance-action` GitHub Action
+
+If you want more information on _why_ the trust level changed, or want to detect changes to the provenance information, we highly recommend using the [provenance-action](https://github.com/danielroe/provenance-action) in addition to this.
+
+The provenance action will tell you exactly what changed in the provenance information. For example, if the repository changed between two versions.
+
 ## License
 
 MIT
