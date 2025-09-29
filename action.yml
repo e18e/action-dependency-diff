@@ -40,7 +40,11 @@ inputs:
     description: 'Threshold for warning about packages with multiple versions'
     required: false
     default: '1'
+  detect-replacements:
+    description: 'Detect modules which have community suggested alternatives'
+    required: false
+    default: true
 
 runs:
   using: node24
-  main: main.js
+  main: build/main.js

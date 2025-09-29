@@ -1,5 +1,4 @@
-import { fileURLToPath } from 'node:url';
-      import { createRequire as topLevelCreateRequire } from 'node:module';
+import { createRequire as topLevelCreateRequire } from 'node:module';
       import { dirname as topLevelDirname } from 'path';
       const require = topLevelCreateRequire(import.meta.url);
 var __create = Object.create;
@@ -19702,7 +19701,7 @@ var require_core = __commonJS({
       return inputs.map((input) => input.trim());
     }
     exports.getMultilineInput = getMultilineInput;
-    function getBooleanInput(name, options) {
+    function getBooleanInput2(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
       const val = getInput3(name, options);
@@ -19713,7 +19712,7 @@ var require_core = __commonJS({
       throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
-    exports.getBooleanInput = getBooleanInput;
+    exports.getBooleanInput = getBooleanInput2;
     function setOutput(name, value) {
       const filePath = process.env["GITHUB_OUTPUT"] || "";
       if (filePath) {
@@ -24143,6 +24142,17 @@ function getFileFromRef(ref, filePath, cwd2) {
     return null;
   }
 }
+function tryGetJSONFromRef(ref, filePath, cwd2) {
+  const content = getFileFromRef(ref, filePath, cwd2);
+  if (content) {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 function getBaseRef() {
   const inputBaseRef = core.getInput("base-ref");
   if (inputBaseRef) {
@@ -24250,6 +24260,28 @@ async function calculateTotalDependencySizeIncrease(newVersions) {
     }
   }
   return { totalSize, packageSizes };
+}
+var dependencyTypeMap = {
+  prod: "dependencies",
+  dev: "devDependencies",
+  optional: "optionalDependencies",
+  peer: "peerDependencies"
+};
+function getDependenciesFromPackageJson(pkg, types) {
+  const result = /* @__PURE__ */ new Map();
+  for (const type of types) {
+    const value = pkg[dependencyTypeMap[type]];
+    if (value === void 0) {
+      continue;
+    }
+    for (const [name, version] of Object.entries(value)) {
+      if (typeof version !== "string") {
+        continue;
+      }
+      result.set(name, version);
+    }
+  }
+  return result;
 }
 
 // src/packs.ts
@@ -24374,6 +24406,70 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
   };
 }
 
+// src/replacements.ts
+import nativeManifest from "./native-O77SEK3D.json" with { type: "json" };
+import microUtilsManifest from "./micro-utilities-74AZJTCK.json" with { type: "json" };
+import preferredManifest from "./preferred-UDJHBJAQ.json" with { type: "json" };
+var allReplacements = [
+  ...nativeManifest.moduleReplacements,
+  ...microUtilsManifest.moduleReplacements,
+  ...preferredManifest.moduleReplacements
+];
+function scanForReplacements(messages, baseDependencies, currentDependencies) {
+  const replacementMessages = [];
+  for (const [name] of currentDependencies) {
+    if (!baseDependencies.has(name)) {
+      const replacement = allReplacements.find(
+        (modReplacement) => modReplacement.moduleName === name
+      );
+      if (replacement) {
+        switch (replacement.type) {
+          case "none":
+            replacementMessages.push(
+              `| ${name} | This package is no longer necessary |`
+            );
+            break;
+          case "native": {
+            const mdnUrl = replacement.mdnPath ? `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/${replacement.mdnPath}` : "";
+            const nativeReplacement = mdnUrl ? `[${replacement.replacement}](${mdnUrl})` : replacement.replacement;
+            replacementMessages.push(`| ${name} | Use ${nativeReplacement} |`);
+            break;
+          }
+          case "simple":
+            replacementMessages.push(
+              `| ${name} | ${replacement.replacement} |`
+            );
+            break;
+          case "documented": {
+            const docUrl = `https://github.com/es-tooling/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
+            replacementMessages.push(
+              `| ${name} | [See documentation](${docUrl}) |`
+            );
+            break;
+          }
+        }
+      }
+    }
+  }
+  if (replacementMessages.length > 0) {
+    messages.push(
+      `## \u26A0\uFE0F Recommended Package Replacements
+
+The following new packages or versions have community recommended replacements:
+
+| \u{1F4E6} Package | \u{1F4A1} Recommendation |
+| --- | --- |
+${replacementMessages.join("\n")}
+
+> [!NOTE]
+> These recommendations have been defined by the [e18e](https://e18e.dev) community.
+> They may not always be a straightforward migration, so please review carefully
+> and use the exclusion feature if you want to ignore any of them in future.
+`
+    );
+  }
+}
+
 // src/main.ts
 function formatBytes(bytes) {
   if (bytes === 0) return "0 B";
@@ -24406,6 +24502,23 @@ async function run() {
     const lockfilePath = detectLockfile(workspacePath);
     const token = core4.getInput("github-token", { required: true });
     const prNumber = parseInt(core4.getInput("pr-number", { required: true }), 10);
+    const detectReplacements = core4.getBooleanInput("detect-replacements");
+    const dependencyThreshold = parseInt(
+      core4.getInput("dependency-threshold") || "10",
+      10
+    );
+    const sizeThreshold = parseInt(
+      core4.getInput("size-threshold") || "100000",
+      10
+    );
+    const duplicateThreshold = parseInt(
+      core4.getInput("duplicate-threshold") || "1",
+      10
+    );
+    const packSizeThreshold = parseInt(
+      core4.getInput("pack-size-threshold") || "50000",
+      10
+    );
     if (Number.isNaN(prNumber) || prNumber < 1) {
       core4.info("No valid pull request number was found. Skipping.");
       return;
@@ -24435,24 +24548,18 @@ async function run() {
       core4.info("No package-lock.json found in current ref");
       return;
     }
+    const basePackageJson = tryGetJSONFromRef(
+      baseRef,
+      "package.json",
+      workspacePath
+    );
+    const currentPackageJson = tryGetJSONFromRef(
+      currentRef,
+      "package.json",
+      workspacePath
+    );
     const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
     const baseDeps = parseLockfile(lockfilePath, basePackageLock);
-    const dependencyThreshold = parseInt(
-      core4.getInput("dependency-threshold") || "10",
-      10
-    );
-    const sizeThreshold = parseInt(
-      core4.getInput("size-threshold") || "100000",
-      10
-    );
-    const duplicateThreshold = parseInt(
-      core4.getInput("duplicate-threshold") || "1",
-      10
-    );
-    const packSizeThreshold = parseInt(
-      core4.getInput("pack-size-threshold") || "50000",
-      10
-    );
     core4.info(`Dependency threshold set to ${dependencyThreshold}`);
     core4.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     core4.info(`Duplicate threshold set to ${duplicateThreshold}`);
@@ -24618,6 +24725,25 @@ ${packRows}`
       } catch (err) {
         core4.info(`Failed to compare pack sizes: ${err}`);
       }
+    }
+    if (detectReplacements) {
+      if (!basePackageJson || !currentPackageJson) {
+        core4.setFailed(
+          "detect-replacements requires both base and current package.json to be present"
+        );
+        return;
+      }
+      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+        "optional",
+        "peer",
+        "dev",
+        "prod"
+      ]);
+      const currentDependencies = getDependenciesFromPackageJson(
+        currentPackageJson,
+        ["optional", "peer", "dev", "prod"]
+      );
+      scanForReplacements(messages, baseDependencies, currentDependencies);
     }
     if (messages.length === 0) {
       core4.info("No dependency warnings found. Skipping comment creation.");

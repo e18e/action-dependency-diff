@@ -1,0 +1,1052 @@
+{
+  "moduleReplacements": [
+    {
+      "type": "native",
+      "moduleName": "array-buffer-byte-length",
+      "nodeVersion": "0.10.0",
+      "replacement": "ArrayBuffer.prototype.byteLength",
+      "mdnPath": "Global_Objects/ArrayBuffer/byteLength",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array-every",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.every",
+      "mdnPath": "Global_Objects/Array/every",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array-includes",
+      "nodeVersion": "6.0.0",
+      "replacement": "Array.prototype.includes",
+      "mdnPath": "Global_Objects/Array/includes",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array-map",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.map",
+      "mdnPath": "Global_Objects/Array/map",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.from",
+      "nodeVersion": "4.0.0",
+      "replacement": "Array.from",
+      "mdnPath": "Global_Objects/Array/from",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.of",
+      "nodeVersion": "4.0.0",
+      "replacement": "Array.of",
+      "mdnPath": "Global_Objects/Array/of",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.at",
+      "nodeVersion": "16.6.0",
+      "replacement": "Array.prototype.at",
+      "mdnPath": "Global_Objects/Array/at",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.concat",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.concat",
+      "mdnPath": "Global_Objects/Array/concat",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.copywithin",
+      "nodeVersion": "4.0.0",
+      "replacement": "Array.prototype.copyWithin",
+      "mdnPath": "Global_Objects/Array/copyWithin",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.entries",
+      "nodeVersion": "0.12.0",
+      "replacement": "Array.prototype.entries",
+      "mdnPath": "Global_Objects/Array/entries",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.every",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.every",
+      "mdnPath": "Global_Objects/Array/every",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.filter",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.filter",
+      "mdnPath": "Global_Objects/Array/filter",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.find",
+      "nodeVersion": "4.0.0",
+      "replacement": "Array.prototype.find",
+      "mdnPath": "Global_Objects/Array/find",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.findindex",
+      "nodeVersion": "4.0.0",
+      "replacement": "Array.prototype.findIndex",
+      "mdnPath": "Global_Objects/Array/findIndex",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.flat",
+      "nodeVersion": "11.0.0",
+      "replacement": "Array.prototype.flat",
+      "mdnPath": "Global_Objects/Array/flat",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.flatmap",
+      "nodeVersion": "11.0.0",
+      "replacement": "Array.prototype.flatMap",
+      "mdnPath": "Global_Objects/Array/flatMap",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.foreach",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.forEach",
+      "mdnPath": "Global_Objects/Array/forEach",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.indexof",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.indexOf",
+      "mdnPath": "Global_Objects/Array/indexOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.join",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.join",
+      "mdnPath": "Global_Objects/Array/join",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.keys",
+      "nodeVersion": "0.12.0",
+      "replacement": "Array.prototype.keys",
+      "mdnPath": "Global_Objects/Array/keys",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.lastindexof",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.lastIndexOf",
+      "mdnPath": "Global_Objects/Array/lastIndexOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.map",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.map",
+      "mdnPath": "Global_Objects/Array/map",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.push",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.push",
+      "mdnPath": "Global_Objects/Array/push",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.reduce",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.reduce",
+      "mdnPath": "Global_Objects/Array/reduce",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.reduceright",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.reduceRight",
+      "mdnPath": "Global_Objects/Array/reduceRight",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.slice",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.slice",
+      "mdnPath": "Global_Objects/Array/slice",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.some",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.some",
+      "mdnPath": "Global_Objects/Array/some",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.splice",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.splice",
+      "mdnPath": "Global_Objects/Array/splice",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.unshift",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.unshift",
+      "mdnPath": "Global_Objects/Array/unshift",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "array.prototype.values",
+      "nodeVersion": "10.9.0",
+      "replacement": "Array.prototype.values",
+      "mdnPath": "Global_Objects/Array/values",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "arraybuffer.prototype.slice",
+      "nodeVersion": "0.12.0",
+      "replacement": "ArrayBuffer.prototype.slice",
+      "mdnPath": "Global_Objects/ArrayBuffer/slice",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "concat-map",
+      "nodeVersion": "11.0.0",
+      "replacement": "Array.prototype.flatMap",
+      "mdnPath": "Global_Objects/Array/flatMap",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "data-view-buffer",
+      "nodeVersion": "0.10.0",
+      "replacement": "DataView.prototype.buffer",
+      "mdnPath": "Global_Objects/DataView/buffer",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "data-view-byte-length",
+      "nodeVersion": "0.10.0",
+      "replacement": "DataView.prototype.byteLength",
+      "mdnPath": "Global_Objects/DataView/byteLength",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "data-view-byte-offset",
+      "nodeVersion": "0.10.0",
+      "replacement": "DataView.prototype.byteOffset",
+      "mdnPath": "Global_Objects/DataView/byteOffset",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "date",
+      "nodeVersion": "0.10.0",
+      "replacement": "Date",
+      "mdnPath": "Global_Objects/Date",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "defaults",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign, or if deep clones are needed, use structuredClone",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "define-accessor-property",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.defineProperty",
+      "mdnPath": "Global_Objects/Object/defineProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "define-data-property",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.defineProperty",
+      "mdnPath": "Global_Objects/Object/defineProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "define-properties",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.defineProperties",
+      "mdnPath": "Global_Objects/Object/defineProperties",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "error-cause",
+      "nodeVersion": "16.9.0",
+      "replacement": "Use errors `.cause` property and second `Error` constructors argument to define it",
+      "mdnPath": "Global_Objects/Error/cause",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-aggregate-error",
+      "nodeVersion": "15.0.0",
+      "replacement": "AggregateError",
+      "mdnPath": "Global_Objects/AggregateError",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-create-array-iterator",
+      "nodeVersion": "0.12.0",
+      "replacement": "Array.prototype.{ entries, keys, values, [Symbol.iterator] }",
+      "mdnPath": "Global_Objects/Array/entries",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-define-property",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.defineProperty",
+      "mdnPath": "Global_Objects/Object/defineProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-errors",
+      "nodeVersion": "0.10.0",
+      "replacement": "Error / EvalError / RangeError / ReferenceError / SyntaxError / TypeError / URIError",
+      "mdnPath": "Global_Objects/Error",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-shim-unscopables",
+      "nodeVersion": "0.12.0",
+      "replacement": "Array.prototype[Symbol.unscopables]",
+      "mdnPath": "Global_Objects/Array/@@unscopables",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "es-string-html-methods",
+      "nodeVersion": "0.10.0",
+      "replacement": "String.prototype.{ anchor, big, blink, bold, fixed, fontcolor, fontsize, italics, link, small, strike, sub, sup }",
+      "mdnPath": "Global_Objects/String#html_wrapper_methods",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "extend-shallow",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign, or if deep clones are needed, use structuredClone",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "filter-array",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.filter",
+      "mdnPath": "Global_Objects/Array/filter",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "for-each",
+      "nodeVersion": "0.12.0",
+      "replacement": "for...of (using \"Object.entries\" if dealing with objects)",
+      "mdnPath": "Statements/for...of",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "function-bind",
+      "nodeVersion": "0.10.0",
+      "replacement": "Function.prototype.bind",
+      "mdnPath": "Global_Objects/Function/bind",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "function.prototype.name",
+      "nodeVersion": "0.10.0",
+      "replacement": "Use functions `.name` property",
+      "mdnPath": "Global_Objects/Function/name",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "functions-have-names",
+      "nodeVersion": "0.10.0",
+      "replacement": "Always `true`",
+      "mdnPath": "Global_Objects/Function/name",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "get-symbol-description",
+      "nodeVersion": "11.0.0",
+      "replacement": "Symbol.prototype.description",
+      "mdnPath": "Global_Objects/Symbol/description",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "global",
+      "nodeVersion": "12.0.0",
+      "replacement": "globalThis",
+      "mdnPath": "Global_Objects/globalThis",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "globalthis",
+      "nodeVersion": "12.0.0",
+      "replacement": "globalThis",
+      "mdnPath": "Global_Objects/globalThis",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "gopd",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.getOwnPropertyDescriptor",
+      "mdnPath": "Global_Objects/Object/getOwnPropertyDescriptor",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "has",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.prototype.hasOwnProperty.call(obj, prop) (or in later versions of node, \"Object.hasOwn(obj, prop)\")",
+      "mdnPath": "Global_Objects/Object/hasOwnProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "has-own-prop",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.prototype.hasOwnProperty.call(obj, prop) (or in later versions of node, \"Object.hasOwn(obj, prop)\")",
+      "mdnPath": "Global_Objects/Object/hasOwnProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "has-proto",
+      "nodeVersion": "0.10.0",
+      "replacement": "Always `true`",
+      "mdnPath": "Operators/Object_initializer#prototype_setter",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "has-symbols",
+      "nodeVersion": "0.12.0",
+      "replacement": "Always `true`",
+      "mdnPath": "Global_Objects/Symbol",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "has-tostringtag",
+      "nodeVersion": "6.0.0",
+      "replacement": "Always `true`",
+      "mdnPath": "Global_Objects/Symbol/toStringTag",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "hasown",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.prototype.hasOwnProperty.call(obj, prop) (or in later versions of node, \"Object.hasOwn(obj, prop)\")",
+      "mdnPath": "Global_Objects/Object/hasOwnProperty",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "index-of",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.indexOf",
+      "mdnPath": "Global_Objects/Array/indexOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "inherits",
+      "nodeVersion": "6.0.0",
+      "replacement": "Use native class syntax",
+      "mdnPath": "Classes/extends",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "is-nan",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.isNaN",
+      "mdnPath": "Global_Objects/Number/isNaN",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "iterate-iterator",
+      "nodeVersion": "0.12.0",
+      "replacement": "for...of",
+      "mdnPath": "Statements/for...of",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "iterate-value",
+      "nodeVersion": "0.12.0",
+      "replacement": "for...of",
+      "mdnPath": "Statements/for...of",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "last-index-of",
+      "nodeVersion": "0.10.0",
+      "replacement": "Array.prototype.lastIndexOf",
+      "mdnPath": "Global_Objects/Array/lastIndexOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "left-pad",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padStart",
+      "mdnPath": "Global_Objects/String/padStart",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.acosh",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.acosh",
+      "mdnPath": "Global_Objects/Math/acosh",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.atanh",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.atanh",
+      "mdnPath": "Global_Objects/Math/atanh",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.cbrt",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.cbrt",
+      "mdnPath": "Global_Objects/Math/cbrt",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.clz32",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.clz32",
+      "mdnPath": "Global_Objects/Math/clz32",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.f16round",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.f16round",
+      "mdnPath": "Global_Objects/Math/f16round",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.fround",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.fround",
+      "mdnPath": "Global_Objects/Math/fround",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.imul",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.imul",
+      "mdnPath": "Global_Objects/Math/imul",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.log10",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.log10",
+      "mdnPath": "Global_Objects/Math/log10",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.log1p",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.log1p",
+      "mdnPath": "Global_Objects/Math/log1p",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "math.sign",
+      "nodeVersion": "0.10.0",
+      "replacement": "Math.sign",
+      "mdnPath": "Global_Objects/Math/sign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "node.extend",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign, or if deep clones are needed, use structuredClone",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.isfinite",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.isFinite",
+      "mdnPath": "Global_Objects/Number/isFinite",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.isinteger",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.isInteger",
+      "mdnPath": "Global_Objects/Number/isInteger",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.isnan",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.isNaN",
+      "mdnPath": "Global_Objects/Number/isNaN",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.issafeinteger",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.isSafeInteger",
+      "mdnPath": "Global_Objects/Number/isSafeInteger",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.parsefloat",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.parseFloat",
+      "mdnPath": "Global_Objects/Number/parseFloat",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.parseint",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.parseInt",
+      "mdnPath": "Global_Objects/Number/parseInt",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "number.prototype.toexponential",
+      "nodeVersion": "0.10.0",
+      "replacement": "Number.prototype.toExponential",
+      "mdnPath": "Global_Objects/Number/toExponential",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object-assign",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object-is",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.is",
+      "mdnPath": "Global_Objects/Object/is",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object-keys",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.keys(obj)",
+      "mdnPath": "Global_Objects/Object/keys",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.assign",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.defineproperties",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.defineProperties",
+      "mdnPath": "Global_Objects/Object/defineProperties",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.entries",
+      "nodeVersion": "7.0.0",
+      "replacement": "Object.entries",
+      "mdnPath": "Global_Objects/Object/entries",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.fromentries",
+      "nodeVersion": "12.0.0",
+      "replacement": "Object.fromEntries",
+      "mdnPath": "Global_Objects/Object/fromEntries",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.getownpropertydescriptors",
+      "nodeVersion": "7.0.0",
+      "replacement": "Object.getOwnPropertyDescriptors",
+      "mdnPath": "Global_Objects/Object/getOwnPropertyDescriptors",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.getprototypeof",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.getPrototypeOf",
+      "mdnPath": "Global_Objects/Object/getPrototypeOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.hasown",
+      "nodeVersion": "16.9.0",
+      "replacement": "Object.hasOwn",
+      "mdnPath": "Global_Objects/Object/hasOwn",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.keys",
+      "nodeVersion": "0.10.0",
+      "replacement": "Object.keys(obj)",
+      "mdnPath": "Global_Objects/Object/keys",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "object.values",
+      "nodeVersion": "7.0.0",
+      "replacement": "Object.values",
+      "mdnPath": "Global_Objects/Object/values",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "pad-left",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padStart",
+      "mdnPath": "Global_Objects/String/padStart",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "parseint",
+      "nodeVersion": "0.10.0",
+      "replacement": "parseInt",
+      "mdnPath": "Global_Objects/parseInt",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "promise.allsettled",
+      "nodeVersion": "12.9.0",
+      "replacement": "Promise.allSettled",
+      "mdnPath": "Global_Objects/Promise/allSettled",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "promise.any",
+      "nodeVersion": "15.0.0",
+      "replacement": "Promise.any",
+      "mdnPath": "Global_Objects/Promise/any",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "promise.prototype.finally",
+      "nodeVersion": "10.0.0",
+      "replacement": "Promise.prototype.finally",
+      "mdnPath": "Global_Objects/Promise/finally",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "reflect.getprototypeof",
+      "nodeVersion": "6.0.0",
+      "replacement": "Reflect.getPrototypeOf",
+      "mdnPath": "Global_Objects/Reflect/getPrototypeOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "reflect.ownkeys",
+      "nodeVersion": "6.0.0",
+      "replacement": "Reflect.ownKeys",
+      "mdnPath": "Global_Objects/Reflect/ownKeys",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "regexp.prototype.flags",
+      "nodeVersion": "6.0.0",
+      "replacement": "RegExp.prototype.flags (e.g. \"/foo/g.flags\")",
+      "mdnPath": "Global_Objects/RegExp/flags",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.at",
+      "nodeVersion": "16.6.0",
+      "replacement": "String.prototype.at",
+      "mdnPath": "Global_Objects/String/at",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.lastindexof",
+      "nodeVersion": "0.10.0",
+      "replacement": "String.prototype.lastIndexOf",
+      "mdnPath": "Global_Objects/String/lastIndexOf",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.matchall",
+      "nodeVersion": "12.0.0",
+      "replacement": "String.prototype.matchAll",
+      "mdnPath": "Global_Objects/String/matchAll",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.padend",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padEnd",
+      "mdnPath": "Global_Objects/String/padEnd",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.padleft",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padStart",
+      "mdnPath": "Global_Objects/String/padStart",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.padright",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padEnd",
+      "mdnPath": "Global_Objects/String/padEnd",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.padstart",
+      "nodeVersion": "8.0.0",
+      "replacement": "String.prototype.padStart",
+      "mdnPath": "Global_Objects/String/padStart",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.replaceall",
+      "nodeVersion": "15.0.0",
+      "replacement": "String.prototype.replaceAll",
+      "mdnPath": "Global_Objects/String/replaceAll",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.split",
+      "nodeVersion": "0.10.0",
+      "replacement": "String.prototype.split",
+      "mdnPath": "Global_Objects/String/split",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.substr",
+      "nodeVersion": "0.10.0",
+      "replacement": "String.prototype.substr",
+      "mdnPath": "Global_Objects/String/substr",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.trim",
+      "nodeVersion": "0.10.0",
+      "replacement": "String.prototype.trim",
+      "mdnPath": "Global_Objects/String/trim",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.trimend",
+      "nodeVersion": "10.0.0",
+      "replacement": "String.prototype.trimEnd",
+      "mdnPath": "Global_Objects/String/trimEnd",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.trimleft",
+      "nodeVersion": "10.0.0",
+      "replacement": "String.prototype.trimLeft",
+      "mdnPath": "Global_Objects/String/trimLeft",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.trimright",
+      "nodeVersion": "10.0.0",
+      "replacement": "String.prototype.trimRight",
+      "mdnPath": "Global_Objects/String/trimRight",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.prototype.trimstart",
+      "nodeVersion": "10.0.0",
+      "replacement": "String.prototype.trimStart",
+      "mdnPath": "Global_Objects/String/trimStart",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "string.raw",
+      "nodeVersion": "4.0.0",
+      "replacement": "String.raw",
+      "mdnPath": "Global_Objects/String/raw",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "symbol.prototype.description",
+      "nodeVersion": "11.0.0",
+      "replacement": "Symbol.prototype.description",
+      "mdnPath": "Global_Objects/Symbol/description",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "typed-array-buffer",
+      "nodeVersion": "0.10.0",
+      "replacement": "%TypedArray%.prototype.buffer",
+      "mdnPath": "Global_Objects/TypedArray/buffer",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "typed-array-byte-length",
+      "nodeVersion": "0.10.0",
+      "replacement": "%TypedArray%.prototype.byteLength",
+      "mdnPath": "Global_Objects/TypedArray/byteLength",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "typed-array-byte-offset",
+      "nodeVersion": "0.10.0",
+      "replacement": "%TypedArray%.prototype.byteOffset",
+      "mdnPath": "Global_Objects/TypedArray/byteOffset",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "typed-array-length",
+      "nodeVersion": "0.10.0",
+      "replacement": "%TypedArray%.prototype.length",
+      "mdnPath": "Global_Objects/TypedArray/length",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "typedarray.prototype.slice",
+      "nodeVersion": "4.0.0",
+      "replacement": "%TypedArray%.prototype.slice",
+      "mdnPath": "Global_Objects/TypedArray/slice",
+      "category": "native"
+    },
+    {
+      "type": "native",
+      "moduleName": "xtend",
+      "nodeVersion": "4.0.0",
+      "replacement": "Object.assign, or if deep clones are needed, use structuredClone",
+      "mdnPath": "Global_Objects/Object/assign",
+      "category": "native"
+    }
+  ]
+}
