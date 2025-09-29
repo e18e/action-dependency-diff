@@ -10,6 +10,7 @@ This action compares dependencies between your base branch and current branch, a
 - 📈 **Dependency growth** - Warns when dependency count increases significantly
 - 📦 **Install size** - Warns when package size increases significantly
 - 🔄 **Duplicate versions** - Detects packages with multiple versions installed
+- ⚠️ **Module replacements** - Identifies new packages that have community-recommended alternatives
 
 ## Usage
 
@@ -82,6 +83,19 @@ The action accepts glob patterns to locate package tarballs for comparison:
 > Package bundle analysis only runs when both `base-packages` and `source-packages` are provided. If these inputs are not set, this feature is skipped entirely.
 
 You can see an example of how to set this up in the [bundle difference workflow](./recipes/bundle-diff.yml).
+
+## Module Replacements
+
+This action automatically scans for new dependencies that have community-recommended replacements or alternatives.
+
+The recommendations come from the [e18e community](https://e18e.dev) and include manifests for:
+
+- Native alternatives
+- Micro-utility alternatives
+- Generally preferred packages
+
+> [!NOTE]
+> Module replacement suggestions are advisory and may not always be straightforward migrations. Review each recommendation carefully and use exclusion features if needed.
 
 ## Supported package managers
 
