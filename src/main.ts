@@ -1,6 +1,5 @@
 import * as process from 'process';
 import * as core from '@actions/core';
-import * as path from 'path';
 import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
 import {parseLockfile, detectLockfile} from './lockfile.js';
@@ -49,7 +48,6 @@ async function run(): Promise<void> {
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
-    const packageFilePath = path.join(workspacePath, 'package.json');
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
     const detectReplacements = core.getBooleanInput('detect-replacements');
@@ -106,12 +104,12 @@ async function run(): Promise<void> {
 
     const basePackageJson = tryGetJSONFromRef<PackageJson>(
       baseRef,
-      packageFilePath,
+      'package.json',
       workspacePath
     );
     const currentPackageJson = tryGetJSONFromRef<PackageJson>(
       currentRef,
-      packageFilePath,
+      'package.json',
       workspacePath
     );
 
