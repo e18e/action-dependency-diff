@@ -44,6 +44,7 @@
     "@types/node": "^24.7.0",
     "esbuild": "^0.25.10",
     "eslint": "^9.37.0",
+    "lockparse": "^0.2.1",
     "module-replacements": "^2.9.0",
     "pkg-types": "^2.3.0",
     "prettier": "^3.6.2",

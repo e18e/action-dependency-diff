@@ -2,7 +2,8 @@ import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
-import {parseLockfile, detectLockfile} from './lockfile.js';
+import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
+import {detectLockfile, computeDependencyVersions} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
 import {getDependenciesFromPackageJson} from './npm.js';
 import {getPacksFromPattern} from './packs.js';
@@ -87,8 +88,32 @@ async function run(): Promise<void> {
       workspacePath
     );
 
-    const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
-    const baseDeps = parseLockfile(lockfilePath, basePackageLock);
+    let parsedCurrentLock: ParsedLockFile;
+    let parsedBaseLock: ParsedLockFile;
+
+    try {
+      parsedCurrentLock = await parseLockfile(
+        currentPackageLock,
+        lockfilePath,
+        currentPackageJson ?? undefined
+      );
+    } catch (err) {
+      core.setFailed(`Failed to parse current lockfile: ${err}`);
+      return;
+    }
+    try {
+      parsedBaseLock = await parseLockfile(
+        basePackageLock,
+        lockfilePath,
+        basePackageJson ?? undefined
+      );
+    } catch (err) {
+      core.setFailed(`Failed to parse base lockfile: ${err}`);
+      return;
+    }
+
+    const currentDeps = computeDependencyVersions(parsedCurrentLock);
+    const baseDeps = computeDependencyVersions(parsedBaseLock);
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
