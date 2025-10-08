@@ -20398,7 +20398,7 @@ var require_dist_node2 = __commonJS({
         return template.replace(/\/$/, "");
       }
     }
-    function parse(options) {
+    function parse2(options) {
       let method = options.method.toUpperCase();
       let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
       let headers = Object.assign({}, options.headers);
@@ -20462,7 +20462,7 @@ var require_dist_node2 = __commonJS({
       );
     }
     function endpointWithDefaults(defaults, route, options) {
-      return parse(merge(defaults, route, options));
+      return parse2(merge(defaults, route, options));
     }
     function withDefaults(oldDefaults, newDefaults) {
       const DEFAULTS2 = merge(oldDefaults, newDefaults);
@@ -20471,7 +20471,7 @@ var require_dist_node2 = __commonJS({
         DEFAULTS: DEFAULTS2,
         defaults: withDefaults.bind(null, DEFAULTS2),
         merge: merge.bind(null, DEFAULTS2),
-        parse
+        parse: parse2
       });
     }
     var endpoint = withDefaults(null, DEFAULTS);
@@ -23890,6 +23890,412 @@ var core7 = __toESM(require_core(), 1);
 var github2 = __toESM(require_github(), 1);
 import * as process2 from "process";
 
+// node_modules/lockparse/lib/types.js
+var dependencyTypes = [
+  "dependencies",
+  "devDependencies",
+  "peerDependencies",
+  "optionalDependencies"
+];
+
+// node_modules/lockparse/lib/parsers/npm.js
+async function parseNpm(input) {
+  let lockFile;
+  try {
+    lockFile = JSON.parse(input);
+  } catch {
+    return Promise.reject(new Error("Invalid JSON format"));
+  }
+  const rootPackage = lockFile.packages[""];
+  if (!rootPackage) {
+    throw new Error("Invalid npm lock file: missing root package");
+  }
+  const { packages, root } = processPackages(lockFile.packages);
+  const parsed = {
+    type: "npm",
+    packages,
+    root
+  };
+  return parsed;
+}
+function processPackages(input) {
+  const packageMap = {};
+  for (const [pkgKey, pkg] of Object.entries(input)) {
+    const modulesIndex = pkgKey.lastIndexOf("node_modules/");
+    let name = pkg.name;
+    if (modulesIndex !== -1) {
+      name = pkgKey.slice(modulesIndex + "node_modules/".length);
+    }
+    packageMap[pkgKey] = {
+      name,
+      version: pkg.version,
+      dependencies: [],
+      devDependencies: [],
+      peerDependencies: [],
+      optionalDependencies: []
+    };
+  }
+  const root = packageMap[""];
+  for (const [pkgKey, pkg] of Object.entries(input)) {
+    const parsedPkg = packageMap[pkgKey];
+    processDependencyMap(pkg, parsedPkg, packageMap, pkgKey);
+  }
+  return { packages: Object.values(packageMap), root };
+}
+function processDependencyMap(pkg, parsed, packageMap, parentKey) {
+  for (const depType of dependencyTypes) {
+    const collection = parsed[depType];
+    const deps = pkg[depType];
+    if (!deps) {
+      continue;
+    }
+    for (const depName of Object.keys(deps)) {
+      let currentPath = parentKey ? `${parentKey}/node_modules` : "node_modules";
+      let possiblePackage = packageMap[`${currentPath}/${depName}`];
+      while (!possiblePackage) {
+        const modulesIndex = currentPath.lastIndexOf("node_modules/");
+        if (modulesIndex === -1) {
+          break;
+        }
+        currentPath = currentPath.slice(0, modulesIndex + "node_modules/".length - 1);
+        possiblePackage = packageMap[`${currentPath}/${depName}`];
+      }
+      if (possiblePackage) {
+        collection.push(possiblePackage);
+      }
+    }
+  }
+}
+
+// node_modules/lockparse/lib/line-reader.js
+function* createLineReader(input) {
+  let newLineIndex = input.indexOf("\n");
+  let lastIndex = 0;
+  while (newLineIndex !== -1) {
+    const line = input.slice(lastIndex, newLineIndex).trimEnd();
+    lastIndex = newLineIndex + 1;
+    newLineIndex = input.indexOf("\n", lastIndex);
+    yield line;
+  }
+}
+var yamlPairPattern = /^(?<indent> *)(['"](?<key>[^"']+)["']|(?<key>[^:]+)):( (["'](?<value>[^"']+)["']|(?<value>.+)))?$/;
+var spacePattern = /^(?<spaces> *)[^ ]/;
+function* createYamlPairReader(input) {
+  const lineReader = createLineReader(input);
+  let lastIndent = 0;
+  const path2 = [];
+  let lastKey = null;
+  for (const line of lineReader) {
+    if (line === "") {
+      continue;
+    }
+    const pairMatch = line.match(yamlPairPattern);
+    if (pairMatch && pairMatch.groups) {
+      const { indent, key, value } = pairMatch.groups;
+      const indentSize = indent.length;
+      adjustPath(indentSize, lastIndent, lastKey, path2);
+      yield {
+        indent: indent.length,
+        key,
+        value: value ?? null,
+        path: path2
+      };
+      lastKey = key;
+      lastIndent = indentSize;
+    } else {
+      const spaceMatch = line.match(spacePattern);
+      if (spaceMatch && spaceMatch.groups) {
+        const { spaces } = spaceMatch.groups;
+        const indentSize = spaces.length;
+        adjustPath(indentSize, lastIndent, lastKey, path2);
+        lastIndent = indentSize;
+      }
+    }
+  }
+}
+function adjustPath(indentSize, lastIndent, lastKey, path2) {
+  if (indentSize > lastIndent) {
+    if (lastKey !== null) {
+      path2.push(lastKey);
+    }
+  } else if (indentSize < lastIndent) {
+    const indentDiff = (lastIndent - indentSize) / 2;
+    path2.splice(Math.max(path2.length - indentDiff, 0), indentDiff);
+  }
+}
+
+// node_modules/lockparse/lib/parsers/yarn.js
+async function parseYarn(input, packageJson) {
+  const packageMap = {};
+  const pairReader = createYamlPairReader(input);
+  for (const pair of pairReader) {
+    if (pair.path.length == 0 && !pair.value && pair.key.includes("@npm:")) {
+      const pkgKeys = pair.key.split(", ");
+      let pkg;
+      for (const pkgKey of pkgKeys) {
+        if (packageMap[pkgKey]) {
+          pkg = packageMap[pkgKey];
+          break;
+        }
+      }
+      if (!pkg) {
+        pkg = {
+          name: "",
+          version: "",
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        };
+      }
+      packageMap[pair.key] = pkg;
+      for (const pkgKey of pkgKeys) {
+        if (!pkg.name) {
+          const separatorIndex = pkgKey.indexOf("@", 1);
+          const name = pkgKey.slice(0, separatorIndex);
+          pkg.name = name;
+        }
+        packageMap[pkgKey] = pkg;
+      }
+    } else if (pair.path.length === 1 && pair.key === "version" && pair.value) {
+      const [pkgKey] = pair.path;
+      const pkg = packageMap[pkgKey];
+      if (pkg) {
+        pkg.version = pair.value;
+      }
+    } else if (pair.path.length === 2 && pair.value && // oxlint-disable-next-line no-unsafe-type-assertion
+    dependencyTypes.includes(pair.path[1])) {
+      const [pkgKey, depType] = pair.path;
+      const depName = pair.key;
+      const depSemver = pair.value;
+      const pkg = packageMap[pkgKey];
+      const depPkgKey = `${depName}@${depSemver}`;
+      let depPkg = packageMap[depPkgKey];
+      if (!depPkg) {
+        depPkg = {
+          name: depName,
+          version: "",
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        };
+        packageMap[depPkgKey] = depPkg;
+      }
+      if (pkg) {
+        pkg[depType].push(depPkg);
+      }
+    }
+  }
+  const root = {
+    name: "root",
+    version: "",
+    dependencies: [],
+    devDependencies: [],
+    optionalDependencies: [],
+    peerDependencies: []
+  };
+  if (packageJson) {
+    processRootDependencies(packageJson, root, packageMap);
+  }
+  return {
+    type: "yarn",
+    packages: Object.values(packageMap),
+    root
+  };
+}
+function processRootDependencies(packageJson, root, packageMap) {
+  for (const depType of dependencyTypes) {
+    const deps = packageJson[depType];
+    if (!deps) {
+      continue;
+    }
+    const destination = root[depType];
+    for (const [depName, semver] of Object.entries(deps)) {
+      const mapKey = `${depName}@npm:${semver}`;
+      const existing = packageMap[mapKey];
+      if (existing) {
+        destination.push(existing);
+      }
+    }
+  }
+}
+
+// node_modules/lockparse/lib/parsers/pnpm.js
+async function parsePnpm(input) {
+  const packageMap = {};
+  const pairReader = createYamlPairReader(input);
+  const root = {
+    name: "root",
+    version: "",
+    dependencies: [],
+    devDependencies: [],
+    optionalDependencies: [],
+    peerDependencies: []
+  };
+  for (const pair of pairReader) {
+    if (pair.path.length === 4 && pair.path[0] === "importers" && pair.path[1] === ".") {
+      const [, , dependencyType, packageName] = pair.path;
+      const key = pair.key;
+      if (key === "version" && pair.value) {
+        const versionKey = pair.value;
+        const mapKey = `${packageName}@${versionKey}`;
+        const currentPackage = getOrCreatePackage(packageMap, mapKey, packageName, versionKey);
+        tryAddDependency(root, dependencyType, currentPackage);
+      }
+    } else if (pair.path.length === 3 && pair.path[0] === "snapshots") {
+      const [, mapKey, dependencyType] = pair.path;
+      const currentPackage = getOrCreatePackage(packageMap, mapKey);
+      const depVersionKey = pair.value;
+      const depName = pair.key;
+      const depMapKey = `${depName}@${depVersionKey}`;
+      const depPackage = getOrCreatePackage(packageMap, depMapKey, depName, depVersionKey);
+      tryAddDependency(currentPackage, dependencyType, depPackage);
+    }
+  }
+  return {
+    type: "pnpm",
+    packages: Object.values(packageMap),
+    root
+  };
+}
+function getOrCreatePackage(packageMap, mapKey, name, versionKey) {
+  let pkg = packageMap[mapKey];
+  const versionSeparator = mapKey.indexOf("@", 1);
+  if (!versionKey) {
+    versionKey = mapKey.slice(versionSeparator + 1);
+  }
+  if (!name) {
+    name = mapKey.slice(0, versionSeparator);
+  }
+  if (!pkg) {
+    const version = computeVersionForVersionKey(versionKey);
+    pkg = {
+      name,
+      version,
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    packageMap[mapKey] = pkg;
+  }
+  return pkg;
+}
+function tryAddDependency(pkg, dependencyType, depPackage) {
+  const key = dependencyType;
+  if (dependencyTypes.includes(key)) {
+    pkg[key].push(depPackage);
+  }
+}
+function computeVersionForVersionKey(versionKey) {
+  const versionKeyParens = versionKey.indexOf("(");
+  return versionKeyParens !== -1 ? versionKey.slice(0, versionKeyParens) : versionKey;
+}
+
+// node_modules/lockparse/lib/parsers/bun.js
+var trailingCommaRegex = /,(?=\s+[}\]])/g;
+async function parseBun(input) {
+  let lockFile;
+  try {
+    const withoutTrailing = input.replaceAll(trailingCommaRegex, "");
+    lockFile = JSON.parse(withoutTrailing);
+  } catch {
+    return Promise.reject(new Error("Invalid JSON format"));
+  }
+  const rootPackage = lockFile.workspaces?.[""];
+  if (!rootPackage) {
+    throw new Error("Invalid npm lock file: missing root package");
+  }
+  const { packages, root } = processPackages2(rootPackage, lockFile.packages);
+  const parsed = {
+    type: "bun",
+    packages,
+    root
+  };
+  return parsed;
+}
+function processPackages2(rootPackage, input) {
+  const packageMap = {};
+  const root = {
+    name: "root",
+    version: "",
+    dependencies: [],
+    devDependencies: [],
+    optionalDependencies: [],
+    peerDependencies: []
+  };
+  for (const [pkgKey, pkgInfo] of Object.entries(input)) {
+    const [versionKey] = pkgInfo;
+    const versionIndex = versionKey.indexOf("@", 1);
+    const version = versionKey.slice(versionIndex + 1);
+    const name = versionKey.slice(0, versionIndex);
+    const pkg = {
+      name,
+      version,
+      dependencies: [],
+      devDependencies: [],
+      peerDependencies: [],
+      optionalDependencies: []
+    };
+    packageMap[pkgKey] = pkg;
+  }
+  for (const [pkgKey, pkgInfo] of Object.entries(input)) {
+    const [, , packageInfo] = pkgInfo;
+    const pkg = packageMap[pkgKey];
+    processDependencies(packageInfo, pkg, packageMap, pkgKey);
+  }
+  processDependencies(rootPackage, root, packageMap);
+  return { packages: Object.values(packageMap), root };
+}
+function processDependencies(rootInfo, root, packageMap, prefix) {
+  for (const depType of dependencyTypes) {
+    const collection = rootInfo[depType];
+    if (!collection) {
+      return;
+    }
+    for (const name of Object.keys(collection)) {
+      let pkg;
+      if (prefix) {
+        pkg = packageMap[`${prefix}/${name}`];
+      }
+      if (!pkg) {
+        pkg = packageMap[name];
+      }
+      if (pkg) {
+        root[depType].push(pkg);
+      }
+    }
+  }
+}
+
+// node_modules/lockparse/lib/main.js
+var typeMap = {
+  "package-lock.json": "npm",
+  "yarn.lock": "yarn",
+  "pnpm-lock.yaml": "pnpm",
+  "bun.lock": "bun",
+  npm: "npm",
+  yarn: "yarn",
+  pnpm: "pnpm",
+  bun: "bun"
+};
+function parse(input, typeOrFileName, packageJson) {
+  const lockFileType = typeMap[typeOrFileName];
+  switch (lockFileType) {
+    case "npm":
+      return parseNpm(input);
+    case "yarn":
+      return parseYarn(input, packageJson);
+    case "pnpm":
+      return parsePnpm(input);
+    case "bun":
+      return parseBun(input);
+    default:
+      throw new Error(`Unsupported lock file type: ${typeOrFileName}`);
+  }
+}
+
 // src/lockfile.ts
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -23899,223 +24305,19 @@ var supportedLockfiles = [
   "yarn.lock",
   "bun.lock"
 ];
+function computeDependencyVersions(lockFile) {
+  const result = /* @__PURE__ */ new Map();
+  for (const pkg of lockFile.packages) {
+    if (!pkg.name || !pkg.version) continue;
+    addVersion(result, pkg.name, pkg.version);
+  }
+  return result;
+}
 function detectLockfile(workspacePath) {
   for (const c of supportedLockfiles) {
     if (existsSync(join(workspacePath, c))) return c;
   }
   return void 0;
-}
-function parseLockfile(lockfilePath, content) {
-  if (lockfilePath.endsWith("package-lock.json")) return parseNpmLock(content);
-  if (lockfilePath.endsWith("pnpm-lock.yaml")) return parsePnpmLock(content);
-  if (lockfilePath.endsWith("yarn.lock")) {
-    if (content.includes("yarn lockfile v1")) return parseYarnV1Lock(content);
-    return parseYarnBerryLock(content);
-  }
-  if (lockfilePath.endsWith("bun.lock")) return parseBunLock(content);
-  return /* @__PURE__ */ new Map();
-}
-function parseNpmLock(content) {
-  const result = /* @__PURE__ */ new Map();
-  let json;
-  try {
-    json = JSON.parse(content);
-  } catch {
-    return result;
-  }
-  const packages = json.packages || {};
-  for (const key of Object.keys(packages)) {
-    const entry = packages[key];
-    const version = entry && entry.version;
-    if (!version) continue;
-    if (key === "") continue;
-    let name = entry.name;
-    if (!name) {
-      const parts = key.split("node_modules/").filter(Boolean);
-      if (parts.length > 0) {
-        const last = parts[parts.length - 1].replace(/\/$/, "");
-        name = last;
-      }
-    }
-    if (!name) continue;
-    addVersion(result, name, version);
-  }
-  return result;
-}
-function parsePnpmLock(content) {
-  const result = /* @__PURE__ */ new Map();
-  const lines = content.split(/\r?\n/);
-  let inPackages = false;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!inPackages) {
-      if (/^packages:\s*$/.test(line)) {
-        inPackages = true;
-      }
-      continue;
-    }
-    if (/^\S.*:$/.test(line)) {
-      inPackages = /^packages:\s*$/.test(line);
-      continue;
-    }
-    const m = /^\s{2}(\S.*?):\s*$/.exec(line);
-    if (!m) continue;
-    let key = m[1];
-    if (key.startsWith("/")) key = key.slice(1);
-    if (key.startsWith('"') && key.endsWith('"') || key.startsWith("'") && key.endsWith("'")) {
-      key = key.slice(1, -1);
-    }
-    const core8 = key.includes("(") ? key.slice(0, key.indexOf("(")) : key;
-    const at = core8.lastIndexOf("@");
-    if (at <= 0) continue;
-    const name = core8.slice(0, at);
-    const version = core8.slice(at + 1).trim();
-    if (!version) continue;
-    addVersion(result, name, version);
-  }
-  return result;
-}
-function parseYarnV1Lock(content) {
-  const result = /* @__PURE__ */ new Map();
-  const lines = content.split(/\r?\n/);
-  let i = 0;
-  while (i < lines.length) {
-    let line = lines[i];
-    if (!line || /^\s/.test(line)) {
-      i++;
-      continue;
-    }
-    if (!line.trimEnd().endsWith(":")) {
-      i++;
-      continue;
-    }
-    const headerLines = [];
-    while (i < lines.length) {
-      const hl = lines[i];
-      headerLines.push(hl);
-      i++;
-      if (!lines[i] || lines[i].startsWith("  ")) break;
-    }
-    const specifiers = headerLines.join("\n").split(",\n").map((s) => s.trim()).map((s) => s.replace(/:$/, "")).map((s) => s.replace(/^"|"$/g, ""));
-    let version;
-    while (i < lines.length) {
-      line = lines[i];
-      if (!line || !line.startsWith(" ") && line.trimEnd().endsWith(":"))
-        break;
-      const vm = /^\s{2}version\s+"([^"]+)"/.exec(line);
-      if (vm) version = vm[1];
-      i++;
-    }
-    if (!version) continue;
-    for (const spec of specifiers) {
-      const name = yarnV1SpecifierToName(spec);
-      if (name) addVersion(result, name, version);
-    }
-  }
-  return result;
-}
-function parseYarnBerryLock(content) {
-  const result = /* @__PURE__ */ new Map();
-  const lines = content.split(/\r?\n/);
-  let i = 0;
-  while (i < lines.length) {
-    let line = lines[i];
-    if (!line || line.trimStart().startsWith("#")) {
-      i++;
-      continue;
-    }
-    if (!line.startsWith('"') && !line.startsWith("'")) {
-      i++;
-      continue;
-    }
-    if (!line.trimEnd().endsWith(":")) {
-      i++;
-      continue;
-    }
-    const headerLine = line.trim();
-    const specifiers = headerLine.split(",").map((s) => s.trim()).map((s) => s.replace(/:$/, "")).map((s) => s.replace(/^"|"$/g, "").replace(/^'|'$/g, ""));
-    i++;
-    let version;
-    while (i < lines.length) {
-      line = lines[i];
-      if (!line) break;
-      if (!line.startsWith(" ")) break;
-      const vm = /^\s{2}version:\s*(?:"([^"]+)"|'([^']+)'|([^\s#]+))/.exec(
-        line
-      );
-      if (vm) version = vm[1] || vm[2] || vm[3];
-      i++;
-    }
-    if (!version) continue;
-    for (const spec of specifiers) {
-      const name = yarnBerrySpecifierToName(spec);
-      if (name) addVersion(result, name, version);
-    }
-  }
-  return result;
-}
-function parseBunLock(content) {
-  const result = /* @__PURE__ */ new Map();
-  let json;
-  try {
-    json = JSON.parse(content);
-  } catch {
-    try {
-      const withoutLineComments = content.split(/\r?\n/).map((l) => l.replace(/(^|\s)\/\/.*$/, "$1")).join("\n");
-      json = JSON.parse(withoutLineComments);
-    } catch {
-      return result;
-    }
-  }
-  const pkgs = json && json.packages;
-  if (!pkgs) return result;
-  if (Array.isArray(pkgs)) {
-    for (const entry of pkgs) {
-      if (!entry) continue;
-      const name = entry.name;
-      const version = entry.version;
-      if (name && version) addVersion(result, name, version);
-    }
-    return result;
-  }
-  if (typeof pkgs === "object") {
-    for (const key of Object.keys(pkgs)) {
-      const entry = pkgs[key];
-      const version = entry && entry.version;
-      if (!version) continue;
-      let name = entry && entry.name;
-      if (!name) {
-        const spec = String(key);
-        if (spec.startsWith("@")) {
-          const at2 = spec.indexOf("@", 1);
-          if (at2 > 0) name = spec.slice(0, at2);
-        } else {
-          const at1 = spec.indexOf("@");
-          if (at1 > 0) name = spec.slice(0, at1);
-        }
-      }
-      if (!name) continue;
-      addVersion(result, name, version);
-    }
-    return result;
-  }
-  return result;
-}
-function yarnV1SpecifierToName(spec) {
-  const at = spec.lastIndexOf("@");
-  if (at <= 0) return void 0;
-  return spec.slice(0, at);
-}
-function yarnBerrySpecifierToName(spec) {
-  const s = spec.replace(/^"|"$/g, "").replace(/^'|'$/g, "");
-  if (s.startsWith("@")) {
-    const at2 = s.indexOf("@", 1);
-    if (at2 <= 0) return void 0;
-    return s.slice(0, at2);
-  }
-  const at1 = s.indexOf("@");
-  if (at1 <= 0) return void 0;
-  return s.slice(0, at1);
 }
 function addVersion(map, name, version) {
   let set = map.get(name);
@@ -24769,8 +24971,22 @@ async function run() {
       "package.json",
       workspacePath
     );
-    const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
-    const baseDeps = parseLockfile(lockfilePath, basePackageLock);
+    let parsedCurrentLock;
+    let parsedBaseLock;
+    try {
+      parsedCurrentLock = await parse(currentPackageLock, lockfilePath, currentPackageJson ?? void 0);
+    } catch (err) {
+      core7.setFailed(`Failed to parse current lockfile: ${err}`);
+      return;
+    }
+    try {
+      parsedBaseLock = await parse(basePackageLock, lockfilePath, basePackageJson ?? void 0);
+    } catch (err) {
+      core7.setFailed(`Failed to parse base lockfile: ${err}`);
+      return;
+    }
+    const currentDeps = computeDependencyVersions(parsedCurrentLock);
+    const baseDeps = computeDependencyVersions(parsedBaseLock);
     core7.info(`Dependency threshold set to ${dependencyThreshold}`);
     core7.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     core7.info(`Duplicate threshold set to ${duplicateThreshold}`);
