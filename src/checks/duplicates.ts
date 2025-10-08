@@ -6,7 +6,7 @@ function getLsCommand(
     return `npm ls ${packageName}`;
   }
   if (lockfilePath.endsWith('pnpm-lock.yaml')) {
-    return `pnpm why ${packageName}`;
+    return `pnpm -r why ${packageName}`;
   }
   if (lockfilePath.endsWith('yarn.lock')) {
     return `yarn why ${packageName}`;
