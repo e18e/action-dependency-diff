@@ -24698,7 +24698,7 @@ function getLsCommand(lockfilePath, packageName) {
     return `npm ls ${packageName}`;
   }
   if (lockfilePath.endsWith("pnpm-lock.yaml")) {
-    return `pnpm why ${packageName}`;
+    return `pnpm -r why ${packageName}`;
   }
   if (lockfilePath.endsWith("yarn.lock")) {
     return `yarn why ${packageName}`;
@@ -24974,13 +24974,21 @@ async function run() {
     let parsedCurrentLock;
     let parsedBaseLock;
     try {
-      parsedCurrentLock = await parse(currentPackageLock, lockfilePath, currentPackageJson ?? void 0);
+      parsedCurrentLock = await parse(
+        currentPackageLock,
+        lockfilePath,
+        currentPackageJson ?? void 0
+      );
     } catch (err) {
       core7.setFailed(`Failed to parse current lockfile: ${err}`);
       return;
     }
     try {
-      parsedBaseLock = await parse(basePackageLock, lockfilePath, basePackageJson ?? void 0);
+      parsedBaseLock = await parse(
+        basePackageLock,
+        lockfilePath,
+        basePackageJson ?? void 0
+      );
     } catch (err) {
       core7.setFailed(`Failed to parse base lockfile: ${err}`);
       return;
