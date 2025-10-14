@@ -1,5 +1,5 @@
 import type {ParsedLockFile} from 'lockparse';
-import {existsSync, readFileSync} from 'node:fs';
+import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 
 export type VersionsSet = Map<string, Set<string>>;
@@ -29,10 +29,6 @@ export function detectLockfile(workspacePath: string): string | undefined {
     if (existsSync(join(workspacePath, c))) return c;
   }
   return undefined;
-}
-
-export function readTextFile(path: string): string {
-  return readFileSync(path, 'utf8');
 }
 
 function addVersion(map: VersionsSet, name: string, version: string): void {
