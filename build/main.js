@@ -23935,11 +23935,12 @@ function processPackages(input) {
       optionalDependencies: []
     };
   }
-  const root = packageMap[""];
   for (const [pkgKey, pkg] of Object.entries(input)) {
     const parsedPkg = packageMap[pkgKey];
     processDependencyMap(pkg, parsedPkg, packageMap, pkgKey);
   }
+  const root = packageMap[""];
+  delete packageMap[""];
   return { packages: Object.values(packageMap), root };
 }
 function processDependencyMap(pkg, parsed, packageMap, parentKey) {
@@ -23978,7 +23979,7 @@ function* createLineReader(input) {
     yield line;
   }
 }
-var yamlPairPattern = /^(?<indent> *)(['"](?<key>[^"']+)["']|(?<key>[^:]+)):( (["'](?<value>[^"']+)["']|(?<value>.+)))?$/;
+var yamlPairPattern = /^(?<indent> *)(['"](?<quotedKey>[^"']+)["']|(?<key>[^:]+)):( (["'](?<quotedValue>[^"']+)["']|(?<value>.+)))?$/;
 var spacePattern = /^(?<spaces> *)[^ ]/;
 function* createYamlPairReader(input) {
   const lineReader = createLineReader(input);
@@ -23991,7 +23992,9 @@ function* createYamlPairReader(input) {
     }
     const pairMatch = line.match(yamlPairPattern);
     if (pairMatch && pairMatch.groups) {
-      const { indent, key, value } = pairMatch.groups;
+      const { indent, key: unquotedKey, value: unquotedValue, quotedKey, quotedValue } = pairMatch.groups;
+      const key = quotedKey ?? unquotedKey;
+      const value = quotedValue ?? unquotedValue;
       const indentSize = indent.length;
       adjustPath(indentSize, lastIndent, lastKey, path2);
       yield {
@@ -24026,8 +24029,113 @@ function adjustPath(indentSize, lastIndent, lastKey, path2) {
 
 // node_modules/lockparse/lib/parsers/yarn.js
 async function parseYarn(input, packageJson) {
+  const isV1 = input.includes("yarn lockfile v1");
   const packageMap = {};
+  if (isV1) {
+    processYarnV1(input, packageMap);
+  } else {
+    processYarn(input, packageMap);
+  }
+  const root = {
+    name: "root",
+    version: "",
+    dependencies: [],
+    devDependencies: [],
+    optionalDependencies: [],
+    peerDependencies: []
+  };
+  if (packageJson) {
+    root.version = packageJson.version ?? "";
+    processRootDependencies(packageJson, root, packageMap);
+  }
+  return {
+    type: "yarn",
+    packages: Object.values(packageMap),
+    root
+  };
+}
+var indentPattern = /^( *)/;
+var quotePattern = /^['"]|['"]$/g;
+function processYarnV1(input, packageMap) {
+  const lineReader = createLineReader(input);
+  let currentPackage = null;
+  let currentDepType = null;
+  for (const line of lineReader) {
+    if (line === "") {
+      continue;
+    }
+    const indentMatch = line.match(indentPattern);
+    const indentSize = indentMatch ? indentMatch[1].length : 0;
+    if (indentSize === 0 && line.endsWith(":")) {
+      const pkgKeys = line.slice(0, -1).split(", ");
+      currentPackage = null;
+      for (const pkgKeyRaw of pkgKeys) {
+        const pkgKey = pkgKeyRaw.replace(quotePattern, "");
+        if (!currentPackage) {
+          let pkg = packageMap[pkgKey];
+          if (!pkg) {
+            pkg = {
+              name: "",
+              version: "",
+              dependencies: [],
+              devDependencies: [],
+              optionalDependencies: [],
+              peerDependencies: []
+            };
+            packageMap[pkgKey] = pkg;
+          }
+          currentPackage = pkg;
+          if (!pkg.name) {
+            const separatorIndex = pkgKey.indexOf("@", 1);
+            const name = pkgKey.slice(0, separatorIndex);
+            pkg.name = name;
+          }
+        } else {
+          packageMap[pkgKey] = currentPackage;
+        }
+      }
+      continue;
+    }
+    if (indentSize === 2) {
+      if (line.endsWith(":")) {
+        const key = line.slice(indentSize, -1);
+        if (dependencyTypes.includes(key)) {
+          currentDepType = key;
+        }
+      } else {
+        const separatorIndex = line.indexOf(" ", indentSize);
+        const key = line.slice(indentSize, separatorIndex);
+        const value = line.slice(separatorIndex + 1);
+        if (key === "version" && currentPackage) {
+          currentPackage.version = value.replace(quotePattern, "");
+        }
+      }
+      continue;
+    }
+    if (indentSize === 4 && currentDepType && currentPackage) {
+      const separatorIndex = line.indexOf(" ", indentSize);
+      const depName = line.slice(indentSize, separatorIndex).replace(quotePattern, "");
+      const depSemver = line.slice(separatorIndex + 1).replace(quotePattern, "");
+      const depPkgKey = `${depName}@${depSemver}`;
+      let depPkg = packageMap[depPkgKey];
+      if (!depPkg) {
+        depPkg = {
+          name: depName,
+          version: "",
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        };
+        packageMap[depPkgKey] = depPkg;
+      }
+      currentPackage[currentDepType].push(depPkg);
+    }
+  }
+}
+function processYarn(input, packageMap) {
   const pairReader = createYamlPairReader(input);
+  const optionalDependencies = [];
   for (const pair of pairReader) {
     if (pair.path.length == 0 && !pair.value && pair.key.includes("@npm:")) {
       const pkgKeys = pair.key.split(", ");
@@ -24085,24 +24193,22 @@ async function parseYarn(input, packageJson) {
       if (pkg) {
         pkg[depType].push(depPkg);
       }
+    } else if (pair.path.length === 3 && pair.value === "true" && pair.key === "optional" && pair.path[1] === "dependenciesMeta") {
+      const pkgKey = pair.path[0];
+      optionalDependencies.push([pkgKey, pair.path[2]]);
     }
   }
-  const root = {
-    name: "root",
-    version: "",
-    dependencies: [],
-    devDependencies: [],
-    optionalDependencies: [],
-    peerDependencies: []
-  };
-  if (packageJson) {
-    processRootDependencies(packageJson, root, packageMap);
+  for (const [pkgKey, depName] of optionalDependencies) {
+    const pkg = packageMap[pkgKey];
+    if (pkg) {
+      const deps = pkg.dependencies;
+      const index = deps.findIndex((d) => d.name === depName);
+      if (index !== -1) {
+        const [dep] = deps.splice(index, 1);
+        pkg.optionalDependencies.push(dep);
+      }
+    }
   }
-  return {
-    type: "yarn",
-    packages: Object.values(packageMap),
-    root
-  };
 }
 function processRootDependencies(packageJson, root, packageMap) {
   for (const depType of dependencyTypes) {
@@ -24149,7 +24255,7 @@ async function parsePnpm(input) {
       const depVersionKey = pair.value;
       const depName = pair.key;
       const depMapKey = `${depName}@${depVersionKey}`;
-      const depPackage = getOrCreatePackage(packageMap, depMapKey, depName, depVersionKey);
+      const depPackage = getOrCreatePackage(packageMap, depMapKey, depName, depVersionKey ?? void 0);
       tryAddDependency(currentPackage, dependencyType, depPackage);
     }
   }
@@ -24297,7 +24403,7 @@ function parse(input, typeOrFileName, packageJson) {
 }
 
 // src/lockfile.ts
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 var supportedLockfiles = [
   "pnpm-lock.yaml",

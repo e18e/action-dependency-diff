@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {describe, it, expect} from 'vitest';
 import * as git from '../src/git.js';
 import * as github from '@actions/github';
 import * as process from 'process';
@@ -60,17 +60,6 @@ describe('getBaseRef', () => {
 });
 
 describe('getFileFromRef', () => {
-  beforeEach(() => {
-    vi.mock(import('@actions/core'), async (importModule) => {
-      const mod = await importModule();
-      return {
-        ...mod,
-        info: vi.fn(),
-        error: vi.fn()
-      };
-    });
-  });
-
   it('should return file content from a given ref', () => {
     const content = git.getFileFromRef('HEAD', 'package.json', rootDir);
     expect(content).toBeDefined();
@@ -80,5 +69,23 @@ describe('getFileFromRef', () => {
   it('should return null if file does not exist in the given ref', () => {
     const content = git.getFileFromRef('HEAD', 'nonexistentfile.txt', rootDir);
     expect(content).toBeNull();
+  });
+});
+
+describe('tryGetJSONFromRef', () => {
+  it('returns null for non-existent file', () => {
+    const result = git.tryGetJSONFromRef('HEAD', 'nonexistent.json', rootDir);
+    expect(result).toBeNull();
+  });
+
+  it('returns null for invalid JSON content', () => {
+    const result = git.tryGetJSONFromRef('HEAD', 'README.md', rootDir);
+    expect(result).toBeNull();
+  });
+
+  it('returns parsed JSON object for valid JSON content', () => {
+    const result = git.tryGetJSONFromRef('HEAD', 'package.json', rootDir);
+    expect(result).toBeDefined();
+    expect(result).toHaveProperty('name');
   });
 });
