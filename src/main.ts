@@ -27,8 +27,8 @@ async function run(): Promise<void> {
 
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
-    const lockfilePath = detectLockfile(workspacePath);
-    core.info(`Detected lockfile ${lockfilePath}`);
+    const lockfileFilename = detectLockfile(workspacePath);
+    core.info(`Detected lockfile ${lockfileFilename}`);
 
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
@@ -55,10 +55,12 @@ async function run(): Promise<void> {
       return;
     }
 
-    if (!lockfilePath) {
+    if (!lockfileFilename) {
       core.info('No lockfile detected in the workspace. Exiting.');
       return;
     }
+    const lockfilePath = workDir ? join(workDir, lockfileFilename || '') : lockfileFilename;
+    core.info(`Using lockfile: ${lockfilePath}`);
 
     core.info(
       `Comparing package lockfiles between ${baseRef} and ${currentRef}`
@@ -73,7 +75,6 @@ async function run(): Promise<void> {
       core.info('No package lockfile found in base ref');
       return;
     }
-    core.info(`Found package lockfile in base ref: ${basePackageLock}`);
 
     const currentPackageLock = getFileFromRef(
       currentRef,
@@ -84,7 +85,6 @@ async function run(): Promise<void> {
       core.info('No package lockfile found in current ref');
       return;
     }
-    core.info(`Found package lockfile in current ref: ${currentPackageLock}`);
 
     const basePackageJson = tryGetJSONFromRef<PackageJson>(
       baseRef,
@@ -103,7 +103,7 @@ async function run(): Promise<void> {
     try {
       parsedCurrentLock = await parseLockfile(
         currentPackageLock,
-        lockfilePath,
+        lockfileFilename,
         currentPackageJson ?? undefined
       );
       core.info(`Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`);
@@ -114,7 +114,7 @@ async function run(): Promise<void> {
     try {
       parsedBaseLock = await parseLockfile(
         basePackageLock,
-        lockfilePath,
+        lockfileFilename,
         basePackageJson ?? undefined
       );
       core.info(`Parsed base lockfile with ${parsedBaseLock.packages.length} packages`);

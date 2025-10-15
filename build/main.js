@@ -25091,8 +25091,8 @@ async function run() {
     core7.info(`Workspace path is ${workspacePath}`);
     const baseRef = getBaseRef();
     const currentRef = github2.context.sha;
-    const lockfilePath = detectLockfile(workspacePath);
-    core7.info(`Detected lockfile ${lockfilePath}`);
+    const lockfileFilename = detectLockfile(workspacePath);
+    core7.info(`Detected lockfile ${lockfileFilename}`);
     const token = core7.getInput("github-token", { required: true });
     const prNumber = parseInt(core7.getInput("pr-number", { required: true }), 10);
     const detectReplacements = core7.getBooleanInput("detect-replacements");
@@ -25116,10 +25116,12 @@ async function run() {
       core7.info("No valid pull request number was found. Skipping.");
       return;
     }
-    if (!lockfilePath) {
+    if (!lockfileFilename) {
       core7.info("No lockfile detected in the workspace. Exiting.");
       return;
     }
+    const lockfilePath = workDir ? join2(workDir, lockfileFilename || "") : lockfileFilename;
+    core7.info(`Using lockfile: ${lockfilePath}`);
     core7.info(
       `Comparing package lockfiles between ${baseRef} and ${currentRef}`
     );
@@ -25132,7 +25134,6 @@ async function run() {
       core7.info("No package lockfile found in base ref");
       return;
     }
-    core7.info(`Found package lockfile in base ref: ${basePackageLock}`);
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
@@ -25142,7 +25143,6 @@ async function run() {
       core7.info("No package lockfile found in current ref");
       return;
     }
-    core7.info(`Found package lockfile in current ref: ${currentPackageLock}`);
     const basePackageJson = tryGetJSONFromRef(
       baseRef,
       "package.json",
@@ -25158,7 +25158,7 @@ async function run() {
     try {
       parsedCurrentLock = await parse(
         currentPackageLock,
-        lockfilePath,
+        lockfileFilename,
         currentPackageJson ?? void 0
       );
       core7.info(`Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`);
@@ -25169,7 +25169,7 @@ async function run() {
     try {
       parsedBaseLock = await parse(
         basePackageLock,
-        lockfilePath,
+        lockfileFilename,
         basePackageJson ?? void 0
       );
       core7.info(`Parsed base lockfile with ${parsedBaseLock.packages.length} packages`);
