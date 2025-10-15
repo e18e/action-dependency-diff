@@ -130,7 +130,13 @@ async function run(): Promise<void> {
     );
     scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
 
-    await scanForDependencySize(messages, sizeThreshold, currentDeps, baseDeps);
+    await scanForDependencySize(
+      messages,
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock
+    );
     await scanForProvenance(messages, currentDeps, baseDeps);
 
     const basePackagesPattern = core.getInput('base-packages');

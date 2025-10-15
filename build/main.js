@@ -24375,6 +24375,25 @@ function processDependencies(rootInfo, root, packageMap, prefix) {
   }
 }
 
+// node_modules/lockparse/lib/traverse.js
+var visitorKeys = [
+  ["dependency", "dependencies"],
+  ["devDependency", "devDependencies"],
+  ["peerDependency", "peerDependencies"],
+  ["optionalDependency", "optionalDependencies"]
+];
+function traverse(node, visitor) {
+  for (const [visitorKey, nodeKey] of visitorKeys) {
+    if (visitor[visitorKey]) {
+      for (const dep of node[nodeKey]) {
+        if (visitor[visitorKey](dep, node) !== false) {
+          traverse(dep, visitor);
+        }
+      }
+    }
+  }
+}
+
 // node_modules/lockparse/lib/main.js
 var typeMap = {
   "package-lock.json": "npm",
@@ -24878,9 +24897,30 @@ function formatBytes(bytes) {
 }
 
 // src/checks/dependency-size.ts
-async function scanForDependencySize(messages, threshold, currentDeps, baseDeps) {
+async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile) {
   const newVersions = [];
   const removedVersions = [];
+  const skippedVersions = /* @__PURE__ */ new Map();
+  const allOptionalVersions = /* @__PURE__ */ new Map();
+  for (const pkg of currentLockFile.packages) {
+    traverse(pkg, {
+      optionalDependency: (node) => {
+        const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
+        entry.add(node.version);
+        allOptionalVersions.set(node.name, entry);
+      }
+    });
+  }
+  for (const [pkg, versions] of allOptionalVersions) {
+    for (const version of versions) {
+      const pkgMeta = await fetchPackageMetadata(pkg, version);
+      if (pkgMeta && (pkgMeta.os && pkgMeta.os.length > 0 && !pkgMeta.os.includes("linux") || pkgMeta.cpu && pkgMeta.cpu.length > 0 && !pkgMeta.cpu.includes("x64"))) {
+        const entry = skippedVersions.get(pkg) ?? /* @__PURE__ */ new Set();
+        entry.add(version);
+        skippedVersions.set(pkg, entry);
+      }
+    }
+  }
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
     for (const version of currentVersionSet) {
@@ -25113,7 +25153,13 @@ async function run() {
       baseDeps
     );
     scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
-    await scanForDependencySize(messages, sizeThreshold, currentDeps, baseDeps);
+    await scanForDependencySize(
+      messages,
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock
+    );
     await scanForProvenance(messages, currentDeps, baseDeps);
     const basePackagesPattern = core7.getInput("base-packages");
     const sourcePackagesPattern = core7.getInput("source-packages");
