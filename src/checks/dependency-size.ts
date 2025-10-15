@@ -2,7 +2,8 @@ import * as core from '@actions/core';
 import {type ParsedLockFile, traverse} from 'lockparse';
 import {
   calculateTotalDependencySizeIncrease,
-  fetchPackageMetadata
+  fetchPackageMetadata,
+  isSupportedArchitecture
 } from '../npm.js';
 import {formatBytes} from '../common.js';
 
@@ -68,12 +69,7 @@ export async function scanForDependencySize(
         const pkgMeta = await fetchPackageMetadata(pkg, version);
         if (
           pkgMeta &&
-          ((pkgMeta.os &&
-            pkgMeta.os.length > 0 &&
-            !pkgMeta.os.includes('linux')) ||
-            (pkgMeta.cpu &&
-              pkgMeta.cpu.length > 0 &&
-              !pkgMeta.cpu.includes('x64')))
+          isSupportedArchitecture(pkgMeta, 'linux', 'x64', 'glibc')
         ) {
           const entry = newVersions.findIndex(
             (v) => v.name === pkg && v.version === version

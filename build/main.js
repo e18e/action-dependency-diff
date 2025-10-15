@@ -24630,6 +24630,12 @@ function getDependenciesFromPackageJson(pkg, types) {
   }
   return result;
 }
+function isSupportedArchitecture(pkg, os, cpu, libc) {
+  const osMatches = pkg.os === void 0 || pkg.os.length > 0 && pkg.os.includes(os);
+  const cpuMatches = pkg.cpu === void 0 || pkg.cpu.length > 0 && pkg.cpu.includes(cpu);
+  const libcMatches = pkg.libc === void 0 || pkg.libc.length > 0 && pkg.libc.includes(libc);
+  return osMatches && cpuMatches && libcMatches;
+}
 
 // src/packs.ts
 var core3 = __toESM(require_core(), 1);
@@ -24937,7 +24943,7 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     for (const [pkg, versions] of allOptionalVersions) {
       for (const version of versions) {
         const pkgMeta = await fetchPackageMetadata(pkg, version);
-        if (pkgMeta && (pkgMeta.os && pkgMeta.os.length > 0 && !pkgMeta.os.includes("linux") || pkgMeta.cpu && pkgMeta.cpu.length > 0 && !pkgMeta.cpu.includes("x64"))) {
+        if (pkgMeta && isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
           const entry = newVersions.findIndex(
             (v) => v.name === pkg && v.version === version
           );
