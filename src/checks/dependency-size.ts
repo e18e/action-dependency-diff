@@ -7,12 +7,47 @@ import {
 } from '../npm.js';
 import {formatBytes} from '../common.js';
 
+async function removeUnsupportedOptionalDependencies(
+  lockFile: ParsedLockFile,
+  versionInfo: Array<{name: string; version: string; isNewPackage?: boolean}>
+): Promise<void> {
+  const allOptionalVersions = new Map<string, Set<string>>();
+
+  for (const pkg of lockFile.packages) {
+    traverse(pkg, {
+      optionalDependency: (node) => {
+        const entry = allOptionalVersions.get(node.name) ?? new Set<string>();
+        entry.add(node.version);
+        allOptionalVersions.set(node.name, entry);
+      }
+    });
+  }
+
+  for (const [pkg, versions] of allOptionalVersions) {
+    for (const version of versions) {
+      const pkgMeta = await fetchPackageMetadata(pkg, version);
+      if (
+        pkgMeta &&
+        !isSupportedArchitecture(pkgMeta, 'linux', 'x64', 'glibc')
+      ) {
+        const newEntry = versionInfo.findIndex(
+          (v) => v.name === pkg && v.version === version
+        );
+        if (newEntry !== -1) {
+          versionInfo.splice(newEntry, 1);
+        }
+      }
+    }
+  }
+}
+
 export async function scanForDependencySize(
   messages: string[],
   threshold: number,
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>,
-  currentLockFile: ParsedLockFile
+  currentLockFile: ParsedLockFile,
+  baseLockFile: ParsedLockFile
 ): Promise<void> {
   const newVersions: Array<{
     name: string;
@@ -52,34 +87,11 @@ export async function scanForDependencySize(
   }
 
   if (newVersions.length > 0) {
-    const allOptionalVersions = new Map<string, Set<string>>();
+    await removeUnsupportedOptionalDependencies(currentLockFile, newVersions);
+  }
 
-    for (const pkg of currentLockFile.packages) {
-      traverse(pkg, {
-        optionalDependency: (node) => {
-          const entry = allOptionalVersions.get(node.name) ?? new Set<string>();
-          entry.add(node.version);
-          allOptionalVersions.set(node.name, entry);
-        }
-      });
-    }
-
-    for (const [pkg, versions] of allOptionalVersions) {
-      for (const version of versions) {
-        const pkgMeta = await fetchPackageMetadata(pkg, version);
-        if (
-          pkgMeta &&
-          !isSupportedArchitecture(pkgMeta, 'linux', 'x64', 'glibc')
-        ) {
-          const entry = newVersions.findIndex(
-            (v) => v.name === pkg && v.version === version
-          );
-          if (entry !== -1) {
-            newVersions.splice(entry, 1);
-          }
-        }
-      }
-    }
+  if (removedVersions.length > 0) {
+    await removeUnsupportedOptionalDependencies(baseLockFile, removedVersions);
   }
 
   core.info(`Found ${newVersions.length} new package versions`);
@@ -101,20 +113,31 @@ export async function scanForDependencySize(
       }`
     );
 
-    if (sizeData !== null && sizeData.totalSize >= threshold) {
+    const shouldShow =
+      threshold === -1 ||
+      (sizeData !== null && sizeData.totalSize >= threshold);
+
+    if (shouldShow && sizeData !== null) {
       const packageRows = Array.from(sizeData.packageSizes.entries())
         .sort(([, a], [, b]) => b - a)
         .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
         .join('\n');
 
+      let alert = '';
+      if (threshold !== -1 && sizeData.totalSize >= threshold) {
+        alert = `> [!WARNING]\n> This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.\n\n`;
+      } else if (sizeData.totalSize < 0) {
+        alert = `> [!NOTE]\n> :tada: This PR removes ${formatBytes(Math.abs(sizeData.totalSize))} of dependencies.\n\n`;
+      }
+
       messages.push(
-        `## ⚠️ Large Dependency Size Increase
+        `## 📊 Dependency Size Changes
 
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
-
-| 📦 Package | 📏 Size |
+${alert}| 📦 Package | 📏 Size |
 | --- | --- |
-${packageRows}`
+${packageRows}
+
+**Total size change:** ${formatBytes(sizeData.totalSize)}`
       );
     }
   } catch (err) {
