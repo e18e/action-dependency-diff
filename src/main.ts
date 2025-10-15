@@ -106,7 +106,9 @@ async function run(): Promise<void> {
         lockfileFilename,
         currentPackageJson ?? undefined
       );
-      core.info(`Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`);
+      core.info(
+        `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
+      );
     } catch (err) {
       core.setFailed(`Failed to parse current lockfile: ${err}`);
       return;
@@ -117,7 +119,9 @@ async function run(): Promise<void> {
         lockfileFilename,
         basePackageJson ?? undefined
       );
-      core.info(`Parsed base lockfile with ${parsedBaseLock.packages.length} packages`);
+      core.info(
+        `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
+      );
     } catch (err) {
       core.setFailed(`Failed to parse base lockfile: ${err}`);
       return;
