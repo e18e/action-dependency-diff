@@ -229,10 +229,10 @@ export function isSupportedArchitecture(
   libc: string
 ): boolean {
   const osMatches =
-    pkg.os === undefined || (pkg.os.length > 0 && pkg.os.includes(os));
+    pkg.os === undefined || pkg.os.length === 0 || pkg.os.includes(os);
   const cpuMatches =
-    pkg.cpu === undefined || (pkg.cpu.length > 0 && pkg.cpu.includes(cpu));
+    pkg.cpu === undefined || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
   const libcMatches =
-    pkg.libc === undefined || (pkg.libc.length > 0 && pkg.libc.includes(libc));
+    pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }

@@ -24631,9 +24631,9 @@ function getDependenciesFromPackageJson(pkg, types) {
   return result;
 }
 function isSupportedArchitecture(pkg, os, cpu, libc) {
-  const osMatches = pkg.os === void 0 || pkg.os.length > 0 && pkg.os.includes(os);
-  const cpuMatches = pkg.cpu === void 0 || pkg.cpu.length > 0 && pkg.cpu.includes(cpu);
-  const libcMatches = pkg.libc === void 0 || pkg.libc.length > 0 && pkg.libc.includes(libc);
+  const osMatches = pkg.os === void 0 || pkg.os.length === 0 || pkg.os.includes(os);
+  const cpuMatches = pkg.cpu === void 0 || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
+  const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }
 
