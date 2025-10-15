@@ -44,6 +44,9 @@ inputs:
     description: 'Detect modules which have community suggested alternatives'
     required: false
     default: true
+  work-dir:
+    description: 'Working directory'
+    required: false
 
 runs:
   using: node24

@@ -2,6 +2,7 @@ import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
+import {join} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {detectLockfile, computeDependencyVersions} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
@@ -19,7 +20,10 @@ const COMMENT_TAG = '<!-- dependency-diff-action -->';
 
 async function run(): Promise<void> {
   try {
-    const workspacePath = process.env.GITHUB_WORKSPACE || process.cwd();
+    const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
+    const workDir = core.getInput('work-dir', { });
+    const workspacePath = workDir ? join(baseWorkspace, workDir) : baseWorkspace;
+
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
