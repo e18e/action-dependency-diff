@@ -24900,27 +24900,6 @@ function formatBytes(bytes) {
 async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile) {
   const newVersions = [];
   const removedVersions = [];
-  const skippedVersions = /* @__PURE__ */ new Map();
-  const allOptionalVersions = /* @__PURE__ */ new Map();
-  for (const pkg of currentLockFile.packages) {
-    traverse(pkg, {
-      optionalDependency: (node) => {
-        const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
-        entry.add(node.version);
-        allOptionalVersions.set(node.name, entry);
-      }
-    });
-  }
-  for (const [pkg, versions] of allOptionalVersions) {
-    for (const version of versions) {
-      const pkgMeta = await fetchPackageMetadata(pkg, version);
-      if (pkgMeta && (pkgMeta.os && pkgMeta.os.length > 0 && !pkgMeta.os.includes("linux") || pkgMeta.cpu && pkgMeta.cpu.length > 0 && !pkgMeta.cpu.includes("x64"))) {
-        const entry = skippedVersions.get(pkg) ?? /* @__PURE__ */ new Set();
-        entry.add(version);
-        skippedVersions.set(pkg, entry);
-      }
-    }
-  }
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
     for (const version of currentVersionSet) {
@@ -24941,6 +24920,31 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
           name: packageName,
           version
         });
+      }
+    }
+  }
+  if (newVersions.length > 0) {
+    const allOptionalVersions = /* @__PURE__ */ new Map();
+    for (const pkg of currentLockFile.packages) {
+      traverse(pkg, {
+        optionalDependency: (node) => {
+          const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
+          entry.add(node.version);
+          allOptionalVersions.set(node.name, entry);
+        }
+      });
+    }
+    for (const [pkg, versions] of allOptionalVersions) {
+      for (const version of versions) {
+        const pkgMeta = await fetchPackageMetadata(pkg, version);
+        if (pkgMeta && (pkgMeta.os && pkgMeta.os.length > 0 && !pkgMeta.os.includes("linux") || pkgMeta.cpu && pkgMeta.cpu.length > 0 && !pkgMeta.cpu.includes("x64"))) {
+          const entry = newVersions.findIndex(
+            (v) => v.name === pkg && v.version === version
+          );
+          if (entry !== -1) {
+            newVersions.splice(entry, 1);
+          }
+        }
       }
     }
   }

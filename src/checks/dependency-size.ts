@@ -22,37 +22,6 @@ export async function scanForDependencySize(
     name: string;
     version: string;
   }> = [];
-  const skippedVersions = new Map<string, Set<string>>();
-  const allOptionalVersions = new Map<string, Set<string>>();
-
-  for (const pkg of currentLockFile.packages) {
-    traverse(pkg, {
-      optionalDependency: (node) => {
-        const entry = allOptionalVersions.get(node.name) ?? new Set<string>();
-        entry.add(node.version);
-        allOptionalVersions.set(node.name, entry);
-      }
-    });
-  }
-
-  for (const [pkg, versions] of allOptionalVersions) {
-    for (const version of versions) {
-      const pkgMeta = await fetchPackageMetadata(pkg, version);
-      if (
-        pkgMeta &&
-        ((pkgMeta.os &&
-          pkgMeta.os.length > 0 &&
-          !pkgMeta.os.includes('linux')) ||
-          (pkgMeta.cpu &&
-            pkgMeta.cpu.length > 0 &&
-            !pkgMeta.cpu.includes('x64')))
-      ) {
-        const entry = skippedVersions.get(pkg) ?? new Set<string>();
-        entry.add(version);
-        skippedVersions.set(pkg, entry);
-      }
-    }
-  }
 
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
@@ -77,6 +46,42 @@ export async function scanForDependencySize(
           name: packageName,
           version: version
         });
+      }
+    }
+  }
+
+  if (newVersions.length > 0) {
+    const allOptionalVersions = new Map<string, Set<string>>();
+
+    for (const pkg of currentLockFile.packages) {
+      traverse(pkg, {
+        optionalDependency: (node) => {
+          const entry = allOptionalVersions.get(node.name) ?? new Set<string>();
+          entry.add(node.version);
+          allOptionalVersions.set(node.name, entry);
+        }
+      });
+    }
+
+    for (const [pkg, versions] of allOptionalVersions) {
+      for (const version of versions) {
+        const pkgMeta = await fetchPackageMetadata(pkg, version);
+        if (
+          pkgMeta &&
+          ((pkgMeta.os &&
+            pkgMeta.os.length > 0 &&
+            !pkgMeta.os.includes('linux')) ||
+            (pkgMeta.cpu &&
+              pkgMeta.cpu.length > 0 &&
+              !pkgMeta.cpu.includes('x64')))
+        ) {
+          const entry = newVersions.findIndex(
+            (v) => v.name === pkg && v.version === version
+          );
+          if (entry !== -1) {
+            newVersions.splice(entry, 1);
+          }
+        }
       }
     }
   }
