@@ -4,6 +4,8 @@ import type {PackageJson} from 'pkg-types';
 export interface PackageMetadata {
   name: string;
   version: string;
+  os?: string[];
+  cpu?: string[];
   dist?: {
     unpackedSize?: number;
     attestations?: {
