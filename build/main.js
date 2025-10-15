@@ -25121,7 +25121,7 @@ async function run() {
       return;
     }
     core7.info(
-      `Comparing package-lock.json between ${baseRef} and ${currentRef}`
+      `Comparing package lockfiles between ${baseRef} and ${currentRef}`
     );
     const basePackageLock = getFileFromRef(
       baseRef,
@@ -25129,18 +25129,20 @@ async function run() {
       workspacePath
     );
     if (!basePackageLock) {
-      core7.info("No package-lock.json found in base ref");
+      core7.info("No package lockfile found in base ref");
       return;
     }
+    core7.info(`Found package lockfile in base ref: ${basePackageLock}`);
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
       workspacePath
     );
     if (!currentPackageLock) {
-      core7.info("No package-lock.json found in current ref");
+      core7.info("No package lockfile found in current ref");
       return;
     }
+    core7.info(`Found package lockfile in current ref: ${currentPackageLock}`);
     const basePackageJson = tryGetJSONFromRef(
       baseRef,
       "package.json",
