@@ -23889,6 +23889,7 @@ var require_github = __commonJS({
 var core7 = __toESM(require_core(), 1);
 var github2 = __toESM(require_github(), 1);
 import * as process2 from "process";
+import { join as join2 } from "node:path";
 
 // node_modules/lockparse/lib/types.js
 var dependencyTypes = [
@@ -25084,10 +25085,14 @@ ${packRows}`
 var COMMENT_TAG = "<!-- dependency-diff-action -->";
 async function run() {
   try {
-    const workspacePath = process2.env.GITHUB_WORKSPACE || process2.cwd();
+    const baseWorkspace = process2.env.GITHUB_WORKSPACE || process2.cwd();
+    const workDir = core7.getInput("work-dir", {});
+    const workspacePath = workDir ? join2(baseWorkspace, workDir) : baseWorkspace;
+    core7.info(`Workspace path is ${workspacePath}`);
     const baseRef = getBaseRef();
     const currentRef = github2.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
+    core7.info(`Detected lockfile ${lockfilePath}`);
     const token = core7.getInput("github-token", { required: true });
     const prNumber = parseInt(core7.getInput("pr-number", { required: true }), 10);
     const detectReplacements = core7.getBooleanInput("detect-replacements");
