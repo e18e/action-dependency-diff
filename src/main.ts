@@ -23,10 +23,13 @@ async function run(): Promise<void> {
     const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
     const workDir = core.getInput('work-dir', { });
     const workspacePath = workDir ? join(baseWorkspace, workDir) : baseWorkspace;
+    core.info(`Workspace path is ${workspacePath}`);
 
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
     const lockfilePath = detectLockfile(workspacePath);
+    core.info(`Detected lockfile ${lockfilePath}`);
+
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
     const detectReplacements = core.getBooleanInput('detect-replacements');
