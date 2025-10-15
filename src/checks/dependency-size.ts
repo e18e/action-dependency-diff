@@ -135,7 +135,9 @@ export async function scanForDependencySize(
 
 ${alert}| 📦 Package | 📏 Size |
 | --- | --- |
-${packageRows}`
+${packageRows}
+
+**Total size change:** ${formatBytes(sizeData.totalSize)}`
       );
     }
   } catch (err) {

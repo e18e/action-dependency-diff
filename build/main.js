@@ -24993,7 +24993,9 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
 
 ${alert}| \u{1F4E6} Package | \u{1F4CF} Size |
 | --- | --- |
-${packageRows}`
+${packageRows}
+
+**Total size change:** ${formatBytes(sizeData.totalSize)}`
       );
     }
   } catch (err) {
