@@ -25159,6 +25159,7 @@ async function run() {
         lockfilePath,
         currentPackageJson ?? void 0
       );
+      core7.info(`Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`);
     } catch (err) {
       core7.setFailed(`Failed to parse current lockfile: ${err}`);
       return;
@@ -25169,6 +25170,7 @@ async function run() {
         lockfilePath,
         basePackageJson ?? void 0
       );
+      core7.info(`Parsed base lockfile with ${parsedBaseLock.packages.length} packages`);
     } catch (err) {
       core7.setFailed(`Failed to parse base lockfile: ${err}`);
       return;
