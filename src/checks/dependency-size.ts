@@ -69,7 +69,7 @@ export async function scanForDependencySize(
         const pkgMeta = await fetchPackageMetadata(pkg, version);
         if (
           pkgMeta &&
-          isSupportedArchitecture(pkgMeta, 'linux', 'x64', 'glibc')
+          !isSupportedArchitecture(pkgMeta, 'linux', 'x64', 'glibc')
         ) {
           const entry = newVersions.findIndex(
             (v) => v.name === pkg && v.version === version

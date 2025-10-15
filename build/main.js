@@ -24943,7 +24943,7 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     for (const [pkg, versions] of allOptionalVersions) {
       for (const version of versions) {
         const pkgMeta = await fetchPackageMetadata(pkg, version);
-        if (pkgMeta && isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
+        if (pkgMeta && !isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
           const entry = newVersions.findIndex(
             (v) => v.name === pkg && v.version === version
           );
