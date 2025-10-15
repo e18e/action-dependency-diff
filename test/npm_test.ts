@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import type {PackageJson} from 'pkg-types';
 import {
   describe,
   it,
@@ -14,6 +15,7 @@ import {
   getProvenance,
   getTrustLevel,
   getProvenanceForPackageVersions,
+  isSupportedArchitecture,
   getMinTrustLevel,
   getDependenciesFromPackageJson,
   type ProvenanceStatus,
@@ -292,5 +294,96 @@ describe('getDependenciesFromPackageJson', () => {
         ['dev-package', '3.0.0']
       ])
     );
+  });
+});
+
+describe('isSupportedArchitecture', () => {
+  it('returns true if no os, cpu, or libc fields are present', () => {
+    const pkg: PackageJson = {
+      name: 'some-package'
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+  });
+
+  it('returns true if os matches, cpu/libc empty', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      os: ['linux', 'darwin']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'darwin', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'win32', 'x64', 'glibc')).toBe(false);
+  });
+
+  it('returns true if cpu matches, os/libc empty', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      cpu: ['x64', 'arm64']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'arm64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'ia32', 'glibc')).toBe(false);
+  });
+
+  it('returns true if libc matches, os/cpu empty', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      libc: ['glibc', 'musl']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'musl')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'uclibc')).toBe(false);
+  });
+
+  it('returns true if all match', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      os: ['linux', 'darwin'],
+      cpu: ['x64', 'arm64'],
+      libc: ['glibc', 'musl']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'darwin', 'arm64', 'musl')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'ia32', 'glibc')).toBe(false);
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'uclibc')).toBe(false);
+    expect(isSupportedArchitecture(pkg, 'win32', 'x64', 'glibc')).toBe(false);
+  });
+
+  it('returns true if os is empty array', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      os: [],
+      cpu: ['x64'],
+      libc: ['glibc']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'darwin', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'win32', 'x64', 'glibc')).toBe(true);
+  });
+
+  it('returns true if cpu is empty array', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      os: ['linux'],
+      cpu: [],
+      libc: ['glibc']
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'arm64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'ia32', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'darwin', 'x64', 'glibc')).toBe(false);
+  });
+
+  it('returns true if libc is empty array', () => {
+    const pkg: PackageJson = {
+      name: 'some-package',
+      os: ['linux'],
+      cpu: ['x64'],
+      libc: []
+    };
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'glibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'musl')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'linux', 'x64', 'uclibc')).toBe(true);
+    expect(isSupportedArchitecture(pkg, 'darwin', 'x64', 'glibc')).toBe(false);
   });
 });

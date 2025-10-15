@@ -24375,6 +24375,25 @@ function processDependencies(rootInfo, root, packageMap, prefix) {
   }
 }
 
+// node_modules/lockparse/lib/traverse.js
+var visitorKeys = [
+  ["dependency", "dependencies"],
+  ["devDependency", "devDependencies"],
+  ["peerDependency", "peerDependencies"],
+  ["optionalDependency", "optionalDependencies"]
+];
+function traverse(node, visitor) {
+  for (const [visitorKey, nodeKey] of visitorKeys) {
+    if (visitor[visitorKey]) {
+      for (const dep of node[nodeKey]) {
+        if (visitor[visitorKey](dep, node) !== false) {
+          traverse(dep, visitor);
+        }
+      }
+    }
+  }
+}
+
 // node_modules/lockparse/lib/main.js
 var typeMap = {
   "package-lock.json": "npm",
@@ -24610,6 +24629,12 @@ function getDependenciesFromPackageJson(pkg, types) {
     }
   }
   return result;
+}
+function isSupportedArchitecture(pkg, os, cpu, libc) {
+  const osMatches = pkg.os === void 0 || pkg.os.length === 0 || pkg.os.includes(os);
+  const cpuMatches = pkg.cpu === void 0 || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
+  const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
+  return osMatches && cpuMatches && libcMatches;
 }
 
 // src/packs.ts
@@ -24878,7 +24903,7 @@ function formatBytes(bytes) {
 }
 
 // src/checks/dependency-size.ts
-async function scanForDependencySize(messages, threshold, currentDeps, baseDeps) {
+async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile) {
   const newVersions = [];
   const removedVersions = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -24901,6 +24926,31 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps)
           name: packageName,
           version
         });
+      }
+    }
+  }
+  if (newVersions.length > 0) {
+    const allOptionalVersions = /* @__PURE__ */ new Map();
+    for (const pkg of currentLockFile.packages) {
+      traverse(pkg, {
+        optionalDependency: (node) => {
+          const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
+          entry.add(node.version);
+          allOptionalVersions.set(node.name, entry);
+        }
+      });
+    }
+    for (const [pkg, versions] of allOptionalVersions) {
+      for (const version of versions) {
+        const pkgMeta = await fetchPackageMetadata(pkg, version);
+        if (pkgMeta && !isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
+          const entry = newVersions.findIndex(
+            (v) => v.name === pkg && v.version === version
+          );
+          if (entry !== -1) {
+            newVersions.splice(entry, 1);
+          }
+        }
       }
     }
   }
@@ -25113,7 +25163,13 @@ async function run() {
       baseDeps
     );
     scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
-    await scanForDependencySize(messages, sizeThreshold, currentDeps, baseDeps);
+    await scanForDependencySize(
+      messages,
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock
+    );
     await scanForProvenance(messages, currentDeps, baseDeps);
     const basePackagesPattern = core7.getInput("base-packages");
     const sourcePackagesPattern = core7.getInput("source-packages");

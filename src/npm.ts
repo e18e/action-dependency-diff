@@ -4,6 +4,9 @@ import type {PackageJson} from 'pkg-types';
 export interface PackageMetadata {
   name: string;
   version: string;
+  os?: string[];
+  cpu?: string[];
+  libc?: string[];
   dist?: {
     unpackedSize?: number;
     attestations?: {
@@ -217,4 +220,19 @@ export function getDependenciesFromPackageJson(
   }
 
   return result;
+}
+
+export function isSupportedArchitecture(
+  pkg: PackageJson,
+  os: string,
+  cpu: string,
+  libc: string
+): boolean {
+  const osMatches =
+    pkg.os === undefined || pkg.os.length === 0 || pkg.os.includes(os);
+  const cpuMatches =
+    pkg.cpu === undefined || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
+  const libcMatches =
+    pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
+  return osMatches && cpuMatches && libcMatches;
 }
