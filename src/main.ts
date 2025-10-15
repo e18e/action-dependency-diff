@@ -69,7 +69,7 @@ async function run(): Promise<void> {
     const basePackageLock = getFileFromRef(
       baseRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!basePackageLock) {
       core.info('No package lockfile found in base ref');
@@ -79,7 +79,7 @@ async function run(): Promise<void> {
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!currentPackageLock) {
       core.info('No package lockfile found in current ref');

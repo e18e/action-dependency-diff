@@ -25128,7 +25128,7 @@ async function run() {
     const basePackageLock = getFileFromRef(
       baseRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!basePackageLock) {
       core7.info("No package lockfile found in base ref");
@@ -25137,7 +25137,7 @@ async function run() {
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!currentPackageLock) {
       core7.info("No package lockfile found in current ref");
