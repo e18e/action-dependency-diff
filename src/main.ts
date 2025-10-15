@@ -208,7 +208,12 @@ async function run(): Promise<void> {
       }
     )) {
       // Search for the comment with the unique tag
-      const comment = comments.find((c) => c.body?.includes(COMMENT_TAG));
+      const comment = comments.find(
+        (c) =>
+          c.user &&
+          c.user.login === 'github-actions[bot]' &&
+          c.body?.includes(COMMENT_TAG)
+      );
       if (comment) {
         existingCommentId = comment.id;
         break;

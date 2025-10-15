@@ -25228,7 +25228,9 @@ async function run() {
         per_page: perPage
       }
     )) {
-      const comment = comments.find((c) => c.body?.includes(COMMENT_TAG));
+      const comment = comments.find(
+        (c) => c.user && c.user.login === "github-actions[bot]" && c.body?.includes(COMMENT_TAG)
+      );
       if (comment) {
         existingCommentId = comment.id;
         break;
