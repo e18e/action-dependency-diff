@@ -24463,7 +24463,8 @@ function getFileFromRef(ref, filePath, cwd2) {
     const content = execFileSync("git", ["show", `${ref}:${filePath}`], {
       encoding: "utf8",
       cwd: cwd2,
-      stdio: "pipe"
+      stdio: "pipe",
+      maxBuffer: 1e10
     });
     return content;
   } catch {

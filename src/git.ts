@@ -11,7 +11,8 @@ export function getFileFromRef(
     const content = execFileSync('git', ['show', `${ref}:${filePath}`], {
       encoding: 'utf8',
       cwd,
-      stdio: 'pipe'
+      stdio: 'pipe',
+      maxBuffer: 10000000000
     });
     return content;
   } catch {
