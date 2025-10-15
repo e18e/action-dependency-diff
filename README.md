@@ -76,7 +76,7 @@ If you'd like to always report install size, whether it reduces or increases, yo
 - name: Create Diff
   uses: e18e/action-dependency-diff@v1
   with:
-    size-threshold: '-1'
+    size-threshold: -1
 ```
 
 ## Package Bundle Analysis
