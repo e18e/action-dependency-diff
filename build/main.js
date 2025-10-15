@@ -24903,7 +24903,32 @@ function formatBytes(bytes) {
 }
 
 // src/checks/dependency-size.ts
-async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile) {
+async function removeUnsupportedOptionalDependencies(lockFile, versionInfo) {
+  const allOptionalVersions = /* @__PURE__ */ new Map();
+  for (const pkg of lockFile.packages) {
+    traverse(pkg, {
+      optionalDependency: (node) => {
+        const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
+        entry.add(node.version);
+        allOptionalVersions.set(node.name, entry);
+      }
+    });
+  }
+  for (const [pkg, versions] of allOptionalVersions) {
+    for (const version of versions) {
+      const pkgMeta = await fetchPackageMetadata(pkg, version);
+      if (pkgMeta && !isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
+        const newEntry = versionInfo.findIndex(
+          (v) => v.name === pkg && v.version === version
+        );
+        if (newEntry !== -1) {
+          versionInfo.splice(newEntry, 1);
+        }
+      }
+    }
+  }
+}
+async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile, baseLockFile) {
   const newVersions = [];
   const removedVersions = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -24930,29 +24955,10 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     }
   }
   if (newVersions.length > 0) {
-    const allOptionalVersions = /* @__PURE__ */ new Map();
-    for (const pkg of currentLockFile.packages) {
-      traverse(pkg, {
-        optionalDependency: (node) => {
-          const entry = allOptionalVersions.get(node.name) ?? /* @__PURE__ */ new Set();
-          entry.add(node.version);
-          allOptionalVersions.set(node.name, entry);
-        }
-      });
-    }
-    for (const [pkg, versions] of allOptionalVersions) {
-      for (const version of versions) {
-        const pkgMeta = await fetchPackageMetadata(pkg, version);
-        if (pkgMeta && !isSupportedArchitecture(pkgMeta, "linux", "x64", "glibc")) {
-          const entry = newVersions.findIndex(
-            (v) => v.name === pkg && v.version === version
-          );
-          if (entry !== -1) {
-            newVersions.splice(entry, 1);
-          }
-        }
-      }
-    }
+    await removeUnsupportedOptionalDependencies(currentLockFile, newVersions);
+  }
+  if (removedVersions.length > 0) {
+    await removeUnsupportedOptionalDependencies(baseLockFile, removedVersions);
   }
   core5.info(`Found ${newVersions.length} new package versions`);
   core5.info(`Found ${removedVersions.length} removed package versions.`);
@@ -25179,7 +25185,8 @@ async function run() {
       sizeThreshold,
       currentDeps,
       baseDeps,
-      parsedCurrentLock
+      parsedCurrentLock,
+      parsedBaseLock
     );
     await scanForProvenance(messages, currentDeps, baseDeps);
     const basePackagesPattern = core7.getInput("base-packages");

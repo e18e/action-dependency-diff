@@ -135,7 +135,8 @@ async function run(): Promise<void> {
       sizeThreshold,
       currentDeps,
       baseDeps,
-      parsedCurrentLock
+      parsedCurrentLock,
+      parsedBaseLock
     );
     await scanForProvenance(messages, currentDeps, baseDeps);
 
