@@ -24967,14 +24967,25 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     core5.info(
       `Total dependency size increase: ${sizeData ? formatBytes(sizeData.totalSize) : "unknown"}`
     );
-    if (sizeData !== null && sizeData.totalSize >= threshold) {
+    const shouldShow = threshold === -1 || sizeData !== null && sizeData.totalSize >= threshold;
+    if (shouldShow && sizeData !== null) {
       const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => b - a).map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`).join("\n");
+      let alert = "";
+      if (threshold !== -1 && sizeData.totalSize >= threshold) {
+        alert = `> [!WARNING]
+> This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
+
+`;
+      } else if (sizeData.totalSize < 0) {
+        alert = `> [!NOTE]
+> :tada: This PR removes ${formatBytes(Math.abs(sizeData.totalSize))} of dependencies.
+
+`;
+      }
       messages.push(
-        `## \u26A0\uFE0F Large Dependency Size Increase
+        `## \u{1F4CA} Dependency Size Changes
 
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
-
-| \u{1F4E6} Package | \u{1F4CF} Size |
+${alert}| \u{1F4E6} Package | \u{1F4CF} Size |
 | --- | --- |
 ${packageRows}`
       );

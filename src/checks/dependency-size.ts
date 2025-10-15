@@ -101,18 +101,27 @@ export async function scanForDependencySize(
       }`
     );
 
-    if (sizeData !== null && sizeData.totalSize >= threshold) {
+    const shouldShow =
+      threshold === -1 ||
+      (sizeData !== null && sizeData.totalSize >= threshold);
+
+    if (shouldShow && sizeData !== null) {
       const packageRows = Array.from(sizeData.packageSizes.entries())
         .sort(([, a], [, b]) => b - a)
         .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
         .join('\n');
 
+      let alert = '';
+      if (threshold !== -1 && sizeData.totalSize >= threshold) {
+        alert = `> [!WARNING]\n> This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.\n\n`;
+      } else if (sizeData.totalSize < 0) {
+        alert = `> [!NOTE]\n> :tada: This PR removes ${formatBytes(Math.abs(sizeData.totalSize))} of dependencies.\n\n`;
+      }
+
       messages.push(
-        `## ⚠️ Large Dependency Size Increase
+        `## 📊 Dependency Size Changes
 
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
-
-| 📦 Package | 📏 Size |
+${alert}| 📦 Package | 📏 Size |
 | --- | --- |
 ${packageRows}`
       );
