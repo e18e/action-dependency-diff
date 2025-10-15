@@ -7,15 +7,17 @@ export function getFileFromRef(
   filePath: string,
   cwd: string
 ): string | null {
+  const refFilePath = `${ref}:${filePath}`;
   try {
-    const content = execFileSync('git', ['show', `${ref}:${filePath}`], {
+    const content = execFileSync('git', ['show', refFilePath], {
       encoding: 'utf8',
       cwd,
       stdio: 'pipe',
-      maxBuffer: 10000000000
+      maxBuffer: 1024 * 1024 * 100
     });
     return content;
-  } catch {
+  } catch (e) {
+    core.error(`Failed to get file from ref "${refFilePath}": ${e}`);
     return null;
   }
 }

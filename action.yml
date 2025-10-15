@@ -44,8 +44,8 @@ inputs:
     description: 'Detect modules which have community suggested alternatives'
     required: false
     default: true
-  work-dir:
-    description: 'Working directory'
+  working-directory:
+    description: 'Working directory to scan for package lock file'
     required: false
 
 runs:

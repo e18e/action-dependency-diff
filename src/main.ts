@@ -21,8 +21,8 @@ const COMMENT_TAG = '<!-- dependency-diff-action -->';
 async function run(): Promise<void> {
   try {
     const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
-    const workDir = core.getInput('work-dir', { });
-    const workspacePath = workDir ? join(baseWorkspace, workDir) : baseWorkspace;
+    const workDir = core.getInput('working-directory') || '.';
+    const workspacePath = join(baseWorkspace, workDir);
     core.info(`Workspace path is ${workspacePath}`);
 
     const baseRef = getBaseRef();
@@ -59,7 +59,7 @@ async function run(): Promise<void> {
       core.info('No lockfile detected in the workspace. Exiting.');
       return;
     }
-    const lockfilePath = workDir ? join(workDir, lockfileFilename || '') : lockfileFilename;
+    const lockfilePath = join(workDir, lockfileFilename);
     core.info(`Using lockfile: ${lockfilePath}`);
 
     core.info(
