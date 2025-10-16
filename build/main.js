@@ -24461,13 +24461,12 @@ import { execFileSync } from "child_process";
 function getFileFromRef(ref, filePath, cwd2) {
   const refFilePath = `${ref}:${filePath}`;
   try {
-    const content = execFileSync("git", ["show", refFilePath], {
+    return execFileSync("git", ["show", refFilePath], {
       encoding: "utf8",
       cwd: cwd2,
       stdio: "pipe",
       maxBuffer: 1024 * 1024 * 100
     });
-    return content;
   } catch (e) {
     core.error(`Failed to get file from ref "${refFilePath}": ${e}`);
     return null;
@@ -24478,7 +24477,9 @@ function tryGetJSONFromRef(ref, filePath, cwd2) {
   if (content) {
     try {
       return JSON.parse(content);
-    } catch {
+    } catch (e) {
+      const refFilePath = `${ref}:${filePath}`;
+      core.error(`Failed to get json from ref "${refFilePath}": ${e}`);
       return null;
     }
   }
