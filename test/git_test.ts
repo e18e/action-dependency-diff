@@ -12,7 +12,7 @@ import * as github from '@actions/github';
 import * as process from 'process';
 import {fileURLToPath} from 'node:url';
 import * as path from 'node:path';
-import * as importedCore from '@actions/core';
+import * as core from '@actions/core';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.join(currentDir, '..');
@@ -69,10 +69,14 @@ describe('getBaseRef', () => {
 });
 
 describe('getFileFromRef', () => {
-  let errorSpy: MockInstance<(typeof importedCore)['error']>;
+  let errorSpy: MockInstance<(typeof core)['error']>;
 
   beforeEach(() => {
-    errorSpy = vi.spyOn(importedCore, 'error');
+    vi.mock(import('@actions/core'), async (importModule) => {
+      const mod = await importModule();
+      return {...mod, error: vi.fn()};
+    });
+    errorSpy = vi.mocked(core.error);
   });
 
   afterEach(() => {
@@ -99,10 +103,14 @@ describe('getFileFromRef', () => {
 });
 
 describe('tryGetJSONFromRef', () => {
-  let errorSpy: MockInstance<(typeof importedCore)['error']>;
+  let errorSpy: MockInstance<(typeof core)['error']>;
 
   beforeEach(() => {
-    errorSpy = vi.spyOn(importedCore, 'error');
+    vi.mock(import('@actions/core'), async (importModule) => {
+      const mod = await importModule();
+      return {...mod, error: vi.fn()};
+    });
+    errorSpy = vi.mocked(core.error);
   });
 
   afterEach(() => {
