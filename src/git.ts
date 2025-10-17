@@ -7,14 +7,16 @@ export function getFileFromRef(
   filePath: string,
   cwd: string
 ): string | null {
+  const refFilePath = `${ref}:${filePath}`;
   try {
-    const content = execFileSync('git', ['show', `${ref}:${filePath}`], {
+    return execFileSync('git', ['show', refFilePath], {
       encoding: 'utf8',
       cwd,
-      stdio: 'pipe'
+      stdio: 'pipe',
+      maxBuffer: 1024 * 1024 * 100
     });
-    return content;
-  } catch {
+  } catch (e) {
+    core.error(`Failed to get file from ref "${refFilePath}": ${e}`);
     return null;
   }
 }
@@ -28,7 +30,9 @@ export function tryGetJSONFromRef<T>(
   if (content) {
     try {
       return JSON.parse(content);
-    } catch {
+    } catch (e) {
+      const refFilePath = `${ref}:${filePath}`;
+      core.error(`Failed to get json from ref "${refFilePath}": ${e}`);
       return null;
     }
   }

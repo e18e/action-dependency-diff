@@ -37,18 +37,19 @@ jobs:
 
 ## Inputs
 
-| Name | Description | Required | Default |
-|------|-------------|----------|---------|
-| `base-ref` | Base ref to compare against (defaults to main or PR target) | No | Auto-detected from PR or `main` |
-| `github-token` | The GitHub token for authentication | Yes | `${{ github.token }}` |
-| `pr-number` | The number of the pull request to comment on | Yes | `${{ github.event.pull_request.number }}` |
-| `dependency-threshold` | Threshold for warning about significant increase in number of dependencies | No | `10` |
-| `size-threshold` | Threshold (in bytes) for warning about significant increase in package size | No | `100000` |
-| `duplicate-threshold` | Threshold for warning about packages with multiple versions | No | `1` |
-| `base-packages` | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`) | No | None |
-| `source-packages` | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`) | No | None |
-| `pack-size-threshold` | Threshold (in bytes) for warning about significant increase in total pack size | No | `50000` |
-| `detect-replacements` | Detect modules which have community suggested alternatives | No | `true` |
+| Name                   | Description                                                                    | Required | Default                                   |
+|------------------------|--------------------------------------------------------------------------------|----------|-------------------------------------------|
+| `base-ref`             | Base ref to compare against (defaults to main or PR target)                    | No       | Auto-detected from PR or `main`           |
+| `github-token`         | The GitHub token for authentication                                            | Yes      | `${{ github.token }}`                     |
+| `pr-number`            | The number of the pull request to comment on                                   | Yes      | `${{ github.event.pull_request.number }}` |
+| `dependency-threshold` | Threshold for warning about significant increase in number of dependencies     | No       | `10`                                      |
+| `size-threshold`       | Threshold (in bytes) for warning about significant increase in package size    | No       | `100000`                                  |
+| `duplicate-threshold`  | Threshold for warning about packages with multiple versions                    | No       | `1`                                       |
+| `base-packages`        | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)         | No       | None                                      |
+| `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)     | No       | None                                      |
+| `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size | No       | `50000`                                   |
+| `detect-replacements`  | Detect modules which have community suggested alternatives                     | No       | `true`                                    |
+| `working-directory`    | Working directory to scan for package lock file                                | No       | None                                      |
 
 ## Example with custom inputs
 

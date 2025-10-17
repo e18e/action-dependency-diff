@@ -2,6 +2,7 @@ import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
+import {join} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {detectLockfile, computeDependencyVersions} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
@@ -19,10 +20,16 @@ const COMMENT_TAG = '<!-- dependency-diff-action -->';
 
 async function run(): Promise<void> {
   try {
-    const workspacePath = process.env.GITHUB_WORKSPACE || process.cwd();
+    const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
+    const workDir = core.getInput('working-directory') || '.';
+    const workspacePath = join(baseWorkspace, workDir);
+    core.info(`Workspace path is ${workspacePath}`);
+
     const baseRef = getBaseRef();
     const currentRef = github.context.sha;
-    const lockfilePath = detectLockfile(workspacePath);
+    const lockfileFilename = detectLockfile(workspacePath);
+    core.info(`Detected lockfile ${lockfileFilename}`);
+
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
     const detectReplacements = core.getBooleanInput('detect-replacements');
@@ -48,32 +55,34 @@ async function run(): Promise<void> {
       return;
     }
 
-    if (!lockfilePath) {
+    if (!lockfileFilename) {
       core.info('No lockfile detected in the workspace. Exiting.');
       return;
     }
+    const lockfilePath = join(workDir, lockfileFilename);
+    core.info(`Using lockfile: ${lockfilePath}`);
 
     core.info(
-      `Comparing package-lock.json between ${baseRef} and ${currentRef}`
+      `Comparing package lockfiles between ${baseRef} and ${currentRef}`
     );
 
     const basePackageLock = getFileFromRef(
       baseRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!basePackageLock) {
-      core.info('No package-lock.json found in base ref');
+      core.info('No package lockfile found in base ref');
       return;
     }
 
     const currentPackageLock = getFileFromRef(
       currentRef,
       lockfilePath,
-      workspacePath
+      baseWorkspace
     );
     if (!currentPackageLock) {
-      core.info('No package-lock.json found in current ref');
+      core.info('No package lockfile found in current ref');
       return;
     }
 
@@ -94,8 +103,11 @@ async function run(): Promise<void> {
     try {
       parsedCurrentLock = await parseLockfile(
         currentPackageLock,
-        lockfilePath,
+        lockfileFilename,
         currentPackageJson ?? undefined
+      );
+      core.info(
+        `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
       );
     } catch (err) {
       core.setFailed(`Failed to parse current lockfile: ${err}`);
@@ -104,8 +116,11 @@ async function run(): Promise<void> {
     try {
       parsedBaseLock = await parseLockfile(
         basePackageLock,
-        lockfilePath,
+        lockfileFilename,
         basePackageJson ?? undefined
+      );
+      core.info(
+        `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
       );
     } catch (err) {
       core.setFailed(`Failed to parse base lockfile: ${err}`);
