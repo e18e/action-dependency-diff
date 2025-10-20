@@ -119,8 +119,11 @@ export async function scanForDependencySize(
 
     if (shouldShow && sizeData !== null) {
       const packageRows = Array.from(sizeData.packageSizes.entries())
-        .sort(([, a], [, b]) => b - a)
-        .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
+        .sort(([, a], [, b]) => (b ?? Infinity) - (a ?? Infinity))
+        .map(
+          ([pkg, size]) =>
+            `| ${pkg} | ${size === null ? '_Unknown_' : formatBytes(size)} |`
+        )
         .join('\n');
 
       let alert = '';
