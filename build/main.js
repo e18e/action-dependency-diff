@@ -24984,7 +24984,7 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     );
     const shouldShow = threshold === -1 || sizeData !== null && sizeData.totalSize >= threshold;
     if (shouldShow && sizeData !== null) {
-      const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => (b ?? Infinity) - (a ?? Infinity)).map(([pkg, size]) => `| ${pkg} | ${size === null ? "Unknown" : formatBytes(size)} |`).join("\n");
+      const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => (b ?? Infinity) - (a ?? Infinity)).map(([pkg, size]) => `| ${pkg} | ${size === null ? "_Unknown_" : formatBytes(size)} |`).join("\n");
       let alert = "";
       if (threshold !== -1 && sizeData.totalSize >= threshold) {
         alert = `> [!WARNING]

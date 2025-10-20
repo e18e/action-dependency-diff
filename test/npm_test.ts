@@ -19,7 +19,8 @@ import {
   getMinTrustLevel,
   getDependenciesFromPackageJson,
   type ProvenanceStatus,
-  type PackageMetadata
+  type PackageMetadata,
+  calculateTotalDependencySizeIncrease
 } from '../src/npm.js';
 
 describe('fetchPackageMetadata', () => {
@@ -68,6 +69,107 @@ describe('fetchPackageMetadata', () => {
     expect(result).toBeNull();
     expect(infoSpy).toHaveBeenCalledWith(
       'Failed to fetch metadata for some-package@1.0.0: Error: Network error'
+    );
+  });
+});
+
+const wrapMockMetadataResponse = (meta: any) =>
+  Promise.resolve(new Response(JSON.stringify(meta), {status: 200}));
+
+describe('calculateTotalDependencySizeIncrease', () => {
+  it('returns 0 for empty version list', async () => {
+    const output = await calculateTotalDependencySizeIncrease([], []);
+    expect(output?.totalSize).toEqual(0);
+    expect(output?.packageSizes).toEqual(new Map());
+  });
+
+  it('sums sizes of new-old versions correctly', async () => {
+    const mockMetadata1 = {
+      name: 'package-a',
+      version: '1.0.0',
+      dist: {
+        unpackedSize: 1500
+      }
+    };
+    const mockMetadata2 = {
+      name: 'package-b',
+      version: '2.0.0',
+      dist: {
+        unpackedSize: 2500
+      }
+    };
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    fetchMock.mockImplementation((url) => {
+      switch (url) {
+        case 'https://registry.npmjs.org/package-a/1.0.0':
+          return wrapMockMetadataResponse(mockMetadata1);
+        case 'https://registry.npmjs.org/package-b/2.0.0':
+          return wrapMockMetadataResponse(mockMetadata2);
+        default:
+          return Promise.resolve(new Response(null, {status: 404}));
+      }
+    });
+
+    const newVersions = [{name: 'package-a', version: '1.0.0'}];
+    const removedVersions = [{name: 'package-b', version: '2.0.0'}];
+    const output = await calculateTotalDependencySizeIncrease(
+      newVersions,
+      removedVersions
+    );
+    expect(output?.totalSize).toEqual(-1000);
+    expect(output?.packageSizes).toEqual(
+      new Map([
+        ['package-a@1.0.0', 1500],
+        ['package-b@2.0.0', -2500]
+      ])
+    );
+  });
+
+  it('handles missing unpackedSize gracefully', async () => {
+    const mockMetadataExists = {
+      name: 'package-a',
+      version: '1.0.0',
+      dist: {
+        unpackedSize: 1500
+      }
+    };
+    const mockMetadataMissing = {
+      name: 'package-c',
+      version: '1.0.0'
+      // No dist.unpackedSize
+    };
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch');
+    fetchMock.mockImplementation((url) => {
+      switch (url) {
+        case 'https://registry.npmjs.org/package-a/1.0.0':
+          return wrapMockMetadataResponse(mockMetadataExists);
+        case 'https://registry.npmjs.org/package-c/1.0.0':
+          return wrapMockMetadataResponse(mockMetadataMissing);
+        default:
+          return Promise.resolve(new Response(null, {status: 404}));
+      }
+    });
+
+    const newVersions = [
+      {name: 'package-a', version: '1.0.0'},
+      {name: 'package-c', version: '1.0.0'}
+    ];
+    const infoSpy = vi.mocked(core.info);
+    const output = await calculateTotalDependencySizeIncrease(newVersions, []);
+    expect(output?.totalSize).toEqual(1500);
+    expect(output?.packageSizes).toEqual(
+      new Map([
+        ['package-a@1.0.0', 1500],
+        ['package-c@1.0.0', null]
+      ])
+    );
+    expect(infoSpy).toHaveBeenCalledWith(
+      'Added 1500 bytes for package-a@1.0.0'
+    );
+    expect(infoSpy).toHaveBeenCalledWith(
+      'No unpacked size info for package-c@1.0.0, skipping'
     );
   });
 });
