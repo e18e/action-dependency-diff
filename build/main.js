@@ -24586,11 +24586,15 @@ async function calculateTotalDependencySizeIncrease(newVersions, removedVersions
       } else {
         totalSize += metadata.dist.unpackedSize;
         packageSizes.set(packageKey, metadata.dist.unpackedSize);
-        core2.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
+        core2.info(
+          `Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+        );
       }
       processedPackages.add(packageKey);
     } catch (e) {
-      core2.error(`Error fetching package metadata for dep ${packageKey}: ` + e.message);
+      core2.error(
+        `Error fetching package metadata for dep ${packageKey}: ` + e.message
+      );
     }
   }
   for (const dep of removedVersions) {
@@ -24612,7 +24616,9 @@ async function calculateTotalDependencySizeIncrease(newVersions, removedVersions
       }
       processedPackages.add(packageKey);
     } catch (e) {
-      core2.error(`Error fetching package metadata for dep ${packageKey}: ` + e.message);
+      core2.error(
+        `Error fetching package metadata for dep ${packageKey}: ` + e.message
+      );
     }
   }
   return { totalSize, packageSizes };
@@ -24984,7 +24990,9 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
     );
     const shouldShow = threshold === -1 || sizeData !== null && sizeData.totalSize >= threshold;
     if (shouldShow && sizeData !== null) {
-      const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => (b ?? Infinity) - (a ?? Infinity)).map(([pkg, size]) => `| ${pkg} | ${size === null ? "_Unknown_" : formatBytes(size)} |`).join("\n");
+      const packageRows = Array.from(sizeData.packageSizes.entries()).sort(([, a], [, b]) => (b ?? Infinity) - (a ?? Infinity)).map(
+        ([pkg, size]) => `| ${pkg} | ${size === null ? "_Unknown_" : formatBytes(size)} |`
+      ).join("\n");
       let alert = "";
       if (threshold !== -1 && sizeData.totalSize >= threshold) {
         alert = `> [!WARNING]
