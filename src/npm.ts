@@ -148,7 +148,8 @@ export async function calculateTotalDependencySizeIncrease(
       const metadata = await fetchPackageMetadata(dep.name, dep.version);
 
       if (!metadata || metadata.dist?.unpackedSize === undefined) {
-        return null;
+        core.info(`No unpacked size info for ${packageKey}, skipping`);
+        continue;
       }
 
       totalSize += metadata.dist.unpackedSize;
@@ -156,8 +157,8 @@ export async function calculateTotalDependencySizeIncrease(
       processedPackages.add(packageKey);
 
       core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
-    } catch {
-      return null;
+    } catch (e) {
+      core.error(`Error fetching package metadata for dep ${dep.name}@${dep.version}: ` + (e as Error).message);
     }
   }
 
@@ -172,7 +173,8 @@ export async function calculateTotalDependencySizeIncrease(
       const metadata = await fetchPackageMetadata(dep.name, dep.version);
 
       if (!metadata || metadata.dist?.unpackedSize === undefined) {
-        return null;
+        core.info(`No unpacked size info for ${packageKey}, skipping`);
+        continue;
       }
 
       totalSize -= metadata.dist.unpackedSize;
@@ -182,8 +184,8 @@ export async function calculateTotalDependencySizeIncrease(
       core.info(
         `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
       );
-    } catch {
-      return null;
+    } catch (e) {
+      core.error(`Error fetching package metadata for dep ${dep.name}@${dep.version}: ` + (e as Error).message);
     }
   }
 
