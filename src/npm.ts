@@ -132,10 +132,10 @@ export async function fetchPackageMetadata(
 export async function calculateTotalDependencySizeIncrease(
   newVersions: Array<{name: string; version: string}>,
   removedVersions: Array<{name: string; version: string}>
-): Promise<{totalSize: number; packageSizes: Map<string, number>} | null> {
+): Promise<{totalSize: number; packageSizes: Map<string, number | null>} | null> {
   let totalSize = 0;
   const processedPackages = new Set<string>();
-  const packageSizes = new Map<string, number>();
+  const packageSizes = new Map<string, number | null>();
 
   for (const dep of newVersions) {
     const packageKey = `${dep.name}@${dep.version}`;
@@ -148,17 +148,16 @@ export async function calculateTotalDependencySizeIncrease(
       const metadata = await fetchPackageMetadata(dep.name, dep.version);
 
       if (!metadata || metadata.dist?.unpackedSize === undefined) {
+        packageSizes.set(packageKey, null);
         core.info(`No unpacked size info for ${packageKey}, skipping`);
-        continue;
+      } else {
+        totalSize += metadata.dist.unpackedSize;
+        packageSizes.set(packageKey, metadata.dist.unpackedSize);
+        core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
       }
-
-      totalSize += metadata.dist.unpackedSize;
-      packageSizes.set(packageKey, metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
-
-      core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
     } catch (e) {
-      core.error(`Error fetching package metadata for dep ${dep.name}@${dep.version}: ` + (e as Error).message);
+      core.error(`Error fetching package metadata for dep ${packageKey}: ` + (e as Error).message);
     }
   }
 
@@ -173,19 +172,18 @@ export async function calculateTotalDependencySizeIncrease(
       const metadata = await fetchPackageMetadata(dep.name, dep.version);
 
       if (!metadata || metadata.dist?.unpackedSize === undefined) {
+        packageSizes.set(packageKey, null);
         core.info(`No unpacked size info for ${packageKey}, skipping`);
-        continue;
+      } else {
+        totalSize -= metadata.dist.unpackedSize;
+        packageSizes.set(packageKey, -metadata.dist.unpackedSize);
+        core.info(
+          `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+        );
       }
-
-      totalSize -= metadata.dist.unpackedSize;
-      packageSizes.set(packageKey, -metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
-
-      core.info(
-        `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
-      );
     } catch (e) {
-      core.error(`Error fetching package metadata for dep ${dep.name}@${dep.version}: ` + (e as Error).message);
+      core.error(`Error fetching package metadata for dep ${packageKey}: ` + (e as Error).message);
     }
   }
 
