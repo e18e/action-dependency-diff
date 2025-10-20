@@ -132,7 +132,10 @@ export async function fetchPackageMetadata(
 export async function calculateTotalDependencySizeIncrease(
   newVersions: Array<{name: string; version: string}>,
   removedVersions: Array<{name: string; version: string}>
-): Promise<{totalSize: number; packageSizes: Map<string, number | null>} | null> {
+): Promise<{
+  totalSize: number;
+  packageSizes: Map<string, number | null>;
+} | null> {
   let totalSize = 0;
   const processedPackages = new Set<string>();
   const packageSizes = new Map<string, number | null>();
@@ -153,11 +156,16 @@ export async function calculateTotalDependencySizeIncrease(
       } else {
         totalSize += metadata.dist.unpackedSize;
         packageSizes.set(packageKey, metadata.dist.unpackedSize);
-        core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
+        core.info(
+          `Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+        );
       }
       processedPackages.add(packageKey);
     } catch (e) {
-      core.error(`Error fetching package metadata for dep ${packageKey}: ` + (e as Error).message);
+      core.error(
+        `Error fetching package metadata for dep ${packageKey}: ` +
+          (e as Error).message
+      );
     }
   }
 
@@ -183,7 +191,10 @@ export async function calculateTotalDependencySizeIncrease(
       }
       processedPackages.add(packageKey);
     } catch (e) {
-      core.error(`Error fetching package metadata for dep ${packageKey}: ` + (e as Error).message);
+      core.error(
+        `Error fetching package metadata for dep ${packageKey}: ` +
+          (e as Error).message
+      );
     }
   }
 
