@@ -34,10 +34,14 @@ function computeParentPaths(
     if (!versionSet) {
       return;
     }
+    const nodeKey = `${node.name}@${node.version}`;
+    if (parentPaths.has(nodeKey)) {
+      return;
+    }
     const parentPath = path
       .map((node) => `${node.name}@${node.version}`)
       .join(' -> ');
-    parentPaths.set(`${node.name}@${node.version}`, parentPath);
+    parentPaths.set(nodeKey, parentPath);
   };
   const visitor = {
     dependency: visitorFn,

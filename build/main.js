@@ -24871,8 +24871,12 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
     if (!versionSet) {
       return;
     }
+    const nodeKey = `${node.name}@${node.version}`;
+    if (parentPaths.has(nodeKey)) {
+      return;
+    }
     const parentPath = path2.map((node2) => `${node2.name}@${node2.version}`).join(" -> ");
-    parentPaths.set(`${node.name}@${node.version}`, parentPath);
+    parentPaths.set(nodeKey, parentPath);
   };
   const visitor = {
     dependency: visitorFn,
