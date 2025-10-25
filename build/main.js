@@ -24879,10 +24879,7 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
     devDependency: visitorFn,
     optionalDependency: visitorFn
   };
-  for (const pkg of lockfile.packages) {
-    visitorFn(pkg, null);
-    traverse(pkg, visitor);
-  }
+  traverse(lockfile.root, visitor);
   return parentPaths;
 }
 function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, lockfile) {

@@ -1,8 +1,4 @@
-import {
-  type ParsedLockFile,
-  traverse,
-  type VisitorFn
-} from 'lockparse';
+import {type ParsedLockFile, traverse, type VisitorFn} from 'lockparse';
 
 function getLsCommand(
   lockfilePath: string,
@@ -48,10 +44,8 @@ function computeParentPaths(
     devDependency: visitorFn,
     optionalDependency: visitorFn
   };
-  for (const pkg of lockfile.packages) {
-    visitorFn(pkg, null);
-    traverse(pkg, visitor);
-  }
+
+  traverse(lockfile.root, visitor);
 
   return parentPaths;
 }
