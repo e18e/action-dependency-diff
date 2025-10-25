@@ -1,4 +1,9 @@
-import {type ParsedLockFile, traverse, type ParsedDependency} from 'lockparse';
+import {
+  type ParsedLockFile,
+  traverse,
+  type ParsedDependency,
+  type VisitorFn
+} from 'lockparse';
 
 function getLsCommand(
   lockfilePath: string,
@@ -19,28 +24,6 @@ function getLsCommand(
   return undefined;
 }
 
-function getParentPath(
-  node: ParsedDependency,
-  parentMap: WeakMap<ParsedDependency, ParsedDependency> | undefined
-): string[] {
-  const parentPath: string[] = [];
-  if (!parentMap) {
-    return parentPath;
-  }
-  const seen = new WeakSet<ParsedDependency>();
-  let currentParent = parentMap.get(node);
-  while (currentParent) {
-    parentPath.push(`${currentParent.name}@${currentParent.version}`);
-    if (seen.has(currentParent)) {
-      parentPath.push('(circular)');
-      break;
-    }
-    seen.add(currentParent);
-    currentParent = parentMap.get(currentParent);
-  }
-  return parentPath;
-}
-
 function computeParentPaths(
   lockfile: ParsedLockFile,
   duplicateDependencyNames: Set<string>,
@@ -48,20 +31,18 @@ function computeParentPaths(
 ): Map<string, string> {
   const parentPaths = new Map<string, string>();
 
-  const visitorFn = (
-    node: ParsedDependency,
-    _parent: ParsedDependency | null,
-    parentMap?: WeakMap<ParsedDependency, ParsedDependency>
-  ) => {
-    if (!duplicateDependencyNames.has(node.name)) {
+  const visitorFn: VisitorFn = (node, _parent, path) => {
+    if (!duplicateDependencyNames.has(node.name) || !path) {
       return;
     }
     const versionSet = dependencyMap.get(node.name);
     if (!versionSet) {
       return;
     }
-    const parentPath = getParentPath(node, parentMap);
-    parentPaths.set(`${node.name}@${node.version}`, parentPath.join(' -> '));
+    const parentPath = path
+      .map((node) => `${node.name}@${node.version}`)
+      .join(' -> ');
+    parentPaths.set(`${node.name}@${node.version}`, parentPath);
   };
   const visitor = {
     dependency: visitorFn,

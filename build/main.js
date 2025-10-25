@@ -24383,21 +24383,23 @@ var visitorKeys = [
   ["peerDependency", "peerDependencies"],
   ["optionalDependency", "optionalDependencies"]
 ];
-function traverseInternal(node, visitor, parentMap) {
+function traverseInternal(node, visitor, path2) {
   for (const [visitorKey, nodeKey] of visitorKeys) {
     if (visitor[visitorKey]) {
+      const newPath = [...path2, node];
       for (const dep of node[nodeKey]) {
-        parentMap.set(dep, node);
-        if (visitor[visitorKey](dep, node, parentMap) !== false) {
-          traverseInternal(dep, visitor, parentMap);
+        if (path2.includes(dep)) {
+          continue;
+        }
+        if (visitor[visitorKey](dep, node, newPath) !== false) {
+          traverseInternal(dep, visitor, newPath);
         }
       }
     }
   }
 }
 function traverse(node, visitor) {
-  const parentMap = /* @__PURE__ */ new WeakMap();
-  return traverseInternal(node, visitor, parentMap);
+  return traverseInternal(node, visitor, []);
 }
 
 // node_modules/lockparse/lib/main.js
@@ -24859,36 +24861,18 @@ function getLsCommand(lockfilePath, packageName) {
   }
   return void 0;
 }
-function getParentPath(node, parentMap) {
-  const parentPath = [];
-  if (!parentMap) {
-    return parentPath;
-  }
-  const seen = /* @__PURE__ */ new WeakSet();
-  let currentParent = parentMap.get(node);
-  while (currentParent) {
-    parentPath.push(`${currentParent.name}@${currentParent.version}`);
-    if (seen.has(currentParent)) {
-      parentPath.push("(circular)");
-      break;
-    }
-    seen.add(currentParent);
-    currentParent = parentMap.get(currentParent);
-  }
-  return parentPath;
-}
 function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
   const parentPaths = /* @__PURE__ */ new Map();
-  const visitorFn = (node, _parent, parentMap) => {
-    if (!duplicateDependencyNames.has(node.name)) {
+  const visitorFn = (node, _parent, path2) => {
+    if (!duplicateDependencyNames.has(node.name) || !path2) {
       return;
     }
     const versionSet = dependencyMap.get(node.name);
     if (!versionSet) {
       return;
     }
-    const parentPath = getParentPath(node, parentMap);
-    parentPaths.set(`${node.name}@${node.version}`, parentPath.join(" -> "));
+    const parentPath = path2.map((node2) => `${node2.name}@${node2.version}`).join(" -> ");
+    parentPaths.set(`${node.name}@${node.version}`, parentPath);
   };
   const visitor = {
     dependency: visitorFn,
