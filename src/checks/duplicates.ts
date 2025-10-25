@@ -93,12 +93,14 @@ export function scanForDuplicates(
     for (const version of versions) {
       const pathKey = `${name}@${version}`;
       const path = parentPaths.get(pathKey);
-      const pathDisplay = path || '(root)';
-      detailsLines.push(`**${version}**: ${pathDisplay}`);
+      const fullPath = path
+        ? `${path} -> **${name}@${version}**`
+        : `**${name}@${version}**`;
+      detailsLines.push(fullPath);
     }
 
     const detailsContent = detailsLines.join('<br>');
-    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? 's' : ''}</summary><br><br>${detailsContent}<br><br></details>`;
+    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? 's' : ''}</summary><br>${detailsContent}<br></details>`;
 
     duplicateRows.push(`| ${name} | ${collapsibleSection} |`);
   }

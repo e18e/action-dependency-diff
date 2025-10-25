@@ -24911,11 +24911,11 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, loc
     for (const version of versions) {
       const pathKey = `${name}@${version}`;
       const path2 = parentPaths.get(pathKey);
-      const pathDisplay = path2 || "(root)";
-      detailsLines.push(`**${version}**: ${pathDisplay}`);
+      const fullPath = path2 ? `${path2} -> **${name}@${version}**` : `**${name}@${version}**`;
+      detailsLines.push(fullPath);
     }
     const detailsContent = detailsLines.join("<br>");
-    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary><br><br>${detailsContent}<br><br></details>`;
+    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary><br>${detailsContent}<br></details>`;
     duplicateRows.push(`| ${name} | ${collapsibleSection} |`);
   }
   if (duplicateRows.length > 0) {
