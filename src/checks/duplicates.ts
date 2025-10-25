@@ -23,8 +23,8 @@ function computeParentPaths(
   lockfile: ParsedLockFile,
   duplicateDependencyNames: Set<string>,
   dependencyMap: Map<string, Set<string>>
-): Map<string, string> {
-  const parentPaths = new Map<string, string>();
+): Map<string, string[]> {
+  const parentPaths = new Map<string, string[]>();
 
   const visitorFn: VisitorFn = (node, _parent, path) => {
     if (!duplicateDependencyNames.has(node.name) || !path) {
@@ -38,9 +38,7 @@ function computeParentPaths(
     if (parentPaths.has(nodeKey)) {
       return;
     }
-    const parentPath = path
-      .map((node) => `${node.name}@${node.version}`)
-      .join(' -> ');
+    const parentPath = path.map((node) => `${node.name}@${node.version}`);
     parentPaths.set(nodeKey, parentPath);
   };
   const visitor = {
@@ -90,11 +88,30 @@ export function scanForDuplicates(
     const detailsLines: string[] = [];
     for (const version of versions) {
       const pathKey = `${name}@${version}`;
-      const path = parentPaths.get(pathKey);
-      const fullPath = path
-        ? `${path} -> **${name}@${version}**`
-        : `**${name}@${version}**`;
-      detailsLines.push(fullPath);
+      const pathArray = parentPaths.get(pathKey);
+      if (pathArray && pathArray.length > 0) {
+        const maxDepth = 6;
+        const totalDepth = pathArray.length + 1;
+
+        let displayPath: string[];
+        if (totalDepth > maxDepth) {
+          displayPath = [
+            ...pathArray.slice(0, 2),
+            '...',
+            ...pathArray.slice(-2)
+          ];
+        } else {
+          displayPath = pathArray;
+        }
+
+        let nestedList = `<li>**${name}@${version}**</li>`;
+        for (let i = displayPath.length - 1; i >= 0; i--) {
+          nestedList = `<li>${displayPath[i]}<ul>${nestedList}</ul></li>`;
+        }
+        detailsLines.push(`<ul>${nestedList}</ul>`);
+      } else {
+        detailsLines.push(`**${name}@${version}**`);
+      }
     }
 
     const detailsContent = detailsLines.join('<br>');

@@ -24875,7 +24875,7 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
     if (parentPaths.has(nodeKey)) {
       return;
     }
-    const parentPath = path2.map((node2) => `${node2.name}@${node2.version}`).join(" -> ");
+    const parentPath = path2.map((node2) => `${node2.name}@${node2.version}`);
     parentPaths.set(nodeKey, parentPath);
   };
   const visitor = {
@@ -24911,9 +24911,28 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, loc
     const detailsLines = [];
     for (const version of versions) {
       const pathKey = `${name}@${version}`;
-      const path2 = parentPaths.get(pathKey);
-      const fullPath = path2 ? `${path2} -> **${name}@${version}**` : `**${name}@${version}**`;
-      detailsLines.push(fullPath);
+      const pathArray = parentPaths.get(pathKey);
+      if (pathArray && pathArray.length > 0) {
+        const maxDepth = 6;
+        const totalDepth = pathArray.length + 1;
+        let displayPath;
+        if (totalDepth > maxDepth) {
+          displayPath = [
+            ...pathArray.slice(0, 2),
+            "...",
+            ...pathArray.slice(-2)
+          ];
+        } else {
+          displayPath = pathArray;
+        }
+        let nestedList = `<li>**${name}@${version}**</li>`;
+        for (let i = displayPath.length - 1; i >= 0; i--) {
+          nestedList = `<li>${displayPath[i]}<ul>${nestedList}</ul></li>`;
+        }
+        detailsLines.push(`<ul>${nestedList}</ul>`);
+      } else {
+        detailsLines.push(`**${name}@${version}**`);
+      }
     }
     const detailsContent = detailsLines.join("<br>");
     const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary><br>${detailsContent}<br></details>`;
