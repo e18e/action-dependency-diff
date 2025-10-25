@@ -143,7 +143,13 @@ async function run(): Promise<void> {
       currentDeps,
       baseDeps
     );
-    scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
+    scanForDuplicates(
+      messages,
+      duplicateThreshold,
+      currentDeps,
+      lockfilePath,
+      parsedCurrentLock
+    );
 
     await scanForDependencySize(
       messages,

@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scanForDuplicates > should report duplicates when threshold is exceeded 1`] = `
+[
+  "## ⚠️ Duplicate Dependencies (threshold: 1)
+
+| 📦 Package | 📋 Versions |
+| --- | --- |
+| package-a | <details><summary>2 versions</summary><br><ul><li>root-package@1.0.0<ul><li>**package-a@1.0.0**</li></ul></li></ul><br><ul><li>root-package@1.0.0<ul><li>package-b@2.0.0<ul><li>**package-a@1.1.0**</li></ul></li></ul></li></ul><br></details> |
+
+💡 To find out what depends on a specific package, run: \`npm ls example-package\`",
+]
+`;
+
+exports[`scanForDuplicates > should truncate long parent paths in the report 1`] = `
+[
+  "## ⚠️ Duplicate Dependencies (threshold: 1)
+
+| 📦 Package | 📋 Versions |
+| --- | --- |
+| package-a | <details><summary>2 versions</summary><br><ul><li>root-package@1.0.0<ul><li>**package-a@1.0.0**</li></ul></li></ul><br><ul><li>root-package@1.0.0<ul><li>package-0@1.0.0<ul><li>...<ul><li>package-18@1.0.0<ul><li>package-19@1.0.0<ul><li>**package-a@1.1.0**</li></ul></li></ul></li></ul></li></ul></li></ul></li></ul><br></details> |
+
+💡 To find out what depends on a specific package, run: \`npm ls example-package\`",
+]
+`;
