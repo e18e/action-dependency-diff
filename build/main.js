@@ -24383,16 +24383,21 @@ var visitorKeys = [
   ["peerDependency", "peerDependencies"],
   ["optionalDependency", "optionalDependencies"]
 ];
-function traverse(node, visitor) {
+function traverseInternal(node, visitor, parentMap) {
   for (const [visitorKey, nodeKey] of visitorKeys) {
     if (visitor[visitorKey]) {
       for (const dep of node[nodeKey]) {
-        if (visitor[visitorKey](dep, node) !== false) {
-          traverse(dep, visitor);
+        parentMap.set(dep, node);
+        if (visitor[visitorKey](dep, node, parentMap) !== false) {
+          traverseInternal(dep, visitor, parentMap);
         }
       }
     }
   }
+}
+function traverse(node, visitor) {
+  const parentMap = /* @__PURE__ */ new WeakMap();
+  return traverseInternal(node, visitor, parentMap);
 }
 
 // node_modules/lockparse/lib/main.js
@@ -24854,15 +24859,79 @@ function getLsCommand(lockfilePath, packageName) {
   }
   return void 0;
 }
-function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath) {
+function getParentPath(node, parentMap) {
+  const parentPath = [];
+  if (!parentMap) {
+    return parentPath;
+  }
+  let currentParent = parentMap.get(node);
+  while (currentParent) {
+    parentPath.push(`${currentParent.name}@${currentParent.version}`);
+    currentParent = parentMap.get(currentParent);
+  }
+  return parentPath;
+}
+function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
+  const parentPaths = /* @__PURE__ */ new Map();
+  const visitorFn = (node, _parent, parentMap) => {
+    if (!duplicateDependencyNames.has(node.name)) {
+      return;
+    }
+    const versionSet = dependencyMap.get(node.name);
+    if (!versionSet) {
+      return;
+    }
+    const parentPath = getParentPath(node, parentMap);
+    parentPaths.set(`${node.name}@${node.version}`, parentPath.join(" -> "));
+  };
+  const visitor = {
+    dependency: visitorFn,
+    devDependency: visitorFn,
+    peerDependency: visitorFn,
+    optionalDependency: visitorFn
+  };
+  for (const pkg of lockfile.packages) {
+    visitorFn(pkg, null);
+    traverse(pkg, visitor);
+  }
+  return parentPaths;
+}
+function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, lockfile) {
   const duplicateRows = [];
+  const duplicateDependencyNames = /* @__PURE__ */ new Set();
   for (const [packageName, currentVersionSet] of dependencyMap) {
     if (currentVersionSet.size > threshold) {
-      const versions = Array.from(currentVersionSet).sort();
-      duplicateRows.push(
-        `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(", ")} |`
-      );
+      duplicateDependencyNames.add(packageName);
     }
+  }
+  if (duplicateDependencyNames.size === 0) {
+    return;
+  }
+  const parentPaths = computeParentPaths(
+    lockfile,
+    duplicateDependencyNames,
+    dependencyMap
+  );
+  for (const name of duplicateDependencyNames) {
+    const versionSet = dependencyMap.get(name);
+    if (!versionSet) {
+      continue;
+    }
+    const versions = Array.from(versionSet).sort();
+    const detailsLines = [];
+    for (const version of versions) {
+      const pathKey = `${name}@${version}`;
+      const path2 = parentPaths.get(pathKey);
+      const pathDisplay = path2 || "(root)";
+      detailsLines.push(`**${version}**: ${pathDisplay}`);
+    }
+    const detailsContent = detailsLines.join("  \n");
+    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary>
+
+${detailsContent}
+
+</details>`;
+    duplicateRows.push(`| ${name} | ${collapsibleSection} |`);
   }
   if (duplicateRows.length > 0) {
     const exampleCommand = getLsCommand(lockfilePath, "example-package");
@@ -24872,8 +24941,8 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath) {
     messages.push(
       `## \u26A0\uFE0F Duplicate Dependencies (threshold: ${threshold})
 
-| \u{1F4E6} Package | \u{1F522} Version Count | \u{1F4CB} Versions |
-| --- | --- | --- |
+| \u{1F4E6} Package | \u{1F4CB} Versions |
+| --- | --- |
 ${duplicateRows.join("\n")}${helpMessage}`
     );
   }
@@ -25210,7 +25279,13 @@ async function run() {
       currentDeps,
       baseDeps
     );
-    scanForDuplicates(messages, duplicateThreshold, currentDeps, lockfilePath);
+    scanForDuplicates(
+      messages,
+      duplicateThreshold,
+      currentDeps,
+      lockfilePath,
+      parsedCurrentLock
+    );
     await scanForDependencySize(
       messages,
       sizeThreshold,
