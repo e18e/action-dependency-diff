@@ -27,9 +27,15 @@ function getParentPath(
   if (!parentMap) {
     return parentPath;
   }
+  const seen = new WeakSet<ParsedDependency>();
   let currentParent = parentMap.get(node);
   while (currentParent) {
     parentPath.push(`${currentParent.name}@${currentParent.version}`);
+    if (seen.has(currentParent)) {
+      parentPath.push('(circular)');
+      break;
+    }
+    seen.add(currentParent);
     currentParent = parentMap.get(currentParent);
   }
   return parentPath;
@@ -104,7 +110,6 @@ export function scanForDuplicates(
     }
     const versions = Array.from(versionSet).sort();
 
-    // Build collapsible details showing where each version comes from
     const detailsLines: string[] = [];
     for (const version of versions) {
       const pathKey = `${name}@${version}`;

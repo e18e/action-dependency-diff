@@ -24864,9 +24864,15 @@ function getParentPath(node, parentMap) {
   if (!parentMap) {
     return parentPath;
   }
+  const seen = /* @__PURE__ */ new WeakSet();
   let currentParent = parentMap.get(node);
   while (currentParent) {
     parentPath.push(`${currentParent.name}@${currentParent.version}`);
+    if (seen.has(currentParent)) {
+      parentPath.push("(circular)");
+      break;
+    }
+    seen.add(currentParent);
     currentParent = parentMap.get(currentParent);
   }
   return parentPath;
