@@ -24877,7 +24877,6 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
   const visitor = {
     dependency: visitorFn,
     devDependency: visitorFn,
-    peerDependency: visitorFn,
     optionalDependency: visitorFn
   };
   for (const pkg of lockfile.packages) {
@@ -24915,12 +24914,8 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, loc
       const pathDisplay = path2 || "(root)";
       detailsLines.push(`**${version}**: ${pathDisplay}`);
     }
-    const detailsContent = detailsLines.join("  \n");
-    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary>
-
-${detailsContent}
-
-</details>`;
+    const detailsContent = detailsLines.join("<br>");
+    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? "s" : ""}</summary><br><br>${detailsContent}<br><br></details>`;
     duplicateRows.push(`| ${name} | ${collapsibleSection} |`);
   }
   if (duplicateRows.length > 0) {

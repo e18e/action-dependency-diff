@@ -1,7 +1,6 @@
 import {
   type ParsedLockFile,
   traverse,
-  type ParsedDependency,
   type VisitorFn
 } from 'lockparse';
 
@@ -47,7 +46,6 @@ function computeParentPaths(
   const visitor = {
     dependency: visitorFn,
     devDependency: visitorFn,
-    peerDependency: visitorFn,
     optionalDependency: visitorFn
   };
   for (const pkg of lockfile.packages) {
@@ -99,8 +97,8 @@ export function scanForDuplicates(
       detailsLines.push(`**${version}**: ${pathDisplay}`);
     }
 
-    const detailsContent = detailsLines.join('  \n');
-    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? 's' : ''}</summary>\n\n${detailsContent}\n\n</details>`;
+    const detailsContent = detailsLines.join('<br>');
+    const collapsibleSection = `<details><summary>${versionSet.size} version${versionSet.size > 1 ? 's' : ''}</summary><br><br>${detailsContent}<br><br></details>`;
 
     duplicateRows.push(`| ${name} | ${collapsibleSection} |`);
   }
