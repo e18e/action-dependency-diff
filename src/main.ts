@@ -60,6 +60,7 @@ async function run(): Promise<void> {
       return;
     }
     const lockfilePath = join(workDir, lockfileFilename);
+    const packageFilePath = join(workDir, 'package.json');
     core.info(`Using lockfile: ${lockfilePath}`);
 
     core.info(
@@ -88,12 +89,12 @@ async function run(): Promise<void> {
 
     const basePackageJson = tryGetJSONFromRef<PackageJson>(
       baseRef,
-      'package.json',
+      packageFilePath,
       workspacePath
     );
     const currentPackageJson = tryGetJSONFromRef<PackageJson>(
       currentRef,
-      'package.json',
+      packageFilePath,
       workspacePath
     );
 

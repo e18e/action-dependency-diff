@@ -25211,6 +25211,7 @@ async function run() {
       return;
     }
     const lockfilePath = join2(workDir, lockfileFilename);
+    const packageFilePath = join2(workDir, "package.json");
     core7.info(`Using lockfile: ${lockfilePath}`);
     core7.info(
       `Comparing package lockfiles between ${baseRef} and ${currentRef}`
@@ -25235,12 +25236,12 @@ async function run() {
     }
     const basePackageJson = tryGetJSONFromRef(
       baseRef,
-      "package.json",
+      packageFilePath,
       workspacePath
     );
     const currentPackageJson = tryGetJSONFromRef(
       currentRef,
-      "package.json",
+      packageFilePath,
       workspacePath
     );
     let parsedCurrentLock;
