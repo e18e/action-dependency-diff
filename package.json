@@ -42,7 +42,7 @@
     "@actions/github": "^6.0.1",
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.9.1",
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.25.12",
     "eslint": "^9.38.0",
     "lockparse": "^0.5.0",
     "module-replacements": "^2.9.0",
