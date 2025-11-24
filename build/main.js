@@ -24783,8 +24783,8 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
 
 // src/checks/replacements.ts
 import nativeManifest from "./native-O77SEK3D.json" with { type: "json" };
-import microUtilsManifest from "./micro-utilities-74AZJTCK.json" with { type: "json" };
-import preferredManifest from "./preferred-UDJHBJAQ.json" with { type: "json" };
+import microUtilsManifest from "./micro-utilities-N7NZTMHQ.json" with { type: "json" };
+import preferredManifest from "./preferred-S3MZM3ZJ.json" with { type: "json" };
 var allReplacements = [
   ...nativeManifest.moduleReplacements,
   ...microUtilsManifest.moduleReplacements,
@@ -25180,7 +25180,7 @@ async function run() {
     const workspacePath = join2(baseWorkspace, workDir);
     core7.info(`Workspace path is ${workspacePath}`);
     const baseRef = getBaseRef();
-    const currentRef = github2.context.sha;
+    const currentRef = github2.context.payload.pull_reuqest?.head.sha ?? github2.context.sha;
     const lockfileFilename = detectLockfile(workspacePath);
     core7.info(`Detected lockfile ${lockfileFilename}`);
     const token = core7.getInput("github-token", { required: true });
