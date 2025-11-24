@@ -26,7 +26,8 @@ async function run(): Promise<void> {
     core.info(`Workspace path is ${workspacePath}`);
 
     const baseRef = getBaseRef();
-    const currentRef = github.context.sha;
+    const currentRef =
+      github.context.payload.pull_reuqest?.head.sha ?? github.context.sha;
     const lockfileFilename = detectLockfile(workspacePath);
     core.info(`Detected lockfile ${lockfileFilename}`);
 
