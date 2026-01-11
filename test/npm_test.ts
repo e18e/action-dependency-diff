@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import type {PackageJson} from 'pkg-types';
 import {
   describe,
@@ -22,26 +21,20 @@ import {
   type PackageMetadata,
   calculateTotalDependencySizeIncrease
 } from '../src/npm.js';
+import {coreLogs, clearCoreLogs} from './util.js';
 
 describe('fetchPackageMetadata', () => {
   let fetchMock: MockInstance<typeof globalThis.fetch>;
 
   beforeEach(() => {
     fetchMock = vi.spyOn(globalThis, 'fetch');
-    vi.mock(import('@actions/core'), async (importModule) => {
-      const mod = await importModule();
-      return {
-        ...mod,
-        info: vi.fn(),
-        error: vi.fn()
-      };
-    });
   });
 
   afterEach(() => {
     fetchMock.mockRestore();
     vi.clearAllMocks();
     metaCache.clear();
+    clearCoreLogs();
   });
 
   it('should return null if request fails', async () => {
@@ -63,13 +56,17 @@ describe('fetchPackageMetadata', () => {
   });
 
   it('should return null if fetch fails', async () => {
-    const infoSpy = vi.mocked(core.info);
     fetchMock.mockRejectedValue(new Error('Network error'));
     const result = await fetchPackageMetadata('some-package', '1.0.0');
     expect(result).toBeNull();
-    expect(infoSpy).toHaveBeenCalledWith(
-      'Failed to fetch metadata for some-package@1.0.0: Error: Network error'
-    );
+    expect(coreLogs).toEqual({
+      info: [
+        'Failed to fetch metadata for some-package@1.0.0: Error: Network error'
+      ],
+      warning: [],
+      debug: [],
+      error: []
+    });
   });
 });
 
@@ -96,6 +93,7 @@ describe('calculateTotalDependencySizeIncrease', () => {
   afterEach(() => {
     fetchMock.mockRestore();
     vi.clearAllMocks();
+    clearCoreLogs();
   });
 
   it('returns 0 for empty version list', async () => {
@@ -165,7 +163,6 @@ describe('calculateTotalDependencySizeIncrease', () => {
       {name: 'package-a', version: '1.0.0'},
       {name: 'package-c', version: '1.0.0'}
     ];
-    const infoSpy = vi.mocked(core.info);
     const output = await calculateTotalDependencySizeIncrease(newVersions, []);
     expect(output?.totalSize).toEqual(1500);
     expect(output?.packageSizes).toEqual(
@@ -174,12 +171,15 @@ describe('calculateTotalDependencySizeIncrease', () => {
         ['package-c@1.0.0', null]
       ])
     );
-    expect(infoSpy).toHaveBeenCalledWith(
-      'Added 1500 bytes for package-a@1.0.0'
-    );
-    expect(infoSpy).toHaveBeenCalledWith(
-      'No unpacked size info for package-c@1.0.0, skipping'
-    );
+    expect(coreLogs).toEqual({
+      info: [
+        'Added 1500 bytes for package-a@1.0.0',
+        'No unpacked size info for package-c@1.0.0, skipping'
+      ],
+      warning: [],
+      debug: [],
+      error: []
+    });
   });
 });
 
@@ -251,14 +251,6 @@ describe('getProvenanceForPackageVersions', () => {
 
   beforeEach(() => {
     fetchMock = vi.spyOn(globalThis, 'fetch');
-    vi.mock(import('@actions/core'), async (importModule) => {
-      const mod = await importModule();
-      return {
-        ...mod,
-        info: vi.fn(),
-        error: vi.fn()
-      };
-    });
   });
 
   afterEach(() => {
