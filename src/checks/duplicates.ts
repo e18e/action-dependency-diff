@@ -126,7 +126,7 @@ export function scanForDuplicates(
       ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
       : '';
     messages.push(
-      `## ⚠️ Duplicate Dependencies (threshold: ${threshold})
+      `## ⚠️ Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
 
 | 📦 Package | 📋 Versions |
 | --- | --- |

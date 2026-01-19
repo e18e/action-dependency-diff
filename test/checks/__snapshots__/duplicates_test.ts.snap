@@ -2,7 +2,7 @@
 
 exports[`scanForDuplicates > should report duplicates when threshold is exceeded 1`] = `
 [
-  "## ⚠️ Duplicate Dependencies (threshold: 1)
+  "## ⚠️ Duplicate Dependencies (found: 1, threshold: 1)
 
 | 📦 Package | 📋 Versions |
 | --- | --- |
@@ -14,7 +14,7 @@ exports[`scanForDuplicates > should report duplicates when threshold is exceeded
 
 exports[`scanForDuplicates > should truncate long parent paths in the report 1`] = `
 [
-  "## ⚠️ Duplicate Dependencies (threshold: 1)
+  "## ⚠️ Duplicate Dependencies (found: 1, threshold: 1)
 
 | 📦 Package | 📋 Versions |
 | --- | --- |
