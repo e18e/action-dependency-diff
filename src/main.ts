@@ -212,12 +212,6 @@ async function run(): Promise<void> {
       scanForReplacements(messages, baseDependencies, currentDependencies);
     }
 
-    // Skip comment creation/update if there are no messages
-    if (messages.length === 0) {
-      core.info('No dependency warnings found. Skipping comment creation.');
-      return;
-    }
-
     const octokit = github.getOctokit(token);
     let existingCommentId: number | undefined = undefined;
 
@@ -242,6 +236,24 @@ async function run(): Promise<void> {
         existingCommentId = comment.id;
         break;
       }
+    }
+
+    // Skip comment creation if there are no messages or update the existing comment.
+    if (messages.length === 0) {
+      if (existingCommentId) {
+        await octokit.rest.issues.updateComment({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          comment_id: existingCommentId,
+          body: `${COMMENT_TAG}\n## e18e dependency diff action\n\nNo dependency warnings found.\n`
+        });
+        core.info(
+          `Updated existing dependency diff comment #${existingCommentId}`
+        );
+      } else {
+        core.info('No dependency warnings found. Skipping comment creation.');
+      }
+      return;
     }
 
     const finalCommentBody = `${COMMENT_TAG}\n${messages.join('\n\n')}`;
