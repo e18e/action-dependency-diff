@@ -245,7 +245,7 @@ async function run(): Promise<void> {
           owner: github.context.repo.owner,
           repo: github.context.repo.repo,
           comment_id: existingCommentId,
-          body: `${COMMENT_TAG}\n## e18e dependency diff action\n\nNo dependency warnings found.\n`
+          body: `${COMMENT_TAG}\n## e18e dependency analysis\n\nNo dependency warnings found.\n`
         });
         core.info(
           `Updated existing dependency diff comment #${existingCommentId}`
