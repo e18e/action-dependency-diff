@@ -1,8 +1,12 @@
 import * as core from '@actions/core';
+import type {PackageJson} from 'pkg-types';
 
 export interface PackageMetadata {
   name: string;
   version: string;
+  os?: string[];
+  cpu?: string[];
+  libc?: string[];
   dist?: {
     unpackedSize?: number;
     attestations?: {
@@ -126,11 +130,15 @@ export async function fetchPackageMetadata(
 }
 
 export async function calculateTotalDependencySizeIncrease(
-  newVersions: Array<{name: string; version: string}>
-): Promise<{totalSize: number; packageSizes: Map<string, number>} | null> {
+  newVersions: Array<{name: string; version: string}>,
+  removedVersions: Array<{name: string; version: string}>
+): Promise<{
+  totalSize: number;
+  packageSizes: Map<string, number | null>;
+} | null> {
   let totalSize = 0;
   const processedPackages = new Set<string>();
-  const packageSizes = new Map<string, number>();
+  const packageSizes = new Map<string, number | null>();
 
   for (const dep of newVersions) {
     const packageKey = `${dep.name}@${dep.version}`;
@@ -143,18 +151,99 @@ export async function calculateTotalDependencySizeIncrease(
       const metadata = await fetchPackageMetadata(dep.name, dep.version);
 
       if (!metadata || metadata.dist?.unpackedSize === undefined) {
-        return null;
+        packageSizes.set(packageKey, null);
+        core.info(`No unpacked size info for ${packageKey}, skipping`);
+      } else {
+        totalSize += metadata.dist.unpackedSize;
+        packageSizes.set(packageKey, metadata.dist.unpackedSize);
+        core.info(
+          `Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+        );
       }
-
-      totalSize += metadata.dist.unpackedSize;
-      packageSizes.set(packageKey, metadata.dist.unpackedSize);
       processedPackages.add(packageKey);
+    } catch (e) {
+      core.error(
+        `Error fetching package metadata for dep ${packageKey}: ` +
+          (e as Error).message
+      );
+    }
+  }
 
-      core.info(`Added ${metadata.dist.unpackedSize} bytes for ${packageKey}`);
-    } catch {
-      return null;
+  for (const dep of removedVersions) {
+    const packageKey = `${dep.name}@${dep.version}`;
+
+    if (processedPackages.has(packageKey)) {
+      continue;
+    }
+
+    try {
+      const metadata = await fetchPackageMetadata(dep.name, dep.version);
+
+      if (!metadata || metadata.dist?.unpackedSize === undefined) {
+        packageSizes.set(packageKey, null);
+        core.info(`No unpacked size info for ${packageKey}, skipping`);
+      } else {
+        totalSize -= metadata.dist.unpackedSize;
+        packageSizes.set(packageKey, -metadata.dist.unpackedSize);
+        core.info(
+          `Subtracted ${metadata.dist.unpackedSize} bytes for ${packageKey}`
+        );
+      }
+      processedPackages.add(packageKey);
+    } catch (e) {
+      core.error(
+        `Error fetching package metadata for dep ${packageKey}: ` +
+          (e as Error).message
+      );
     }
   }
 
   return {totalSize, packageSizes};
+}
+
+export type DependencyType = 'prod' | 'dev' | 'optional' | 'peer';
+
+const dependencyTypeMap = {
+  prod: 'dependencies',
+  dev: 'devDependencies',
+  optional: 'optionalDependencies',
+  peer: 'peerDependencies'
+} satisfies Record<DependencyType, keyof PackageJson>;
+
+export function getDependenciesFromPackageJson(
+  pkg: PackageJson,
+  types: DependencyType[]
+): Map<string, string> {
+  const result = new Map<string, string>();
+
+  for (const type of types) {
+    const value = pkg[dependencyTypeMap[type]];
+    if (value === undefined) {
+      continue;
+    }
+
+    for (const [name, version] of Object.entries(value)) {
+      if (typeof version !== 'string') {
+        continue;
+      }
+      result.set(name, version);
+    }
+  }
+
+  return result;
+}
+
+export function isSupportedArchitecture(
+  pkg: PackageJson,
+  os: string,
+  cpu: string,
+  libc: string
+): boolean {
+  const osMatches =
+    pkg.os === undefined || pkg.os.length === 0 || pkg.os.includes(os);
+  const cpuMatches =
+    pkg.cpu === undefined || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
+  const libcMatches =
+    pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
+  return osMatches && cpuMatches && libcMatches;
 }

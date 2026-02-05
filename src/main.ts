@@ -1,89 +1,39 @@
 import * as process from 'process';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
-import {parseLockfile, detectLockfile} from './lockfile.js';
-import {getFileFromRef, getBaseRef} from './git.js';
-import {
-  calculateTotalDependencySizeIncrease,
-  getMinTrustLevel,
-  getProvenanceForPackageVersions
-} from './npm.js';
-import {getPacksFromPattern, comparePackSizes} from './packs.js';
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1000;
-  const sizes = ['B', 'kB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
+import type {PackageJson} from 'pkg-types';
+import {join} from 'node:path';
+import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
+import {detectLockfile, computeDependencyVersions} from './lockfile.js';
+import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
+import {getDependenciesFromPackageJson} from './npm.js';
+import {getPacksFromPattern} from './packs.js';
+import {scanForReplacements} from './checks/replacements.js';
+import {scanForDuplicates} from './checks/duplicates.js';
+import {scanForDependencyCount} from './checks/dependency-count.js';
+import {scanForDependencySize} from './checks/dependency-size.js';
+import {scanForProvenance} from './checks/provenance.js';
+import {scanForBundleSize} from './checks/bundle-size.js';
+import {formatBytes} from './common.js';
 
 const COMMENT_TAG = '<!-- dependency-diff-action -->';
 
-function getLsCommand(
-  lockfilePath: string,
-  packageName: string
-): string | undefined {
-  if (lockfilePath.endsWith('package-lock.json')) {
-    return `npm ls ${packageName}`;
-  }
-  if (lockfilePath.endsWith('pnpm-lock.yaml')) {
-    return `pnpm why ${packageName}`;
-  }
-  if (lockfilePath.endsWith('yarn.lock')) {
-    return `yarn why ${packageName}`;
-  }
-  if (lockfilePath.endsWith('bun.lock')) {
-    return `bun pm ls ${packageName}`;
-  }
-  return undefined;
-}
-
 async function run(): Promise<void> {
   try {
-    const workspacePath = process.env.GITHUB_WORKSPACE || process.cwd();
+    const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
+    const workDir = core.getInput('working-directory') || '.';
+    const workspacePath = join(baseWorkspace, workDir);
+    core.info(`Workspace path is ${workspacePath}`);
+
     const baseRef = getBaseRef();
-    const currentRef = github.context.sha;
-    const lockfilePath = detectLockfile(workspacePath);
+    const currentRef =
+      github.context.payload.pull_reuqest?.head.sha ?? github.context.sha;
+    const lockfileFilename = detectLockfile(workspacePath);
+    core.info(`Detected lockfile ${lockfileFilename}`);
+
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
-
-    if (Number.isNaN(prNumber) || prNumber < 1) {
-      core.info('No valid pull request number was found. Skipping.');
-      return;
-    }
-
-    if (!lockfilePath) {
-      core.info('No lockfile detected in the workspace. Exiting.');
-      return;
-    }
-
-    core.info(
-      `Comparing package-lock.json between ${baseRef} and ${currentRef}`
-    );
-
-    const basePackageLock = getFileFromRef(
-      baseRef,
-      lockfilePath,
-      workspacePath
-    );
-    if (!basePackageLock) {
-      core.info('No package-lock.json found in base ref');
-      return;
-    }
-    const currentPackageLock = getFileFromRef(
-      currentRef,
-      lockfilePath,
-      workspacePath
-    );
-    if (!currentPackageLock) {
-      core.info('No package-lock.json found in current ref');
-      return;
-    }
-
-    const currentDeps = parseLockfile(lockfilePath, currentPackageLock);
-    const baseDeps = parseLockfile(lockfilePath, basePackageLock);
-
+    const detectReplacements = core.getBooleanInput('detect-replacements');
     const dependencyThreshold = parseInt(
       core.getInput('dependency-threshold') || '10',
       10
@@ -101,6 +51,87 @@ async function run(): Promise<void> {
       10
     );
 
+    if (Number.isNaN(prNumber) || prNumber < 1) {
+      core.info('No valid pull request number was found. Skipping.');
+      return;
+    }
+
+    if (!lockfileFilename) {
+      core.info('No lockfile detected in the workspace. Exiting.');
+      return;
+    }
+    const lockfilePath = join(workDir, lockfileFilename);
+    const packageFilePath = join(workDir, 'package.json');
+    core.info(`Using lockfile: ${lockfilePath}`);
+
+    core.info(
+      `Comparing package lockfiles between ${baseRef} and ${currentRef}`
+    );
+
+    const basePackageLock = getFileFromRef(
+      baseRef,
+      lockfilePath,
+      baseWorkspace
+    );
+    if (!basePackageLock) {
+      core.info('No package lockfile found in base ref');
+      return;
+    }
+
+    const currentPackageLock = getFileFromRef(
+      currentRef,
+      lockfilePath,
+      baseWorkspace
+    );
+    if (!currentPackageLock) {
+      core.info('No package lockfile found in current ref');
+      return;
+    }
+
+    const basePackageJson = tryGetJSONFromRef<PackageJson>(
+      baseRef,
+      packageFilePath,
+      workspacePath
+    );
+    const currentPackageJson = tryGetJSONFromRef<PackageJson>(
+      currentRef,
+      packageFilePath,
+      workspacePath
+    );
+
+    let parsedCurrentLock: ParsedLockFile;
+    let parsedBaseLock: ParsedLockFile;
+
+    try {
+      parsedCurrentLock = await parseLockfile(
+        currentPackageLock,
+        lockfileFilename,
+        currentPackageJson ?? undefined
+      );
+      core.info(
+        `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
+      );
+    } catch (err) {
+      core.setFailed(`Failed to parse current lockfile: ${err}`);
+      return;
+    }
+    try {
+      parsedBaseLock = await parseLockfile(
+        basePackageLock,
+        lockfileFilename,
+        basePackageJson ?? undefined
+      );
+      core.info(
+        `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
+      );
+    } catch (err) {
+      core.setFailed(`Failed to parse base lockfile: ${err}`);
+      return;
+    }
+
+    const currentDeps = computeDependencyVersions(parsedCurrentLock);
+    const baseDeps = computeDependencyVersions(parsedBaseLock);
+
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     core.info(`Duplicate threshold set to ${duplicateThreshold}`);
@@ -108,155 +139,30 @@ async function run(): Promise<void> {
 
     const messages: string[] = [];
 
-    // Count total dependencies (all package-version combinations)
-    const currentDepCount = Array.from(currentDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
+    scanForDependencyCount(
+      messages,
+      dependencyThreshold,
+      currentDeps,
+      baseDeps
     );
-    const baseDepCount = Array.from(baseDeps.values()).reduce(
-      (sum, versions) => sum + versions.size,
-      0
+    scanForDuplicates(
+      messages,
+      duplicateThreshold,
+      currentDeps,
+      lockfilePath,
+      parsedCurrentLock
     );
-    const depIncrease = currentDepCount - baseDepCount;
 
-    core.info(`Base dependency count: ${baseDepCount}`);
-    core.info(`Current dependency count: ${currentDepCount}`);
-    core.info(`Dependency count increase: ${depIncrease}`);
+    await scanForDependencySize(
+      messages,
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock,
+      parsedBaseLock
+    );
+    await scanForProvenance(messages, currentDeps, baseDeps);
 
-    if (depIncrease >= dependencyThreshold) {
-      messages.push(
-        `## ⚠️ Dependency Count
-
-This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${dependencyThreshold}.`
-      );
-    }
-
-    const duplicateRows: string[] = [];
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      if (currentVersionSet.size > duplicateThreshold) {
-        const versions = Array.from(currentVersionSet).sort();
-        duplicateRows.push(
-          `| ${packageName} | ${currentVersionSet.size} versions | ${versions.join(', ')} |`
-        );
-      }
-    }
-
-    if (duplicateRows.length > 0) {
-      const exampleCommand = getLsCommand(lockfilePath, 'example-package');
-      const helpMessage = exampleCommand
-        ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
-        : '';
-      messages.push(
-        `## ⚠️ Duplicate Dependencies (threshold: ${duplicateThreshold})
-
-| 📦 Package | 🔢 Version Count | 📋 Versions |
-| --- | --- | --- |
-${duplicateRows.join('\n')}${helpMessage}`
-      );
-    }
-
-    const newVersions: Array<{
-      name: string;
-      version: string;
-      isNewPackage: boolean;
-    }> = [];
-
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-
-      for (const version of currentVersionSet) {
-        if (!baseVersionSet || !baseVersionSet.has(version)) {
-          newVersions.push({
-            name: packageName,
-            version: version,
-            isNewPackage: !baseVersionSet
-          });
-        }
-      }
-    }
-
-    core.info(`Found ${newVersions.length} new package versions`);
-
-    if (newVersions.length > 0) {
-      try {
-        const sizeData =
-          await calculateTotalDependencySizeIncrease(newVersions);
-
-        if (sizeData !== null && sizeData.totalSize >= sizeThreshold) {
-          const packageRows = Array.from(sizeData.packageSizes.entries())
-            .sort(([, a], [, b]) => b - a)
-            .map(([pkg, size]) => `| ${pkg} | ${formatBytes(size)} |`)
-            .join('\n');
-
-          messages.push(
-            `## ⚠️ Large Dependency Size Increase
-
-This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(sizeThreshold)}.
-
-| 📦 Package | 📏 Size |
-| --- | --- |
-${packageRows}`
-          );
-        }
-      } catch (err) {
-        core.info(`Failed to calculate total dependency size increase: ${err}`);
-      }
-    }
-
-    const provenanceRows: string[] = [];
-
-    for (const [packageName, currentVersionSet] of currentDeps) {
-      const baseVersionSet = baseDeps.get(packageName);
-
-      if (!baseVersionSet || baseVersionSet.size === 0) {
-        continue;
-      }
-
-      if (currentVersionSet.isSubsetOf(baseVersionSet)) {
-        continue;
-      }
-
-      try {
-        const baseProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          baseVersionSet
-        );
-        const currentProvenances = await getProvenanceForPackageVersions(
-          packageName,
-          currentVersionSet
-        );
-
-        if (baseProvenances.size === 0 || currentProvenances.size === 0) {
-          continue;
-        }
-
-        const minBaseTrust = getMinTrustLevel(baseProvenances.values());
-        const minCurrentTrust = getMinTrustLevel(currentProvenances.values());
-
-        if (minCurrentTrust.level < minBaseTrust.level) {
-          provenanceRows.push(
-            `| ${packageName} | ${minBaseTrust.status} | ${minCurrentTrust.status} |`
-          );
-        }
-      } catch (err) {
-        core.info(`Failed to check provenance for ${packageName}: ${err}`);
-      }
-    }
-
-    if (provenanceRows.length > 0) {
-      messages.push(
-        `## ⚠️ Package Trust Level Decreased
-
-> [!CAUTION]
-> Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
-
-| 📦 Package | 🔒 Before | 🔓 After |
-| --- | --- | --- |
-${provenanceRows.join('\n')}`
-      );
-    }
-
-    // Compare pack sizes if patterns are provided
     const basePackagesPattern = core.getInput('base-packages');
     const sourcePackagesPattern = core.getInput('source-packages');
 
@@ -273,50 +179,37 @@ ${provenanceRows.join('\n')}`
           `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
         );
 
-        if (basePacks.length > 0 || sourcePacks.length > 0) {
-          const comparison = comparePackSizes(
-            basePacks,
-            sourcePacks,
-            packSizeThreshold
-          );
-          const packWarnings = comparison.packChanges.filter(
-            (change) => change.exceedsThreshold && change.sizeChange > 0
-          );
-
-          if (packWarnings.length > 0) {
-            const packRows = packWarnings
-              .map((change) => {
-                const baseSize = change.baseSize
-                  ? formatBytes(change.baseSize)
-                  : 'New';
-                const sourceSize = change.sourceSize
-                  ? formatBytes(change.sourceSize)
-                  : 'Removed';
-                const sizeChange = formatBytes(change.sizeChange);
-                return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
-              })
-              .join('\n');
-
-            messages.push(
-              `## ⚠️ Package Size Increase
-
-These packages exceed the size increase threshold of ${formatBytes(packSizeThreshold)}:
-
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
-| --- | --- | --- | --- |
-${packRows}`
-            );
-          }
-        }
+        await scanForBundleSize(
+          messages,
+          basePacks,
+          sourcePacks,
+          packSizeThreshold
+        );
       } catch (err) {
         core.info(`Failed to compare pack sizes: ${err}`);
       }
     }
 
-    // Skip comment creation/update if there are no messages
-    if (messages.length === 0) {
-      core.info('No dependency warnings found. Skipping comment creation.');
-      return;
+    if (detectReplacements) {
+      if (!basePackageJson || !currentPackageJson) {
+        core.setFailed(
+          'detect-replacements requires both base and current package.json to be present'
+        );
+        return;
+      }
+
+      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+        'optional',
+        'peer',
+        'dev',
+        'prod'
+      ]);
+      const currentDependencies = getDependenciesFromPackageJson(
+        currentPackageJson,
+        ['optional', 'peer', 'dev', 'prod']
+      );
+
+      scanForReplacements(messages, baseDependencies, currentDependencies);
     }
 
     const octokit = github.getOctokit(token);
@@ -333,11 +226,34 @@ ${packRows}`
       }
     )) {
       // Search for the comment with the unique tag
-      const comment = comments.find((c) => c.body?.includes(COMMENT_TAG));
+      const comment = comments.find(
+        (c) =>
+          c.user &&
+          c.user.login === 'github-actions[bot]' &&
+          c.body?.includes(COMMENT_TAG)
+      );
       if (comment) {
         existingCommentId = comment.id;
         break;
       }
+    }
+
+    // Skip comment creation if there are no messages or update the existing comment.
+    if (messages.length === 0) {
+      if (existingCommentId) {
+        await octokit.rest.issues.updateComment({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          comment_id: existingCommentId,
+          body: `${COMMENT_TAG}\n## e18e dependency analysis\n\nNo dependency warnings found.\n`
+        });
+        core.info(
+          `Updated existing dependency diff comment #${existingCommentId}`
+        );
+      } else {
+        core.info('No dependency warnings found. Skipping comment creation.');
+      }
+      return;
     }
 
     const finalCommentBody = `${COMMENT_TAG}\n${messages.join('\n\n')}`;

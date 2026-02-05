@@ -15,7 +15,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "skipLibCheck": true,
-    "sourceMap": false
+    "sourceMap": false,
+    "resolveJsonModule": true
   },
   "include": [
     "src",

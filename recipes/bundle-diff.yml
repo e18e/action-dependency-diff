@@ -21,7 +21,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci --ignore-scripts
       - name: Build
-        run: npm run build
+        run: node --run build
       - name: Pack
         run: npm pack
 
@@ -44,7 +44,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci --ignore-scripts
       - name: Build
-        run: npm run build
+        run: node --run build
       - name: Pack
         run: npm pack
 

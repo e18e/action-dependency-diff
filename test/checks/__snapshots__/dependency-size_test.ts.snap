@@ -1,0 +1,133 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scanForDependencySize > should not report changes below the threshold 1`] = `
+{
+  "debug": [],
+  "error": [],
+  "info": [
+    "Found 1 new package versions",
+    "Found 0 removed package versions.",
+    "Added 27023 bytes for tinyexec@1.0.0",
+    "Total dependency size increase: 27 kB",
+  ],
+  "warning": [],
+}
+`;
+
+exports[`scanForDependencySize > should report negative upgrades on one line 1`] = `
+[
+  "## 📊 Dependency Size Changes
+
+> [!NOTE]
+> :tada: This PR removes 138.5 kB of dependencies.
+
+| 📦 Package | 📏 Size |
+| --- | --- |
+| chai@5.0.0 → chai@5.0.2 | -138.5 kB |
+
+**Total size change:** -138.5 kB",
+]
+`;
+
+exports[`scanForDependencySize > should report negative upgrades on one line 2`] = `
+{
+  "debug": [],
+  "error": [],
+  "info": [
+    "Found 1 new package versions",
+    "Found 1 removed package versions.",
+    "Added 368262 bytes for chai@5.0.2",
+    "Subtracted 506753 bytes for chai@5.0.0",
+    "Total dependency size increase: -138.5 kB",
+  ],
+  "warning": [],
+}
+`;
+
+exports[`scanForDependencySize > should report new dependencies exceeding the threshold 1`] = `
+[
+  "## 📊 Dependency Size Changes
+
+> [!WARNING]
+> This PR adds 23.6 MB of new dependencies, which exceeds the threshold of 1 kB.
+
+| 📦 Package | 📏 Size |
+| --- | --- |
+| typescript@5.9.3 | 23.6 MB |
+
+**Total size change:** 23.6 MB",
+]
+`;
+
+exports[`scanForDependencySize > should report new dependencies exceeding the threshold 2`] = `
+{
+  "debug": [],
+  "error": [],
+  "info": [
+    "Found 1 new package versions",
+    "Found 0 removed package versions.",
+    "Added 23625066 bytes for typescript@5.9.3",
+    "Total dependency size increase: 23.6 MB",
+  ],
+  "warning": [],
+}
+`;
+
+exports[`scanForDependencySize > should report removals when threshold is -1 1`] = `
+[
+  "## 📊 Dependency Size Changes
+
+> [!NOTE]
+> :tada: This PR removes 27 kB of dependencies.
+
+| 📦 Package | 📏 Size |
+| --- | --- |
+| tinyexec@1.0.0 | -27 kB |
+
+**Total size change:** -27 kB",
+]
+`;
+
+exports[`scanForDependencySize > should report removals when threshold is -1 2`] = `
+{
+  "debug": [],
+  "error": [],
+  "info": [
+    "Found 0 new package versions",
+    "Found 1 removed package versions.",
+    "Subtracted 27023 bytes for tinyexec@1.0.0",
+    "Total dependency size increase: -27 kB",
+  ],
+  "warning": [],
+}
+`;
+
+exports[`scanForDependencySize > should report upgrades on one line 1`] = `
+[
+  "## 📊 Dependency Size Changes
+
+> [!WARNING]
+> This PR adds 137.8 kB of new dependencies, which exceeds the threshold of 1 B.
+
+| 📦 Package | 📏 Size |
+| --- | --- |
+| chai@5.0.2 → chai@5.0.3 | 137.8 kB |
+
+**Total size change:** 137.8 kB",
+]
+`;
+
+exports[`scanForDependencySize > should report upgrades on one line 2`] = `
+{
+  "debug": [],
+  "error": [],
+  "info": [
+    "Found 1 new package versions",
+    "Found 1 removed package versions.",
+    "Added 506025 bytes for chai@5.0.3",
+    "Subtracted 368262 bytes for chai@5.0.2",
+    "Total dependency size increase: 137.8 kB",
+  ],
+  "warning": [],
+}
+`;
