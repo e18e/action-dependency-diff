@@ -9,7 +9,7 @@
     {
       "type": "documented",
       "moduleName": "axios",
-      "docPath": "axios",
+      "docPath": "fetch",
       "category": "preferred"
     },
     {
@@ -70,6 +70,12 @@
       "type": "documented",
       "moduleName": "cpx",
       "docPath": "cpx",
+      "category": "preferred"
+    },
+    {
+      "type": "documented",
+      "moduleName": "cross-fetch",
+      "docPath": "fetch",
       "category": "preferred"
     },
     {
@@ -2234,6 +2240,12 @@
     },
     {
       "type": "documented",
+      "moduleName": "node-fetch",
+      "docPath": "fetch",
+      "category": "preferred"
+    },
+    {
+      "type": "documented",
       "moduleName": "npm-run-all",
       "docPath": "npm-run-all",
       "category": "preferred"
@@ -2278,6 +2290,12 @@
       "type": "documented",
       "moduleName": "pkg-up",
       "docPath": "find-up",
+      "category": "preferred"
+    },
+    {
+      "type": "documented",
+      "moduleName": "portal-vue",
+      "docPath": "portal-vue",
       "category": "preferred"
     },
     {
