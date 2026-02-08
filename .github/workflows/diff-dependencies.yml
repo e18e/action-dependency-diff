@@ -72,7 +72,7 @@ jobs:
           name: source-packages
           path: ./source-packages
       - name: Create Diff
-        uses: e18e/action-dependency-diff@main
+        uses: e18e/action-dependency-diff@1d7c22bc4294a760e988dff8ea7857e9663cba14 # v1.4.3
         with:
           base-packages: ./base-packages/*.tgz
           source-packages: ./source-packages/*.tgz
