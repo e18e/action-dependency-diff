@@ -38,7 +38,7 @@ jobs:
 ## Inputs
 
 | Name                   | Description                                                                    | Required | Default                                   |
-|------------------------|--------------------------------------------------------------------------------|----------|-------------------------------------------|
+| ---------------------- | ------------------------------------------------------------------------------ | -------- | ----------------------------------------- |
 | `base-ref`             | Base ref to compare against (defaults to main or PR target)                    | No       | Auto-detected from PR or `main`           |
 | `github-token`         | The GitHub token for authentication                                            | Yes      | `${{ github.token }}`                     |
 | `pr-number`            | The number of the pull request to comment on                                   | Yes      | `${{ github.event.pull_request.number }}` |
@@ -141,6 +141,14 @@ When a package's trust level decreases (e.g., from Trusted Publisher to Provenan
 If you want more information on _why_ the trust level changed, or want to detect changes to the provenance information, we highly recommend using the [provenance-action](https://github.com/danielroe/provenance-action) in addition to this.
 
 The provenance action will tell you exactly what changed in the provenance information. For example, if the repository changed between two versions.
+
+## Sponsors
+
+<p align="center">
+  <a href="https://e18e.dev/sponsors.svg">
+    <img src="https://e18e.dev/sponsors.svg" alt="e18e community sponsors" />
+  </a>
+</p>
 
 ## License
 
