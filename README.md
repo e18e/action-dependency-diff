@@ -145,7 +145,7 @@ The provenance action will tell you exactly what changed in the provenance infor
 ## Sponsors
 
 <p align="center">
-  <a href="https://e18e.dev/sponsors.svg">
+  <a href="https://github.com/sponsors/e18e">
     <img src="https://e18e.dev/sponsors.svg" alt="e18e community sponsors" />
   </a>
 </p>
