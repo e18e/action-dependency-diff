@@ -6,7 +6,7 @@ import {join} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {detectLockfile, computeDependencyVersions} from './lockfile.js';
 import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
-import {getDependenciesFromPackageJson} from './npm.js';
+import {getDependenciesFromPackageJson, type DependencyType} from './npm.js';
 import {getPacksFromPattern} from './packs.js';
 import {scanForReplacements} from './checks/replacements.js';
 import {scanForDuplicates} from './checks/duplicates.js';
@@ -34,6 +34,7 @@ async function run(): Promise<void> {
     const token = core.getInput('github-token', {required: true});
     const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
     const detectReplacements = core.getBooleanInput('detect-replacements');
+    const includeDevDeps = core.getBooleanInput('include-dev-deps');
     const dependencyThreshold = parseInt(
       core.getInput('dependency-threshold') || '10',
       10
@@ -129,8 +130,11 @@ async function run(): Promise<void> {
       return;
     }
 
-    const currentDeps = computeDependencyVersions(parsedCurrentLock);
-    const baseDeps = computeDependencyVersions(parsedBaseLock);
+    const currentDeps = computeDependencyVersions(
+      parsedCurrentLock,
+      includeDevDeps
+    );
+    const baseDeps = computeDependencyVersions(parsedBaseLock, includeDevDeps);
 
     core.info(`Dependency threshold set to ${dependencyThreshold}`);
     core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
@@ -150,7 +154,8 @@ async function run(): Promise<void> {
       duplicateThreshold,
       currentDeps,
       lockfilePath,
-      parsedCurrentLock
+      parsedCurrentLock,
+      includeDevDeps
     );
 
     await scanForDependencySize(
@@ -198,15 +203,19 @@ async function run(): Promise<void> {
         return;
       }
 
-      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+      const depTypes: DependencyType[] = [
         'optional',
         'peer',
-        'dev',
+        ...(includeDevDeps ? (['dev'] as const) : []),
         'prod'
-      ]);
+      ];
+      const baseDependencies = getDependenciesFromPackageJson(
+        basePackageJson,
+        depTypes
+      );
       const currentDependencies = getDependenciesFromPackageJson(
         currentPackageJson,
-        ['optional', 'peer', 'dev', 'prod']
+        depTypes
       );
 
       scanForReplacements(messages, baseDependencies, currentDependencies);

@@ -29,7 +29,8 @@ describe('scanForDuplicates', () => {
       threshold,
       dependencyMap,
       lockfilePath,
-      lockfile
+      lockfile,
+      true
     );
 
     expect(messages).toHaveLength(0);
@@ -85,7 +86,8 @@ describe('scanForDuplicates', () => {
       threshold,
       dependencyMap,
       lockfilePath,
-      lockfile
+      lockfile,
+      true
     );
 
     expect(messages).toMatchSnapshot();
@@ -141,10 +143,65 @@ describe('scanForDuplicates', () => {
       threshold,
       dependencyMap,
       lockfilePath,
-      lockfile
+      lockfile,
+      true
     );
 
     expect(messages).toHaveLength(0);
+  });
+
+  it('should exclude dev dependency duplicates when includeDevDeps is false', () => {
+    const messages: string[] = [];
+    const threshold = 1;
+    const packageA: ParsedDependency = {
+      name: 'package-a',
+      version: '1.0.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const packageAAlt: ParsedDependency = {
+      name: 'package-a',
+      version: '1.1.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const dependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])]
+    ]);
+    const lockfilePath = 'package-lock.json';
+    const lockfile: ParsedLockFile = {
+      type: 'npm',
+      packages: [packageA, packageAAlt],
+      root: {
+        name: 'root-package',
+        version: '1.0.0',
+        dependencies: [packageA],
+        devDependencies: [packageAAlt],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+
+    scanForDuplicates(
+      messages,
+      threshold,
+      dependencyMap,
+      lockfilePath,
+      lockfile,
+      false
+    );
+
+    // With includeDevDeps=false, the devDependency path for packageAAlt should not be traversed
+    // The duplicate is still reported (since dependencyMap has both versions),
+    // but parent paths for the dev-only version won't be found
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('package-a');
+    // The prod version should have a parent path, the dev version should not
+    expect(messages[0]).toContain('package-a@1.0.0');
   });
 
   it('should truncate long parent paths in the report', () => {
@@ -204,7 +261,8 @@ describe('scanForDuplicates', () => {
       threshold,
       dependencyMap,
       lockfilePath,
-      lockfile
+      lockfile,
+      true
     );
 
     expect(messages).toMatchSnapshot();
