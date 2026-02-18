@@ -21,7 +21,7 @@ const mockLockFile: ParsedLockFile = {
 describe('computeDependencyVersions', () => {
   it('should return an empty map for an empty lock file', () => {
     const lockFile: ParsedLockFile = {...mockLockFile};
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile, true);
     expect(result.size).toBe(0);
   });
 
@@ -55,10 +55,136 @@ describe('computeDependencyVersions', () => {
         }
       ]
     };
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile, true);
     expect(result.size).toBe(2);
     expect(result.get('foo')).toEqual(new Set(['1.0.0', '1.1.0']));
     expect(result.get('bar')).toEqual(new Set(['2.0.0']));
+  });
+
+  it('should exclude dev dependencies when includeDevDeps is false', () => {
+    const lockFile: ParsedLockFile = {
+      ...mockLockFile,
+      packages: [
+        {
+          name: 'foo',
+          version: '1.0.0',
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        },
+        {
+          name: 'bar',
+          version: '2.0.0',
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        },
+        {
+          name: 'dev-only',
+          version: '3.0.0',
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        }
+      ],
+      root: {
+        name: 'root',
+        version: '1.0.0',
+        dependencies: [
+          {
+            name: 'foo',
+            version: '1.0.0',
+            dependencies: [],
+            devDependencies: [],
+            optionalDependencies: [],
+            peerDependencies: []
+          }
+        ],
+        devDependencies: [
+          {
+            name: 'dev-only',
+            version: '3.0.0',
+            dependencies: [
+              {
+                name: 'bar',
+                version: '2.0.0',
+                dependencies: [],
+                devDependencies: [],
+                optionalDependencies: [],
+                peerDependencies: []
+              }
+            ],
+            devDependencies: [],
+            optionalDependencies: [],
+            peerDependencies: []
+          }
+        ],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+    const result = computeDependencyVersions(lockFile, false);
+    expect(result.size).toBe(1);
+    expect(result.get('foo')).toEqual(new Set(['1.0.0']));
+    expect(result.has('dev-only')).toBe(false);
+    expect(result.has('bar')).toBe(false);
+  });
+
+  it('should include all packages when includeDevDeps is true', () => {
+    const lockFile: ParsedLockFile = {
+      ...mockLockFile,
+      packages: [
+        {
+          name: 'foo',
+          version: '1.0.0',
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        },
+        {
+          name: 'dev-only',
+          version: '3.0.0',
+          dependencies: [],
+          devDependencies: [],
+          optionalDependencies: [],
+          peerDependencies: []
+        }
+      ],
+      root: {
+        name: 'root',
+        version: '1.0.0',
+        dependencies: [
+          {
+            name: 'foo',
+            version: '1.0.0',
+            dependencies: [],
+            devDependencies: [],
+            optionalDependencies: [],
+            peerDependencies: []
+          }
+        ],
+        devDependencies: [
+          {
+            name: 'dev-only',
+            version: '3.0.0',
+            dependencies: [],
+            devDependencies: [],
+            optionalDependencies: [],
+            peerDependencies: []
+          }
+        ],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+    const result = computeDependencyVersions(lockFile, true);
+    expect(result.size).toBe(2);
+    expect(result.get('foo')).toEqual(new Set(['1.0.0']));
+    expect(result.get('dev-only')).toEqual(new Set(['3.0.0']));
   });
 
   it('should ignore packages without name or version', () => {
@@ -91,7 +217,7 @@ describe('computeDependencyVersions', () => {
         }
       ]
     };
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile, true);
     expect(result.size).toBe(1);
     expect(result.get('foo')).toEqual(new Set(['1.0.0']));
   });
