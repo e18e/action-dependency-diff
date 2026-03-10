@@ -22,7 +22,8 @@ function getLsCommand(
 function computeParentPaths(
   lockfile: ParsedLockFile,
   duplicateDependencyNames: Set<string>,
-  dependencyMap: Map<string, Set<string>>
+  dependencyMap: Map<string, Set<string>>,
+  includeDevDeps: boolean
 ): Map<string, string[]> {
   const parentPaths = new Map<string, string[]>();
 
@@ -43,7 +44,7 @@ function computeParentPaths(
   };
   const visitor = {
     dependency: visitorFn,
-    devDependency: visitorFn,
+    ...(includeDevDeps ? {devDependency: visitorFn} : {}),
     optionalDependency: visitorFn
   };
 
@@ -57,7 +58,8 @@ export function scanForDuplicates(
   threshold: number,
   dependencyMap: Map<string, Set<string>>,
   lockfilePath: string,
-  lockfile: ParsedLockFile
+  lockfile: ParsedLockFile,
+  includeDevDeps: boolean
 ): void {
   const duplicateRows: string[] = [];
   const duplicateDependencyNames = new Set<string>();
@@ -75,7 +77,8 @@ export function scanForDuplicates(
   const parentPaths = computeParentPaths(
     lockfile,
     duplicateDependencyNames,
-    dependencyMap
+    dependencyMap,
+    includeDevDeps
   );
 
   for (const name of duplicateDependencyNames) {

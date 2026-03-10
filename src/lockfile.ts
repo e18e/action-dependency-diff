@@ -1,4 +1,4 @@
-import type {ParsedLockFile} from 'lockparse';
+import {type ParsedLockFile, traverse, type VisitorFn} from 'lockparse';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 
@@ -12,13 +12,26 @@ export const supportedLockfiles = [
 ] as const;
 
 export function computeDependencyVersions(
-  lockFile: ParsedLockFile
+  lockFile: ParsedLockFile,
+  includeDevDeps: boolean
 ): VersionsSet {
   const result: VersionsSet = new Map();
 
-  for (const pkg of lockFile.packages) {
-    if (!pkg.name || !pkg.version) continue;
-    addVersion(result, pkg.name, pkg.version);
+  if (!includeDevDeps) {
+    const visitorFn: VisitorFn = (node) => {
+      if (!node.name || !node.version) return;
+      addVersion(result, node.name, node.version);
+    };
+    traverse(lockFile.root, {
+      dependency: visitorFn,
+      optionalDependency: visitorFn,
+      peerDependency: visitorFn
+    });
+  } else {
+    for (const pkg of lockFile.packages) {
+      if (!pkg.name || !pkg.version) continue;
+      addVersion(result, pkg.name, pkg.version);
+    }
   }
 
   return result;

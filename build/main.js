@@ -24033,11 +24033,23 @@ var supportedLockfiles = [
   "yarn.lock",
   "bun.lock"
 ];
-function computeDependencyVersions(lockFile) {
+function computeDependencyVersions(lockFile, includeDevDeps) {
   const result = /* @__PURE__ */ new Map();
-  for (const pkg of lockFile.packages) {
-    if (!pkg.name || !pkg.version) continue;
-    addVersion(result, pkg.name, pkg.version);
+  if (!includeDevDeps) {
+    const visitorFn = (node) => {
+      if (!node.name || !node.version) return;
+      addVersion(result, node.name, node.version);
+    };
+    traverse(lockFile.root, {
+      dependency: visitorFn,
+      optionalDependency: visitorFn,
+      peerDependency: visitorFn
+    });
+  } else {
+    for (const pkg of lockFile.packages) {
+      if (!pkg.name || !pkg.version) continue;
+      addVersion(result, pkg.name, pkg.version);
+    }
   }
   return result;
 }
@@ -24452,7 +24464,7 @@ function getLsCommand(lockfilePath, packageName) {
   }
   return void 0;
 }
-function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
+function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap, includeDevDeps) {
   const parentPaths = /* @__PURE__ */ new Map();
   const visitorFn = (node, _parent, path2) => {
     if (!duplicateDependencyNames.has(node.name) || !path2) {
@@ -24471,13 +24483,13 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
   };
   const visitor = {
     dependency: visitorFn,
-    devDependency: visitorFn,
+    ...includeDevDeps ? { devDependency: visitorFn } : {},
     optionalDependency: visitorFn
   };
   traverse(lockfile.root, visitor);
   return parentPaths;
 }
-function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, lockfile) {
+function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, lockfile, includeDevDeps) {
   const duplicateRows = [];
   const duplicateDependencyNames = /* @__PURE__ */ new Set();
   for (const [packageName, currentVersionSet] of dependencyMap) {
@@ -24491,7 +24503,8 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, loc
   const parentPaths = computeParentPaths(
     lockfile,
     duplicateDependencyNames,
-    dependencyMap
+    dependencyMap,
+    includeDevDeps
   );
   for (const name of duplicateDependencyNames) {
     const versionSet = dependencyMap.get(name);
@@ -24820,6 +24833,7 @@ async function run() {
     const token = getInput("github-token", { required: true });
     const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
     const detectReplacements = getBooleanInput("detect-replacements");
+    const includeDevDeps = getBooleanInput("include-dev-deps");
     const dependencyThreshold = parseInt(
       getInput("dependency-threshold") || "10",
       10
@@ -24906,8 +24920,11 @@ async function run() {
       setFailed(`Failed to parse base lockfile: ${err}`);
       return;
     }
-    const currentDeps = computeDependencyVersions(parsedCurrentLock);
-    const baseDeps = computeDependencyVersions(parsedBaseLock);
+    const currentDeps = computeDependencyVersions(
+      parsedCurrentLock,
+      includeDevDeps
+    );
+    const baseDeps = computeDependencyVersions(parsedBaseLock, includeDevDeps);
     info(`Dependency threshold set to ${dependencyThreshold}`);
     info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
     info(`Duplicate threshold set to ${duplicateThreshold}`);
@@ -24924,7 +24941,8 @@ async function run() {
       duplicateThreshold,
       currentDeps,
       lockfilePath,
-      parsedCurrentLock
+      parsedCurrentLock,
+      includeDevDeps
     );
     await scanForDependencySize(
       messages,
@@ -24964,15 +24982,19 @@ async function run() {
         );
         return;
       }
-      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+      const depTypes = [
         "optional",
         "peer",
-        "dev",
+        ...includeDevDeps ? ["dev"] : [],
         "prod"
-      ]);
+      ];
+      const baseDependencies = getDependenciesFromPackageJson(
+        basePackageJson,
+        depTypes
+      );
       const currentDependencies = getDependenciesFromPackageJson(
         currentPackageJson,
-        ["optional", "peer", "dev", "prod"]
+        depTypes
       );
       scanForReplacements(messages, baseDependencies, currentDependencies);
     }
