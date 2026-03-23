@@ -28,9 +28,16 @@ No bundle size changes.",
 
 exports[`scanForBundleSize > should show both decreases and increases when threshold is -1 1`] = `
 [
-  "## 📦 Package Bundle Size
+  "## 🎉 Package Size Decrease
 
-No bundle size changes.",
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📉 Size Change |
+| --- | --- | --- | --- |
+| pkg-a | 200 kB | 100 kB | 100 kB |",
+  "## ⚠️ Package Size Increase
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| pkg-b | 50 kB | 150 kB | 100 kB |",
 ]
 `;
 

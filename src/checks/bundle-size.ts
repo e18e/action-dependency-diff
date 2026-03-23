@@ -12,12 +12,11 @@ export async function scanForBundleSize(
   }
   const comparison = comparePackSizes(basePacks, sourcePacks, threshold);
 
-  const totalSizeChange = comparison.packChanges.reduce(
-    (sum, change) => sum + change.sizeChange,
-    0
+  const allUnchanged = comparison.packChanges.every(
+    (change) => change.sizeChange === 0
   );
 
-  if (totalSizeChange === 0) {
+  if (allUnchanged) {
     messages.push(`## 📦 Package Bundle Size\n\nNo bundle size changes.`);
     return;
   }
@@ -79,8 +78,17 @@ ${packRows}`
     return;
   }
 
+  const totalSizeChange = comparison.packChanges.reduce(
+    (sum, change) => sum + change.sizeChange,
+    0
+  );
+
+  if (totalSizeChange < threshold) {
+    return;
+  }
+
   const packWarnings = comparison.packChanges.filter(
-    (change) => change.exceedsThreshold && change.sizeChange > 0
+    (change) => change.sizeChange > 0
   );
 
   if (packWarnings.length > 0) {

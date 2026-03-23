@@ -60,6 +60,26 @@ describe('scanForBundleSize', () => {
     expect(messages).toHaveLength(0);
   });
 
+  it('should not report no-change when individual changes cancel out', async () => {
+    const messages: string[] = [];
+    const basePacks = [makePack('pkg-a', 200000), makePack('pkg-b', 50000)];
+    const sourcePacks = [makePack('pkg-a', 100000), makePack('pkg-b', 150000)];
+
+    await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
+
+    expect(messages).toHaveLength(0);
+  });
+
+  it('should not report no-change when changes exist but are below threshold', async () => {
+    const messages: string[] = [];
+    const basePacks = [makePack('my-package', 100000)];
+    const sourcePacks = [makePack('my-package', 120000)];
+
+    await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
+
+    expect(messages).toHaveLength(0);
+  });
+
   it('should celebrate size decrease when threshold is -1', async () => {
     const messages: string[] = [];
     const basePacks = [makePack('my-package', 200000)];
@@ -77,6 +97,7 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, -1);
 
+    expect(messages).toHaveLength(2);
     expect(messages).toMatchSnapshot();
   });
 
