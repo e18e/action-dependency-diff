@@ -11,6 +11,74 @@ export async function scanForBundleSize(
     return;
   }
   const comparison = comparePackSizes(basePacks, sourcePacks, threshold);
+
+  const totalSizeChange = comparison.packChanges.reduce(
+    (sum, change) => sum + change.sizeChange,
+    0
+  );
+
+  if (totalSizeChange === 0) {
+    messages.push(`## 📦 Package Bundle Size\n\nNo bundle size changes.`);
+    return;
+  }
+
+  if (threshold === -1) {
+    const decreases = comparison.packChanges.filter(
+      (change) => change.exceedsThreshold && change.sizeChange < 0
+    );
+    const increases = comparison.packChanges.filter(
+      (change) => change.exceedsThreshold && change.sizeChange > 0
+    );
+
+    if (decreases.length > 0) {
+      const packRows = decreases
+        .map((change) => {
+          const baseSize = change.baseSize
+            ? formatBytes(change.baseSize)
+            : 'New';
+          const sourceSize = change.sourceSize
+            ? formatBytes(change.sourceSize)
+            : 'Removed';
+          const sizeChange = formatBytes(Math.abs(change.sizeChange));
+          return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
+        })
+        .join('\n');
+
+      messages.push(
+        `## 🎉 Package Size Decrease
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📉 Size Change |
+| --- | --- | --- | --- |
+${packRows}`
+      );
+    }
+
+    if (increases.length > 0) {
+      const packRows = increases
+        .map((change) => {
+          const baseSize = change.baseSize
+            ? formatBytes(change.baseSize)
+            : 'New';
+          const sourceSize = change.sourceSize
+            ? formatBytes(change.sourceSize)
+            : 'Removed';
+          const sizeChange = formatBytes(change.sizeChange);
+          return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
+        })
+        .join('\n');
+
+      messages.push(
+        `## ⚠️ Package Size Increase
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+${packRows}`
+      );
+    }
+
+    return;
+  }
+
   const packWarnings = comparison.packChanges.filter(
     (change) => change.exceedsThreshold && change.sizeChange > 0
   );

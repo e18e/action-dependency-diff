@@ -175,7 +175,8 @@ export function comparePackSizes(
     const sourceSize = sourcePack?.size ?? null;
 
     const sizeChange = (sourceSize ?? 0) - (baseSize ?? 0);
-    const exceedsThreshold = sizeChange >= threshold;
+    const exceedsThreshold =
+      threshold === -1 ? sizeChange !== 0 : sizeChange >= threshold;
 
     packChanges.push({
       name: packName,
