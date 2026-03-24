@@ -22,38 +22,22 @@ export async function scanForBundleSize(
   }
 
   if (threshold === -1) {
-    const decreases = comparison.packChanges.filter(
-      (change) => change.exceedsThreshold && change.sizeChange < 0
-    );
-    const increases = comparison.packChanges.filter(
-      (change) => change.exceedsThreshold && change.sizeChange > 0
+    const changedPacks = comparison.packChanges.filter(
+      (change) => change.exceedsThreshold
     );
 
-    if (decreases.length > 0) {
-      const packRows = decreases
-        .map((change) => {
-          const baseSize = change.baseSize
-            ? formatBytes(change.baseSize)
-            : 'New';
-          const sourceSize = change.sourceSize
-            ? formatBytes(change.sourceSize)
-            : 'Removed';
-          const sizeChange = formatBytes(Math.abs(change.sizeChange));
-          return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
-        })
-        .join('\n');
+    if (changedPacks.length > 0) {
+      const hasDecreases = changedPacks.some((c) => c.sizeChange < 0);
+      const hasIncreases = changedPacks.some((c) => c.sizeChange > 0);
 
-      messages.push(
-        `## 🎉 Package Size Decrease
+      const heading =
+        hasDecreases && hasIncreases
+          ? '## 📦 Package Bundle Size Changes'
+          : hasDecreases
+            ? '## 🎉 Package Size Decrease'
+            : '## ⚠️ Package Size Increase';
 
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📉 Size Change |
-| --- | --- | --- | --- |
-${packRows}`
-      );
-    }
-
-    if (increases.length > 0) {
-      const packRows = increases
+      const packRows = changedPacks
         .map((change) => {
           const baseSize = change.baseSize
             ? formatBytes(change.baseSize)
@@ -67,9 +51,9 @@ ${packRows}`
         .join('\n');
 
       messages.push(
-        `## ⚠️ Package Size Increase
+        `${heading}
 
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
       );

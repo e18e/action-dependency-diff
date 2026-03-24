@@ -97,7 +97,7 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, -1);
 
-    expect(messages).toHaveLength(2);
+    expect(messages).toHaveLength(1);
     expect(messages).toMatchSnapshot();
   });
 

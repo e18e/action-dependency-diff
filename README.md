@@ -99,7 +99,7 @@ When the bundle size does not change between base and source, a message is poste
 
 ### Always Report Bundle Size Changes
 
-To always report bundle size changes and celebrate decreases, set `pack-size-threshold` to `-1`:
+To always report bundle size changes, set `pack-size-threshold` to `-1`. All changed packages are shown in a single table. When only decreases occur, the report is marked with 🎉:
 
 ```yaml
 - name: Create Diff

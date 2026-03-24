@@ -4,9 +4,9 @@ exports[`scanForBundleSize > should celebrate size decrease when threshold is -1
 [
   "## 🎉 Package Size Decrease
 
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📉 Size Change |
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
-| my-package | 200 kB | 100 kB | 100 kB |",
+| my-package | 200 kB | 100 kB | -100 kB |",
 ]
 `;
 
@@ -28,16 +28,12 @@ No bundle size changes.",
 
 exports[`scanForBundleSize > should show both decreases and increases when threshold is -1 1`] = `
 [
-  "## 🎉 Package Size Decrease
+  "## 📦 Package Bundle Size Changes
 
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📉 Size Change |
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
-| pkg-a | 200 kB | 100 kB | 100 kB |",
-  "## ⚠️ Package Size Increase
-
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
-| --- | --- | --- | --- |
-| pkg-b | 50 kB | 150 kB | 100 kB |",
+| pkg-b | 50 kB | 150 kB | 100 kB |
+| pkg-a | 200 kB | 100 kB | -100 kB |",
 ]
 `;
 
@@ -45,7 +41,7 @@ exports[`scanForBundleSize > should show only increases when threshold is -1 and
 [
   "## ⚠️ Package Size Increase
 
-| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
 | my-package | 100 kB | 200 kB | 100 kB |",
 ]
