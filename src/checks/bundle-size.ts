@@ -1,6 +1,10 @@
 import {formatBytes} from '../common.js';
 import {comparePackSizes, type PackInfo} from '../packs.js';
 
+function formatBytesSigned(bytes: number): string {
+  return `${bytes > 0 ? '+' : ''}${formatBytes(bytes)}`;
+}
+
 export async function scanForBundleSize(
   messages: string[],
   basePacks: PackInfo[],
@@ -45,7 +49,7 @@ export async function scanForBundleSize(
           const sourceSize = change.sourceSize
             ? formatBytes(change.sourceSize)
             : 'Removed';
-          const sizeChange = formatBytes(change.sizeChange);
+          const sizeChange = formatBytesSigned(change.sizeChange);
           return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
         })
         .join('\n');
@@ -82,7 +86,7 @@ ${packRows}`
         const sourceSize = change.sourceSize
           ? formatBytes(change.sourceSize)
           : 'Removed';
-        const sizeChange = formatBytes(change.sizeChange);
+        const sizeChange = formatBytesSigned(change.sizeChange);
         return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
       })
       .join('\n');

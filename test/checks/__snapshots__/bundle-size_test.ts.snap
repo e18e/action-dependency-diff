@@ -32,7 +32,7 @@ exports[`scanForBundleSize > should show both decreases and increases when thres
 
 | 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
-| pkg-b | 50 kB | 150 kB | 100 kB |
+| pkg-b | 50 kB | 150 kB | +100 kB |
 | pkg-a | 200 kB | 100 kB | -100 kB |",
 ]
 `;
@@ -43,7 +43,7 @@ exports[`scanForBundleSize > should show only increases when threshold is -1 and
 
 | 📦 Package | 📏 Base Size | 📏 Source Size | 📊 Size Change |
 | --- | --- | --- | --- |
-| my-package | 100 kB | 200 kB | 100 kB |",
+| my-package | 100 kB | 200 kB | +100 kB |",
 ]
 `;
 
@@ -55,6 +55,6 @@ These packages exceed the size increase threshold of 50 kB:
 
 | 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
 | --- | --- | --- | --- |
-| my-package | 100 kB | 200 kB | 100 kB |",
+| my-package | 100 kB | 200 kB | +100 kB |",
 ]
 `;
