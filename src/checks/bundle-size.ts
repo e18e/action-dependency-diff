@@ -16,19 +16,15 @@ export async function scanForBundleSize(
   }
   const comparison = comparePackSizes(basePacks, sourcePacks, threshold);
 
-  const allUnchanged = comparison.packChanges.every(
-    (change) => change.sizeChange === 0
-  );
-
-  if (allUnchanged) {
-    messages.push(`## 📦 Package Bundle Size\n\nNo bundle size changes.`);
-    return;
-  }
-
   if (threshold === -1) {
     const changedPacks = comparison.packChanges.filter(
       (change) => change.exceedsThreshold
     );
+
+    if (changedPacks.length === 0) {
+      messages.push(`## 📦 Package Bundle Size\n\nNo bundle size changes.`);
+      return;
+    }
 
     if (changedPacks.length > 0) {
       const hasDecreases = changedPacks.some((c) => c.sizeChange < 0);

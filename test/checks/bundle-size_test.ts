@@ -25,9 +25,7 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain('No bundle size changes');
-    expect(messages).toMatchSnapshot();
+    expect(messages).toHaveLength(0);
   });
 
   it('should report no bundle size change with threshold=-1 when diff is 0', async () => {
@@ -37,7 +35,19 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, -1);
 
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('No bundle size changes');
     expect(messages).toMatchSnapshot();
+  });
+
+  it('should not report anything when diff is 0 and threshold is not -1', async () => {
+    const messages: string[] = [];
+    const basePacks = [makePack('my-package', 100000)];
+    const sourcePacks = [makePack('my-package', 100000)];
+
+    await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
+
+    expect(messages).toHaveLength(0);
   });
 
   it('should warn about size increase exceeding threshold', async () => {

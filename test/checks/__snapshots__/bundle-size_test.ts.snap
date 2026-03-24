@@ -10,14 +10,6 @@ exports[`scanForBundleSize > should celebrate size decrease when threshold is -1
 ]
 `;
 
-exports[`scanForBundleSize > should report no bundle size change when diff is 0 1`] = `
-[
-  "## 📦 Package Bundle Size
-
-No bundle size changes.",
-]
-`;
-
 exports[`scanForBundleSize > should report no bundle size change with threshold=-1 when diff is 0 1`] = `
 [
   "## 📦 Package Bundle Size
