@@ -62,10 +62,9 @@ ${packRows}`
     return;
   }
 
-  const totalSizeChange = comparison.packChanges.reduce(
-    (sum, change) => sum + change.sizeChange,
-    0
-  );
+  const totalSizeChange = comparison.packChanges
+    .filter((change) => change.sizeChange > 0)
+    .reduce((sum, change) => sum + change.sizeChange, 0);
 
   if (totalSizeChange < threshold) {
     return;

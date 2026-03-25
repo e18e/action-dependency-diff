@@ -70,14 +70,18 @@ describe('scanForBundleSize', () => {
     expect(messages).toHaveLength(0);
   });
 
-  it('should not report no-change when individual changes cancel out', async () => {
+  it('should warn about an increase even when a decrease in another package cancels it out in total', async () => {
     const messages: string[] = [];
+    // pkg-a shrinks by 100 KB, pkg-b grows by 100 KB → net = 0, but pkg-b exceeds threshold
     const basePacks = [makePack('pkg-a', 200000), makePack('pkg-b', 50000)];
     const sourcePacks = [makePack('pkg-a', 100000), makePack('pkg-b', 150000)];
 
     await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
 
-    expect(messages).toHaveLength(0);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toContain('pkg-b');
+    expect(messages[0]).not.toContain('pkg-a');
+    expect(messages).toMatchSnapshot();
   });
 
   it('should not report no-change when changes exist but are below threshold', async () => {

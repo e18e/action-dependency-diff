@@ -39,6 +39,18 @@ exports[`scanForBundleSize > should show only increases when threshold is -1 and
 ]
 `;
 
+exports[`scanForBundleSize > should warn about an increase even when a decrease in another package cancels it out in total 1`] = `
+[
+  "## ⚠️ Package Size Increase
+
+These packages exceed the size increase threshold of 50 kB:
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| pkg-b | 50 kB | 150 kB | +100 kB |",
+]
+`;
+
 exports[`scanForBundleSize > should warn about size increase exceeding threshold 1`] = `
 [
   "## ⚠️ Package Size Increase
