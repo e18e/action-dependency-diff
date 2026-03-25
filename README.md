@@ -95,7 +95,7 @@ The action accepts glob patterns to locate package tarballs for comparison:
 > [!NOTE]
 > Package bundle analysis only runs when both `base-packages` and `source-packages` are provided. If these inputs are not set, this feature is skipped entirely.
 
-When the bundle size does not change between base and source, a message is posted confirming there was no bundle size change.
+When the bundle size does not change between base and source, no message is posted. Set `pack-size-threshold` to `-1` to always report, including a confirmation when there is no change.
 
 ### Always Report Bundle Size Changes
 
