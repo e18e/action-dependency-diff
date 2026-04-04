@@ -45,7 +45,7 @@ export function scanForReplacements(
             );
             break;
           case 'documented': {
-            const docUrl = `https://github.com/es-tooling/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
+            const docUrl = `https://github.com/e18e/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
             replacementMessages.push(
               `| ${name} | [See documentation](${docUrl}) |`
             );
