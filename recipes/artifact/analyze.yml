@@ -1,0 +1,26 @@
+name: Dependency Diff (Analyze)
+
+on:
+  pull_request:
+
+jobs:
+  diff_dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Analyze Dependencies
+        id: analyze
+        uses: e18e/action-dependency-diff@v1
+        with:
+          mode: artifact
+      - name: Upload Artifact
+        if: steps.analyze.outputs.artifact-path
+        uses: actions/upload-artifact@v4
+        with:
+          name: e18e-diff-result
+          path: ${{ steps.analyze.outputs.artifact-path }}

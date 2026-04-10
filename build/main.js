@@ -3981,11 +3981,11 @@ var require_util2 = __commonJS({
     var { isUint8Array } = __require("node:util/types");
     var { webidl } = require_webidl();
     var supportedHashes = [];
-    var crypto;
+    var crypto2;
     try {
-      crypto = __require("node:crypto");
+      crypto2 = __require("node:crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
+      supportedHashes = crypto2.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
     } catch {
     }
     function responseURL(response) {
@@ -4258,7 +4258,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto === void 0) {
+      if (crypto2 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -4273,7 +4273,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto2.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -5337,8 +5337,8 @@ var require_body = __commonJS({
     var { multipartFormDataParser } = require_formdata_parser();
     var random;
     try {
-      const crypto = __require("node:crypto");
-      random = (max) => crypto.randomInt(0, max);
+      const crypto2 = __require("node:crypto");
+      random = (max) => crypto2.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -16742,13 +16742,13 @@ var require_frame = __commonJS({
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
     var BUFFER_SIZE = 16386;
-    var crypto;
+    var crypto2;
     var buffer = null;
     var bufIdx = BUFFER_SIZE;
     try {
-      crypto = __require("node:crypto");
+      crypto2 = __require("node:crypto");
     } catch {
-      crypto = {
+      crypto2 = {
         // not full compatibility, but minimum.
         randomFillSync: function randomFillSync(buffer2, _offset, _size) {
           for (let i = 0; i < buffer2.length; ++i) {
@@ -16761,7 +16761,7 @@ var require_frame = __commonJS({
     function generateMask() {
       if (bufIdx === BUFFER_SIZE) {
         bufIdx = 0;
-        crypto.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
+        crypto2.randomFillSync(buffer ??= Buffer.allocUnsafe(BUFFER_SIZE), 0, BUFFER_SIZE);
       }
       return [buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++], buffer[bufIdx++]];
     }
@@ -16833,9 +16833,9 @@ var require_connection = __commonJS({
     var { Headers: Headers2, getHeadersList } = require_headers();
     var { getDecodeSplit } = require_util2();
     var { WebsocketFrameSend } = require_frame();
-    var crypto;
+    var crypto2;
     try {
-      crypto = __require("node:crypto");
+      crypto2 = __require("node:crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, client, ws, onEstablish, options) {
@@ -16855,7 +16855,7 @@ var require_connection = __commonJS({
         const headersList = getHeadersList(new Headers2(options.headers));
         request2.headersList = headersList;
       }
-      const keyValue = crypto.randomBytes(16).toString("base64");
+      const keyValue = crypto2.randomBytes(16).toString("base64");
       request2.headersList.append("sec-websocket-key", keyValue);
       request2.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -16885,7 +16885,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto2.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -19390,6 +19390,7 @@ var require_fast_content_type_parse = __commonJS({
 
 // src/main.ts
 import * as process2 from "process";
+import * as fs4 from "node:fs/promises";
 
 // node_modules/@actions/core/lib/command.js
 import * as os from "os";
@@ -19462,8 +19463,36 @@ function escapeProperty(s) {
   return toCommandValue(s).replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A").replace(/:/g, "%3A").replace(/,/g, "%2C");
 }
 
+// node_modules/@actions/core/lib/file-command.js
+import * as crypto from "crypto";
+import * as fs from "fs";
+import * as os2 from "os";
+function issueFileCommand(command, message) {
+  const filePath = process.env[`GITHUB_${command}`];
+  if (!filePath) {
+    throw new Error(`Unable to find environment variable for file command ${command}`);
+  }
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`Missing file at path: ${filePath}`);
+  }
+  fs.appendFileSync(filePath, `${toCommandValue(message)}${os2.EOL}`, {
+    encoding: "utf8"
+  });
+}
+function prepareKeyValueMessage(key, value) {
+  const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+  const convertedValue = toCommandValue(value);
+  if (key.includes(delimiter)) {
+    throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+  }
+  if (convertedValue.includes(delimiter)) {
+    throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+  }
+  return `${key}<<${delimiter}${os2.EOL}${convertedValue}${os2.EOL}${delimiter}`;
+}
+
 // node_modules/@actions/core/lib/core.js
-import * as os3 from "os";
+import * as os4 from "os";
 
 // node_modules/@actions/core/node_modules/@actions/http-client/lib/index.js
 var tunnel = __toESM(require_tunnel2(), 1);
@@ -19521,7 +19550,7 @@ var HttpResponseRetryCodes = [
 ];
 
 // node_modules/@actions/core/lib/summary.js
-import { EOL as EOL2 } from "os";
+import { EOL as EOL3 } from "os";
 import { constants, promises } from "fs";
 var __awaiter = function(thisArg, _arguments, P, generator) {
   function adopt(value) {
@@ -19665,7 +19694,7 @@ var Summary = class {
    * @returns {Summary} summary instance
    */
   addEOL() {
-    return this.addRaw(EOL2);
+    return this.addRaw(EOL3);
   }
   /**
    * Adds an HTML codeblock to the summary buffer
@@ -19805,20 +19834,20 @@ var Summary = class {
 var _summary = new Summary();
 
 // node_modules/@actions/core/lib/platform.js
-import os2 from "os";
+import os3 from "os";
 
 // node_modules/@actions/io/lib/io-util.js
-import * as fs from "fs";
-var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
+import * as fs2 from "fs";
+var { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs2.promises;
 var IS_WINDOWS = process.platform === "win32";
-var READONLY = fs.constants.O_RDONLY;
+var READONLY = fs2.constants.O_RDONLY;
 
 // node_modules/@actions/exec/lib/toolrunner.js
 var IS_WINDOWS2 = process.platform === "win32";
 
 // node_modules/@actions/core/lib/platform.js
-var platform = os2.platform();
-var arch = os2.arch();
+var platform = os3.platform();
+var arch = os3.arch();
 
 // node_modules/@actions/core/lib/core.js
 var ExitCode;
@@ -19847,6 +19876,14 @@ function getBooleanInput(name, options) {
   throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 }
+function setOutput(name, value) {
+  const filePath = process.env["GITHUB_OUTPUT"] || "";
+  if (filePath) {
+    return issueFileCommand("OUTPUT", prepareKeyValueMessage(name, value));
+  }
+  process.stdout.write(os4.EOL);
+  issueCommand("set-output", { name }, toCommandValue(value));
+}
 function setFailed(message) {
   process.exitCode = ExitCode.Failure;
   error(message);
@@ -19855,12 +19892,12 @@ function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 function info(message) {
-  process.stdout.write(message + os3.EOL);
+  process.stdout.write(message + os4.EOL);
 }
 
 // node_modules/@actions/github/lib/context.js
-import { readFileSync, existsSync } from "fs";
-import { EOL as EOL4 } from "os";
+import { readFileSync, existsSync as existsSync2 } from "fs";
+import { EOL as EOL5 } from "os";
 var Context = class {
   /**
    * Hydrate the context from the environment
@@ -19869,11 +19906,11 @@ var Context = class {
     var _a, _b, _c;
     this.payload = {};
     if (process.env.GITHUB_EVENT_PATH) {
-      if (existsSync(process.env.GITHUB_EVENT_PATH)) {
+      if (existsSync2(process.env.GITHUB_EVENT_PATH)) {
         this.payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" }));
       } else {
         const path2 = process.env.GITHUB_EVENT_PATH;
-        process.stdout.write(`GITHUB_EVENT_PATH ${path2} does not exist${EOL4}`);
+        process.stdout.write(`GITHUB_EVENT_PATH ${path2} does not exist${EOL5}`);
       }
     }
     this.eventName = process.env.GITHUB_EVENT_NAME;
@@ -24025,7 +24062,7 @@ function parse2(input, typeOrFileName, packageJson) {
 }
 
 // src/lockfile.ts
-import { existsSync as existsSync2 } from "node:fs";
+import { existsSync as existsSync3 } from "node:fs";
 import { join } from "node:path";
 var supportedLockfiles = [
   "pnpm-lock.yaml",
@@ -24043,7 +24080,7 @@ function computeDependencyVersions(lockFile) {
 }
 function detectLockfile(workspacePath) {
   for (const c of supportedLockfiles) {
-    if (existsSync2(join(workspacePath, c))) return c;
+    if (existsSync3(join(workspacePath, c))) return c;
   }
   return void 0;
 }
@@ -24244,15 +24281,15 @@ function getDependenciesFromPackageJson(pkg, types) {
   }
   return result;
 }
-function isSupportedArchitecture(pkg, os4, cpu, libc) {
-  const osMatches = pkg.os === void 0 || pkg.os.length === 0 || pkg.os.includes(os4);
+function isSupportedArchitecture(pkg, os5, cpu, libc) {
+  const osMatches = pkg.os === void 0 || pkg.os.length === 0 || pkg.os.includes(os5);
   const cpuMatches = pkg.cpu === void 0 || pkg.cpu.length === 0 || pkg.cpu.includes(cpu);
   const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }
 
 // src/packs.ts
-import * as fs2 from "node:fs/promises";
+import * as fs3 from "node:fs/promises";
 import * as path from "path";
 import { createReadStream } from "node:fs";
 import { createGunzip } from "node:zlib";
@@ -24312,11 +24349,11 @@ async function extractPackageNameFromTgz(filePath) {
 async function getPacksFromPattern(pattern) {
   try {
     const packs = [];
-    for await (const filePath of fs2.glob(pattern)) {
+    for await (const filePath of fs3.glob(pattern)) {
       if (!filePath.endsWith(".tgz") && !filePath.endsWith(".tar.gz")) {
         continue;
       }
-      const stats = await fs2.stat(filePath);
+      const stats = await fs3.stat(filePath);
       const name = path.basename(filePath);
       const packageName = await extractPackageNameFromTgz(filePath);
       if (!packageName) {
@@ -24407,7 +24444,7 @@ function scanForReplacements(messages, baseDependencies, currentDependencies) {
             );
             break;
           case "documented": {
-            const docUrl = `https://github.com/es-tooling/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
+            const docUrl = `https://github.com/e18e/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
             replacementMessages.push(
               `| ${name} | [See documentation](${docUrl}) |`
             );
@@ -24805,238 +24842,264 @@ ${packRows}`
   }
 }
 
-// src/main.ts
+// src/constants.ts
 var COMMENT_TAG = "<!-- dependency-diff-action -->";
-async function run() {
+var ARTIFACT_FILENAME = "e18e-diff-result.json";
+
+// src/github.ts
+async function findExistingComment(octokit, prNumber) {
+  const { owner, repo } = context2.repo;
+  const perPage = 100;
+  for await (const { data: comments } of octokit.paginate.iterator(
+    octokit.rest.issues.listComments,
+    {
+      owner,
+      repo,
+      issue_number: prNumber,
+      per_page: perPage
+    }
+  )) {
+    const comment = comments.find(
+      (c) => c.user && c.user.login === "github-actions[bot]" && c.body?.includes(COMMENT_TAG)
+    );
+    if (comment) {
+      return comment.id;
+    }
+  }
+  return void 0;
+}
+async function upsertComment(octokit, prNumber, body) {
+  const { owner, repo } = context2.repo;
+  const existingCommentId = await findExistingComment(octokit, prNumber);
+  if (existingCommentId) {
+    await octokit.rest.issues.updateComment({
+      owner,
+      repo,
+      comment_id: existingCommentId,
+      body
+    });
+    info(`Updated existing dependency diff comment #${existingCommentId}`);
+  } else {
+    await octokit.rest.issues.createComment({
+      owner,
+      repo,
+      issue_number: prNumber,
+      body
+    });
+    info("Created new dependency diff comment");
+  }
+}
+
+// src/main.ts
+async function postCommentFromArtifact() {
+  const token = getInput("github-token", { required: true });
+  const artifactPath = getInput("artifact-path");
+  if (!artifactPath) {
+    throw new Error(
+      "No artifact-path was provided. This is required for comment-from-artifact mode."
+    );
+  }
+  info(`Reading artifact from ${artifactPath}`);
+  const result = JSON.parse(
+    await fs4.readFile(artifactPath, "utf-8")
+  );
+  info(`Posting comment to PR #${result.pr_number}`);
+  const octokit = getOctokit(token);
+  await upsertComment(octokit, result.pr_number, result.body);
+}
+async function analyzeAndComment() {
+  const baseWorkspace = process2.env.GITHUB_WORKSPACE || process2.cwd();
+  const mode = getInput("mode") || "comment";
+  const workDir = getInput("working-directory") || ".";
+  const workspacePath = join2(baseWorkspace, workDir);
+  info(`Workspace path is ${workspacePath}`);
+  const baseRef = getBaseRef();
+  const currentRef = context2.payload.pull_reuqest?.head.sha ?? context2.sha;
+  const lockfileFilename = detectLockfile(workspacePath);
+  info(`Detected lockfile ${lockfileFilename}`);
+  const token = getInput("github-token", { required: true });
+  const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
+  const detectReplacements = getBooleanInput("detect-replacements");
+  const dependencyThreshold = parseInt(
+    getInput("dependency-threshold") || "10",
+    10
+  );
+  const sizeThreshold = parseInt(
+    getInput("size-threshold") || "100000",
+    10
+  );
+  const duplicateThreshold = parseInt(
+    getInput("duplicate-threshold") || "1",
+    10
+  );
+  const packSizeThreshold = parseInt(
+    getInput("pack-size-threshold") || "50000",
+    10
+  );
+  if (Number.isNaN(prNumber) || prNumber < 1) {
+    info("No valid pull request number was found. Skipping.");
+    return;
+  }
+  if (!lockfileFilename) {
+    info("No lockfile detected in the workspace. Exiting.");
+    return;
+  }
+  const lockfilePath = join2(workDir, lockfileFilename);
+  const packageFilePath = join2(workDir, "package.json");
+  info(`Using lockfile: ${lockfilePath}`);
+  info(`Comparing package lockfiles between ${baseRef} and ${currentRef}`);
+  const basePackageLock = getFileFromRef(baseRef, lockfilePath, baseWorkspace);
+  if (!basePackageLock) {
+    info("No package lockfile found in base ref");
+    return;
+  }
+  const currentPackageLock = getFileFromRef(
+    currentRef,
+    lockfilePath,
+    baseWorkspace
+  );
+  if (!currentPackageLock) {
+    info("No package lockfile found in current ref");
+    return;
+  }
+  const basePackageJson = tryGetJSONFromRef(
+    baseRef,
+    packageFilePath,
+    workspacePath
+  );
+  const currentPackageJson = tryGetJSONFromRef(
+    currentRef,
+    packageFilePath,
+    workspacePath
+  );
+  let parsedCurrentLock;
+  let parsedBaseLock;
   try {
-    const baseWorkspace = process2.env.GITHUB_WORKSPACE || process2.cwd();
-    const workDir = getInput("working-directory") || ".";
-    const workspacePath = join2(baseWorkspace, workDir);
-    info(`Workspace path is ${workspacePath}`);
-    const baseRef = getBaseRef();
-    const currentRef = context2.payload.pull_reuqest?.head.sha ?? context2.sha;
-    const lockfileFilename = detectLockfile(workspacePath);
-    info(`Detected lockfile ${lockfileFilename}`);
-    const token = getInput("github-token", { required: true });
-    const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
-    const detectReplacements = getBooleanInput("detect-replacements");
-    const dependencyThreshold = parseInt(
-      getInput("dependency-threshold") || "10",
-      10
+    parsedCurrentLock = await parse2(
+      currentPackageLock,
+      lockfileFilename,
+      currentPackageJson ?? void 0
     );
-    const sizeThreshold = parseInt(
-      getInput("size-threshold") || "100000",
-      10
-    );
-    const duplicateThreshold = parseInt(
-      getInput("duplicate-threshold") || "1",
-      10
-    );
-    const packSizeThreshold = parseInt(
-      getInput("pack-size-threshold") || "50000",
-      10
-    );
-    if (Number.isNaN(prNumber) || prNumber < 1) {
-      info("No valid pull request number was found. Skipping.");
-      return;
-    }
-    if (!lockfileFilename) {
-      info("No lockfile detected in the workspace. Exiting.");
-      return;
-    }
-    const lockfilePath = join2(workDir, lockfileFilename);
-    const packageFilePath = join2(workDir, "package.json");
-    info(`Using lockfile: ${lockfilePath}`);
     info(
-      `Comparing package lockfiles between ${baseRef} and ${currentRef}`
+      `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
     );
-    const basePackageLock = getFileFromRef(
-      baseRef,
-      lockfilePath,
-      baseWorkspace
+  } catch (err) {
+    throw new Error(`Failed to parse current lockfile: ${err}`);
+  }
+  try {
+    parsedBaseLock = await parse2(
+      basePackageLock,
+      lockfileFilename,
+      basePackageJson ?? void 0
     );
-    if (!basePackageLock) {
-      info("No package lockfile found in base ref");
-      return;
-    }
-    const currentPackageLock = getFileFromRef(
-      currentRef,
-      lockfilePath,
-      baseWorkspace
+    info(
+      `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
     );
-    if (!currentPackageLock) {
-      info("No package lockfile found in current ref");
-      return;
-    }
-    const basePackageJson = tryGetJSONFromRef(
-      baseRef,
-      packageFilePath,
-      workspacePath
-    );
-    const currentPackageJson = tryGetJSONFromRef(
-      currentRef,
-      packageFilePath,
-      workspacePath
-    );
-    let parsedCurrentLock;
-    let parsedBaseLock;
+  } catch (err) {
+    throw new Error(`Failed to parse base lockfile: ${err}`);
+  }
+  const currentDeps = computeDependencyVersions(parsedCurrentLock);
+  const baseDeps = computeDependencyVersions(parsedBaseLock);
+  info(`Dependency threshold set to ${dependencyThreshold}`);
+  info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
+  info(`Duplicate threshold set to ${duplicateThreshold}`);
+  info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
+  const messages = [];
+  scanForDependencyCount(messages, dependencyThreshold, currentDeps, baseDeps);
+  scanForDuplicates(
+    messages,
+    duplicateThreshold,
+    currentDeps,
+    lockfilePath,
+    parsedCurrentLock
+  );
+  await scanForDependencySize(
+    messages,
+    sizeThreshold,
+    currentDeps,
+    baseDeps,
+    parsedCurrentLock,
+    parsedBaseLock
+  );
+  await scanForProvenance(messages, currentDeps, baseDeps);
+  const basePackagesPattern = getInput("base-packages");
+  const sourcePackagesPattern = getInput("source-packages");
+  if (basePackagesPattern && sourcePackagesPattern) {
     try {
-      parsedCurrentLock = await parse2(
-        currentPackageLock,
-        lockfileFilename,
-        currentPackageJson ?? void 0
-      );
       info(
-        `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
+        `Comparing pack sizes between patterns: ${basePackagesPattern} and ${sourcePackagesPattern}`
+      );
+      const basePacks = await getPacksFromPattern(basePackagesPattern);
+      const sourcePacks = await getPacksFromPattern(sourcePackagesPattern);
+      info(
+        `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
+      );
+      await scanForBundleSize(
+        messages,
+        basePacks,
+        sourcePacks,
+        packSizeThreshold
       );
     } catch (err) {
-      setFailed(`Failed to parse current lockfile: ${err}`);
-      return;
+      info(`Failed to compare pack sizes: ${err}`);
     }
-    try {
-      parsedBaseLock = await parse2(
-        basePackageLock,
-        lockfileFilename,
-        basePackageJson ?? void 0
+  }
+  if (detectReplacements) {
+    if (!basePackageJson || !currentPackageJson) {
+      throw new Error(
+        "detect-replacements requires both base and current package.json to be present"
       );
-      info(
-        `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
-      );
-    } catch (err) {
-      setFailed(`Failed to parse base lockfile: ${err}`);
-      return;
     }
-    const currentDeps = computeDependencyVersions(parsedCurrentLock);
-    const baseDeps = computeDependencyVersions(parsedBaseLock);
-    info(`Dependency threshold set to ${dependencyThreshold}`);
-    info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
-    info(`Duplicate threshold set to ${duplicateThreshold}`);
-    info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
-    const messages = [];
-    scanForDependencyCount(
-      messages,
-      dependencyThreshold,
-      currentDeps,
-      baseDeps
+    const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
+      "optional",
+      "peer",
+      "dev",
+      "prod"
+    ]);
+    const currentDependencies = getDependenciesFromPackageJson(
+      currentPackageJson,
+      ["optional", "peer", "dev", "prod"]
     );
-    scanForDuplicates(
-      messages,
-      duplicateThreshold,
-      currentDeps,
-      lockfilePath,
-      parsedCurrentLock
-    );
-    await scanForDependencySize(
-      messages,
-      sizeThreshold,
-      currentDeps,
-      baseDeps,
-      parsedCurrentLock,
-      parsedBaseLock
-    );
-    await scanForProvenance(messages, currentDeps, baseDeps);
-    const basePackagesPattern = getInput("base-packages");
-    const sourcePackagesPattern = getInput("source-packages");
-    if (basePackagesPattern && sourcePackagesPattern) {
-      try {
-        info(
-          `Comparing pack sizes between patterns: ${basePackagesPattern} and ${sourcePackagesPattern}`
-        );
-        const basePacks = await getPacksFromPattern(basePackagesPattern);
-        const sourcePacks = await getPacksFromPattern(sourcePackagesPattern);
-        info(
-          `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
-        );
-        await scanForBundleSize(
-          messages,
-          basePacks,
-          sourcePacks,
-          packSizeThreshold
-        );
-      } catch (err) {
-        info(`Failed to compare pack sizes: ${err}`);
-      }
-    }
-    if (detectReplacements) {
-      if (!basePackageJson || !currentPackageJson) {
-        setFailed(
-          "detect-replacements requires both base and current package.json to be present"
-        );
-        return;
-      }
-      const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
-        "optional",
-        "peer",
-        "dev",
-        "prod"
-      ]);
-      const currentDependencies = getDependenciesFromPackageJson(
-        currentPackageJson,
-        ["optional", "peer", "dev", "prod"]
-      );
-      scanForReplacements(messages, baseDependencies, currentDependencies);
-    }
-    const octokit = getOctokit(token);
-    let existingCommentId = void 0;
-    const perPage = 100;
-    for await (const { data: comments } of octokit.paginate.iterator(
-      octokit.rest.issues.listComments,
-      {
-        owner: context2.repo.owner,
-        repo: context2.repo.repo,
-        issue_number: prNumber,
-        per_page: perPage
-      }
-    )) {
-      const comment = comments.find(
-        (c) => c.user && c.user.login === "github-actions[bot]" && c.body?.includes(COMMENT_TAG)
-      );
-      if (comment) {
-        existingCommentId = comment.id;
-        break;
-      }
-    }
-    if (messages.length === 0) {
-      if (existingCommentId) {
-        await octokit.rest.issues.updateComment({
-          owner: context2.repo.owner,
-          repo: context2.repo.repo,
-          comment_id: existingCommentId,
-          body: `${COMMENT_TAG}
+    scanForReplacements(messages, baseDependencies, currentDependencies);
+  }
+  const commentBody = messages.length === 0 ? `${COMMENT_TAG}
 ## e18e dependency analysis
 
 No dependency warnings found.
-`
-        });
-        info(
-          `Updated existing dependency diff comment #${existingCommentId}`
-        );
-      } else {
-        info("No dependency warnings found. Skipping comment creation.");
-      }
+` : `${COMMENT_TAG}
+${messages.join("\n\n")}`;
+  if (mode === "artifact") {
+    const tmpDir = join2(baseWorkspace, ".e18e-tmp");
+    const outputPath = join2(tmpDir, ARTIFACT_FILENAME);
+    await fs4.mkdir(tmpDir, { recursive: true });
+    await fs4.writeFile(
+      outputPath,
+      JSON.stringify({ pr_number: prNumber, body: commentBody })
+    );
+    setOutput("artifact-path", outputPath);
+    info(`Wrote artifact to ${outputPath}`);
+    return;
+  }
+  const octokit = getOctokit(token);
+  if (messages.length === 0) {
+    const existingCommentId = await findExistingComment(octokit, prNumber);
+    if (existingCommentId) {
+      await upsertComment(octokit, prNumber, commentBody);
+    } else {
+      info("No dependency warnings found. Skipping comment creation.");
+    }
+    return;
+  }
+  await upsertComment(octokit, prNumber, commentBody);
+}
+async function run() {
+  try {
+    const mode = getInput("mode") || "comment";
+    if (mode === "comment-from-artifact") {
+      await postCommentFromArtifact();
       return;
     }
-    const finalCommentBody = `${COMMENT_TAG}
-${messages.join("\n\n")}`;
-    if (existingCommentId) {
-      await octokit.rest.issues.updateComment({
-        owner: context2.repo.owner,
-        repo: context2.repo.repo,
-        comment_id: existingCommentId,
-        body: finalCommentBody
-      });
-      info(
-        `Updated existing dependency diff comment #${existingCommentId}`
-      );
-    } else {
-      await octokit.rest.issues.createComment({
-        owner: context2.repo.owner,
-        repo: context2.repo.repo,
-        issue_number: prNumber,
-        body: finalCommentBody
-      });
-      info("Created new dependency diff comment");
-    }
+    await analyzeAndComment();
   } catch (error2) {
     if (error2 instanceof Error) {
       setFailed(error2.message);

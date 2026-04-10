@@ -47,6 +47,17 @@ inputs:
   working-directory:
     description: 'Working directory to scan for package lock file'
     required: false
+  mode:
+    description: 'Run mode. "comment" posts a PR comment directly, "artifact" writes a JSON file containing the comment body and PR number, "comment-from-artifact" reads a previously written artifact file and posts it as a PR comment.'
+    required: false
+    default: 'comment'
+  artifact-path:
+    description: 'Path to the artifact JSON file. Required when mode is "comment-from-artifact".'
+    required: false
+
+outputs:
+  artifact-path:
+    description: 'Path to the artifact JSON file. Set when mode is "artifact".'
 
 runs:
   using: node24
