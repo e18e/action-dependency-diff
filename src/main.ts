@@ -6,7 +6,12 @@ import type {PackageJson} from 'pkg-types';
 import {join} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {detectLockfile, computeDependencyVersions} from './lockfile.js';
-import {getFileFromRef, getBaseRef, tryGetJSONFromRef} from './git.js';
+import {
+  getFileFromRef,
+  getBaseRef,
+  getCurrentRef,
+  tryGetJSONFromRef
+} from './git.js';
 import {getDependenciesFromPackageJson} from './npm.js';
 import {getPacksFromPattern} from './packs.js';
 import {scanForReplacements} from './checks/replacements.js';
@@ -54,8 +59,7 @@ async function analyzeAndComment(): Promise<void> {
   core.info(`Workspace path is ${workspacePath}`);
 
   const baseRef = getBaseRef();
-  const currentRef =
-    github.context.payload.pull_reuqest?.head.sha ?? github.context.sha;
+  const currentRef = getCurrentRef();
   const lockfileFilename = detectLockfile(workspacePath);
   core.info(`Detected lockfile ${lockfileFilename}`);
 

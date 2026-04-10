@@ -60,6 +60,43 @@ describe('getBaseRef', () => {
   });
 });
 
+describe('getCurrentRef', () => {
+  it('should return pull request head sha when in PR context', () => {
+    const originalPayload = github.context.payload;
+    const originalSha = github.context.sha;
+    try {
+      github.context.payload = {
+        pull_request: {
+          number: 303,
+          head: {
+            sha: 'pr-head-sha'
+          }
+        }
+      };
+      github.context.sha = 'merge-sha';
+      const currentRef = git.getCurrentRef();
+      expect(currentRef).toBe('pr-head-sha');
+    } finally {
+      github.context.payload = originalPayload;
+      github.context.sha = originalSha;
+    }
+  });
+
+  it('should fall back to context sha outside pull request context', () => {
+    const originalPayload = github.context.payload;
+    const originalSha = github.context.sha;
+    try {
+      github.context.payload = {};
+      github.context.sha = 'push-sha';
+      const currentRef = git.getCurrentRef();
+      expect(currentRef).toBe('push-sha');
+    } finally {
+      github.context.payload = originalPayload;
+      github.context.sha = originalSha;
+    }
+  });
+});
+
 describe('getFileFromRef', () => {
   afterEach(() => {
     vi.clearAllMocks();
