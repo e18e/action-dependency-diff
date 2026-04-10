@@ -19,6 +19,7 @@ jobs:
         with:
           mode: artifact
       - name: Upload Artifact
+        if: steps.analyze.outputs.artifact-path
         uses: actions/upload-artifact@v4
         with:
           name: e18e-diff-result
