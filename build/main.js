@@ -24816,7 +24816,7 @@ ${provenanceRows.join("\n")}`
 
 // src/checks/bundle-size.ts
 function formatBytesSigned(bytes) {
-  return `${bytes > 0 ? "+" : "-"}${formatBytes(bytes)}`;
+  return `${bytes > 0 ? "+" : ""}${formatBytes(bytes)}`;
 }
 async function scanForBundleSize(messages, basePacks, sourcePacks, threshold) {
   if (basePacks.length === 0 && sourcePacks.length === 0) {
@@ -24842,11 +24842,12 @@ No bundle size changes.`);
       const sizeChange = formatBytesSigned(change.sizeChange);
       return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
     }).join("\n");
+    const thresholdText = threshold === -1 ? "" : `
+These packages exceed the size change threshold of ${formatBytes(threshold)}.
+`;
     messages.push(
       `${heading}
-
-These packages exceed the size increase threshold of ${formatBytes(threshold)}:
-
+${thresholdText}
 | \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
 | --- | --- | --- | --- |
 ${packRows}`

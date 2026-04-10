@@ -2,7 +2,7 @@ import {formatBytes} from '../common.js';
 import {comparePackSizes, type PackInfo} from '../packs.js';
 
 function formatBytesSigned(bytes: number): string {
-  return `${bytes > 0 ? '+' : '-'}${formatBytes(bytes)}`;
+  return `${bytes > 0 ? '+' : ''}${formatBytes(bytes)}`;
 }
 
 export async function scanForBundleSize(
@@ -45,11 +45,14 @@ export async function scanForBundleSize(
       })
       .join('\n');
 
+    const thresholdText =
+      threshold === -1
+        ? ''
+        : `\nThese packages exceed the size change threshold of ${formatBytes(threshold)}.\n`;
+
     messages.push(
       `${heading}
-
-These packages exceed the size increase threshold of ${formatBytes(threshold)}:
-
+${thresholdText}
 | 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
