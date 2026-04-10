@@ -93,12 +93,9 @@ The action accepts glob patterns to locate package tarballs for comparison:
 
 - **`base-packages`** - Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)
 - **`source-packages`** - Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)
-- **`pack-size-threshold`** - Threshold in bytes for warning about significant pack size increases. Set to `-1` to always report bundle size changes.
 
 > [!NOTE]
 > Package bundle analysis only runs when both `base-packages` and `source-packages` are provided. If these inputs are not set, this feature is skipped entirely.
-
-When the bundle size does not change between base and source, no message is posted. Set `pack-size-threshold` to `-1` to always report, including a confirmation when there is no change.
 
 ### Always Report Bundle Size Changes
 

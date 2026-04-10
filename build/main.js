@@ -24393,7 +24393,7 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
     const baseSize = basePack?.size ?? null;
     const sourceSize = sourcePack?.size ?? null;
     const sizeChange = (sourceSize ?? 0) - (baseSize ?? 0);
-    const exceedsThreshold = sizeChange >= threshold;
+    const exceedsThreshold = threshold === -1 ? sizeChange !== 0 : sizeChange >= threshold;
     packChanges.push({
       name: packName,
       baseSize,
@@ -24815,23 +24815,35 @@ ${provenanceRows.join("\n")}`
 }
 
 // src/checks/bundle-size.ts
+function formatBytesSigned(bytes) {
+  return `${bytes > 0 ? "+" : "-"}${formatBytes(bytes)}`;
+}
 async function scanForBundleSize(messages, basePacks, sourcePacks, threshold) {
   if (basePacks.length === 0 && sourcePacks.length === 0) {
     return;
   }
   const comparison = comparePackSizes(basePacks, sourcePacks, threshold);
   const packWarnings = comparison.packChanges.filter(
-    (change) => change.exceedsThreshold && change.sizeChange > 0
+    (change) => change.exceedsThreshold
   );
+  if (threshold === -1 && packWarnings.length === 0) {
+    messages.push(`## \u{1F4E6} Package Bundle Size
+
+No bundle size changes.`);
+    return;
+  }
   if (packWarnings.length > 0) {
+    const hasDecreases = packWarnings.some((c) => c.sizeChange < 0);
+    const hasIncreases = packWarnings.some((c) => c.sizeChange > 0);
+    const heading = hasDecreases && hasIncreases ? "## \u{1F4E6} Package Bundle Size Changes" : hasDecreases ? "## \u{1F389} Package Size Decrease" : "## \u26A0\uFE0F Package Size Increase";
     const packRows = packWarnings.map((change) => {
       const baseSize = change.baseSize ? formatBytes(change.baseSize) : "New";
       const sourceSize = change.sourceSize ? formatBytes(change.sourceSize) : "Removed";
-      const sizeChange = formatBytes(change.sizeChange);
+      const sizeChange = formatBytesSigned(change.sizeChange);
       return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
     }).join("\n");
     messages.push(
-      `## \u26A0\uFE0F Package Size Increase
+      `${heading}
 
 These packages exceed the size increase threshold of ${formatBytes(threshold)}:
 
@@ -24984,7 +24996,9 @@ async function analyzeAndComment() {
       `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
     );
   } catch (err) {
-    throw new Error(`Failed to parse current lockfile: ${err}`);
+    throw new Error(`Failed to parse current lockfile: ${err}`, {
+      cause: err
+    });
   }
   try {
     parsedBaseLock = await parse2(
@@ -24996,7 +25010,9 @@ async function analyzeAndComment() {
       `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
     );
   } catch (err) {
-    throw new Error(`Failed to parse base lockfile: ${err}`);
+    throw new Error(`Failed to parse base lockfile: ${err}`, {
+      cause: err
+    });
   }
   const currentDeps = computeDependencyVersions(parsedCurrentLock);
   const baseDeps = computeDependencyVersions(parsedBaseLock);
