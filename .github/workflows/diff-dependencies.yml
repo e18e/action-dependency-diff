@@ -72,12 +72,13 @@ jobs:
           path: ./source-packages
       - name: Analyze Dependencies
         id: analyze
-        uses: e18e/action-dependency-diff@27a5e97505c6a13fbe1eece3388bd16e58888548 # pre-release
+        uses: e18e/action-dependency-diff@b7fa825f127c85c357b7fd9f481ce4725618de81 # main
         with:
           mode: artifact
           base-packages: ./base-packages/*.tgz
           source-packages: ./source-packages/*.tgz
       - name: Upload Artifact
+        if: steps.analyze.outputs.artifact-path
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: e18e-diff-result

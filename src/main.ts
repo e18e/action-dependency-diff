@@ -29,10 +29,9 @@ async function postCommentFromArtifact(): Promise<void> {
   const artifactPath = core.getInput('artifact-path');
 
   if (!artifactPath) {
-    core.setFailed(
+    throw new Error(
       'No artifact-path was provided. This is required for comment-from-artifact mode.'
     );
-    return;
   }
 
   core.info(`Reading artifact from ${artifactPath}`);
@@ -135,8 +134,9 @@ async function analyzeAndComment(): Promise<void> {
       `Parsed current lockfile with ${parsedCurrentLock.packages.length} packages`
     );
   } catch (err) {
-    core.setFailed(`Failed to parse current lockfile: ${err}`);
-    return;
+    throw new Error(`Failed to parse current lockfile: ${err}`, {
+      cause: err
+    });
   }
   try {
     parsedBaseLock = await parseLockfile(
@@ -148,8 +148,9 @@ async function analyzeAndComment(): Promise<void> {
       `Parsed base lockfile with ${parsedBaseLock.packages.length} packages`
     );
   } catch (err) {
-    core.setFailed(`Failed to parse base lockfile: ${err}`);
-    return;
+    throw new Error(`Failed to parse base lockfile: ${err}`, {
+      cause: err
+    });
   }
 
   const currentDeps = computeDependencyVersions(parsedCurrentLock);
@@ -210,10 +211,9 @@ async function analyzeAndComment(): Promise<void> {
 
   if (detectReplacements) {
     if (!basePackageJson || !currentPackageJson) {
-      core.setFailed(
+      throw new Error(
         'detect-replacements requires both base and current package.json to be present'
       );
-      return;
     }
 
     const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
