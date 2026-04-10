@@ -50,6 +50,8 @@ jobs:
 | `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size | No       | `50000`                                   |
 | `detect-replacements`  | Detect modules which have community suggested alternatives                     | No       | `true`                                    |
 | `working-directory`    | Working directory to scan for package lock file                                | No       | None                                      |
+| `mode`                 | Run mode: `comment`, `artifact`, or `comment-from-artifact`                    | No       | `comment`                                 |
+| `artifact-path`        | Path to the artifact JSON file (for `comment-from-artifact` mode)              | No       | None                                      |
 
 ## Example with custom inputs
 
@@ -66,7 +68,8 @@ jobs:
 
 See the [`recipes/`](./recipes/) directory for complete workflow examples:
 
-- [`basic.yml`](./recipes/basic.yml) - Basic dependency diff on pull requests
+- [`basic/`](./recipes/basic/) - Basic dependency diff on pull requests
+- [`artifact/`](./recipes/artifact/) - Two-workflow setup using artifacts (no `pull_request_target` needed)
 - [`bundle-diff.yml`](./recipes/bundle-diff.yml) - Advanced workflow with package bundle size analysis
 
 ## Always Report Install Size
@@ -125,6 +128,32 @@ The action requires the following permissions:
 permissions:
   pull-requests: write # To comment on pull requests
 ```
+
+## Artifact Mode
+
+By default, the action posts a comment directly to the pull request. This requires `pull-requests: write` permission in the workflow that runs the analysis, which typically means using `pull_request_target` for fork PRs.
+
+If you'd prefer not to use `pull_request_target`, you can use a two-workflow setup with artifact mode:
+
+1. **Analyze workflow** (`pull_request`) - runs the analysis and uploads the result as an artifact:
+
+```yaml
+- name: Analyze Dependencies
+  uses: e18e/action-dependency-diff@v1
+  with:
+    mode: artifact
+```
+
+2. **Comment workflow** (`workflow_run`) - downloads the artifact and posts the comment:
+
+```yaml
+- name: Post Comment
+  uses: e18e/action-dependency-diff@v1
+  with:
+    mode: comment-from-artifact
+```
+
+See the [`recipes/artifact/`](./recipes/artifact/) directory for complete workflow files.
 
 ## Trust levels of packages
 
