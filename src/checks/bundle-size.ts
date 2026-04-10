@@ -48,7 +48,7 @@ export async function scanForBundleSize(
     const thresholdText =
       threshold === -1
         ? ''
-        : `\nThese packages exceed the size change threshold of ${formatBytes(threshold)}.\n`;
+        : `\nThese packages exceed the size change threshold of ${formatBytes(threshold)}:\n`;
 
     messages.push(
       `${heading}

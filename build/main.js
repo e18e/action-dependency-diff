@@ -24843,7 +24843,7 @@ No bundle size changes.`);
       return `| ${change.name} | ${baseSize} | ${sourceSize} | ${sizeChange} |`;
     }).join("\n");
     const thresholdText = threshold === -1 ? "" : `
-These packages exceed the size change threshold of ${formatBytes(threshold)}.
+These packages exceed the size change threshold of ${formatBytes(threshold)}:
 `;
     messages.push(
       `${heading}

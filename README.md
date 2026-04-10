@@ -99,7 +99,7 @@ The action accepts glob patterns to locate package tarballs for comparison:
 
 ### Always Report Bundle Size Changes
 
-To always report bundle size changes, set `pack-size-threshold` to `-1`. All changed packages are shown in a single table. When only decreases occur, the report is marked with 🎉:
+To always report bundle size changes, set `pack-size-threshold` to `-1`. This will display bundle size differences even if they are reductions, giving you full visibility into how your changes affect the published package size.
 
 ```yaml
 - name: Create Diff
