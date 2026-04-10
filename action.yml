@@ -33,7 +33,7 @@ inputs:
     description: 'Glob pattern for source branch pack files (e.g., "./source-packs/*.tgz")'
     required: false
   pack-size-threshold:
-    description: 'Threshold (in bytes) for warning about significant increase in total pack size'
+    description: 'Threshold (in bytes) for warning about significant increase in total pack size. Set to -1 to always report size changes.'
     required: false
     default: '50000'
   duplicate-threshold:

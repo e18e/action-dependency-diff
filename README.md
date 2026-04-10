@@ -37,21 +37,21 @@ jobs:
 
 ## Inputs
 
-| Name                   | Description                                                                    | Required | Default                                   |
-| ---------------------- | ------------------------------------------------------------------------------ | -------- | ----------------------------------------- |
-| `base-ref`             | Base ref to compare against (defaults to main or PR target)                    | No       | Auto-detected from PR or `main`           |
-| `github-token`         | The GitHub token for authentication                                            | Yes      | `${{ github.token }}`                     |
-| `pr-number`            | The number of the pull request to comment on                                   | Yes      | `${{ github.event.pull_request.number }}` |
-| `dependency-threshold` | Threshold for warning about significant increase in number of dependencies     | No       | `10`                                      |
-| `size-threshold`       | Threshold (in bytes) for warning about significant increase in package size    | No       | `100000`                                  |
-| `duplicate-threshold`  | Threshold for warning about packages with multiple versions                    | No       | `1`                                       |
-| `base-packages`        | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)         | No       | None                                      |
-| `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)     | No       | None                                      |
-| `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size | No       | `50000`                                   |
-| `detect-replacements`  | Detect modules which have community suggested alternatives                     | No       | `true`                                    |
-| `working-directory`    | Working directory to scan for package lock file                                | No       | None                                      |
-| `mode`                 | Run mode: `comment`, `artifact`, or `comment-from-artifact`                    | No       | `comment`                                 |
-| `artifact-path`        | Path to the artifact JSON file (for `comment-from-artifact` mode)              | No       | None                                      |
+| Name                   | Description                                                                                                                | Required | Default                                   |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------- |
+| `base-ref`             | Base ref to compare against (defaults to main or PR target)                                                                | No       | Auto-detected from PR or `main`           |
+| `github-token`         | The GitHub token for authentication                                                                                        | Yes      | `${{ github.token }}`                     |
+| `pr-number`            | The number of the pull request to comment on                                                                               | Yes      | `${{ github.event.pull_request.number }}` |
+| `dependency-threshold` | Threshold for warning about significant increase in number of dependencies                                                 | No       | `10`                                      |
+| `size-threshold`       | Threshold (in bytes) for warning about significant increase in package size                                                | No       | `100000`                                  |
+| `duplicate-threshold`  | Threshold for warning about packages with multiple versions                                                                | No       | `1`                                       |
+| `base-packages`        | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)                                                     | No       | None                                      |
+| `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)                                                 | No       | None                                      |
+| `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |
+| `detect-replacements`  | Detect modules which have community suggested alternatives                                                                 | No       | `true`                                    |
+| `working-directory`    | Working directory to scan for package lock file                                                                            | No       | None                                      |
+| `mode`                 | Run mode: `comment`, `artifact`, or `comment-from-artifact`                                                                | No       | `comment`                                 |
+| `artifact-path`        | Path to the artifact JSON file (for `comment-from-artifact` mode)                                                          | No       | None                                      |
 
 ## Example with custom inputs
 
@@ -93,10 +93,22 @@ The action accepts glob patterns to locate package tarballs for comparison:
 
 - **`base-packages`** - Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)
 - **`source-packages`** - Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)
-- **`pack-size-threshold`** - Threshold in bytes for warning about significant pack size increases
 
 > [!NOTE]
 > Package bundle analysis only runs when both `base-packages` and `source-packages` are provided. If these inputs are not set, this feature is skipped entirely.
+
+### Always Report Bundle Size Changes
+
+To always report bundle size changes, set `pack-size-threshold` to `-1`. This will display bundle size differences even if they are reductions, giving you full visibility into how your changes affect the published package size.
+
+```yaml
+- name: Create Diff
+  uses: e18e/action-dependency-diff@v1
+  with:
+    base-packages: './base-packs/*.tgz'
+    source-packages: './source-packs/*.tgz'
+    pack-size-threshold: -1
+```
 
 You can see an example of how to set this up in the [bundle difference workflow](./recipes/bundle-diff.yml).
 

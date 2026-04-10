@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`scanForBundleSize > should report no bundle size change with threshold=-1 when diff is 0 1`] = `
+[
+  "## 📦 Package Bundle Size
+
+No bundle size changes.",
+]
+`;
+
+exports[`scanForBundleSize > should report size decrease when threshold is -1 1`] = `
+[
+  "## 🎉 Package Size Decrease
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| my-package | 200 kB | 100 kB | -100 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should show both decreases and increases when threshold is -1 1`] = `
+[
+  "## 📦 Package Bundle Size Changes
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| pkg-b | 50 kB | 150 kB | +100 kB |
+| pkg-a | 200 kB | 100 kB | -100 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should show new packages when threshold is -1 1`] = `
+[
+  "## ⚠️ Package Size Increase
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| new-package | New | 50 kB | +50 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should show only increases when threshold is -1 and no decreases 1`] = `
+[
+  "## ⚠️ Package Size Increase
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| my-package | 100 kB | 200 kB | +100 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should show removed packages when threshold is -1 1`] = `
+[
+  "## 🎉 Package Size Decrease
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| old-package | 50 kB | Removed | -50 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should warn about an increase regardless of other packages decreasing 1`] = `
+[
+  "## ⚠️ Package Size Increase
+
+These packages exceed the size change threshold of 50 kB:
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| pkg-b | 50 kB | 150 kB | +100 kB |",
+]
+`;
+
+exports[`scanForBundleSize > should warn about size increase exceeding threshold 1`] = `
+[
+  "## ⚠️ Package Size Increase
+
+These packages exceed the size change threshold of 50 kB:
+
+| 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
+| --- | --- | --- | --- |
+| my-package | 100 kB | 200 kB | +100 kB |",
+]
+`;
