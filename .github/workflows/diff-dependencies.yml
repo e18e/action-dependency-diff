@@ -72,7 +72,7 @@ jobs:
           path: ./source-packages
       - name: Analyze Dependencies
         id: analyze
-        uses: e18e/action-dependency-diff@b7fa825f127c85c357b7fd9f481ce4725618de81 # main
+        uses: e18e/action-dependency-diff@d995338f3b229fe7b2cd82048df5da930f70c7c3 # v1.4.4
         with:
           mode: artifact
           base-packages: ./base-packages/*.tgz
