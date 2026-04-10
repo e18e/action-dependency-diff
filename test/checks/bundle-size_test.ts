@@ -15,6 +15,7 @@ describe('scanForBundleSize', () => {
   it('should do nothing when no packs are provided', async () => {
     const messages: string[] = [];
     await scanForBundleSize(messages, [], [], 50000);
+
     expect(messages).toHaveLength(0);
   });
 
@@ -35,8 +36,6 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, -1);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain('No bundle size changes');
     expect(messages).toMatchSnapshot();
   });
 
@@ -77,9 +76,6 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, 50000);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain('pkg-b');
-    expect(messages[0]).not.toContain('pkg-a');
     expect(messages).toMatchSnapshot();
   });
 
@@ -100,7 +96,6 @@ describe('scanForBundleSize', () => {
 
     await scanForBundleSize(messages, basePacks, sourcePacks, -1);
 
-    expect(messages).toHaveLength(1);
     expect(messages).toMatchSnapshot();
   });
 
