@@ -54,3 +54,7 @@ export function getBaseRef(): string {
 
   return 'origin/main';
 }
+
+export function getCurrentRef(): string {
+  return github.context.payload.pull_request?.head.sha ?? github.context.sha;
+}

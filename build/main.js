@@ -24150,6 +24150,9 @@ function getBaseRef() {
   }
   return "origin/main";
 }
+function getCurrentRef() {
+  return context2.payload.pull_request?.head.sha ?? context2.sha;
+}
 
 // src/npm.ts
 function getProvenance(meta) {
@@ -24944,7 +24947,7 @@ async function analyzeAndComment() {
   const workspacePath = join2(baseWorkspace, workDir);
   info(`Workspace path is ${workspacePath}`);
   const baseRef = getBaseRef();
-  const currentRef = context2.payload.pull_reuqest?.head.sha ?? context2.sha;
+  const currentRef = getCurrentRef();
   const lockfileFilename = detectLockfile(workspacePath);
   info(`Detected lockfile ${lockfileFilename}`);
   const token = getInput("github-token", { required: true });
