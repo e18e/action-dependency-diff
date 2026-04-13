@@ -25,7 +25,7 @@ jobs:
         run: node --run build
       - name: Pack
         run: npm pack
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: base-packages
           path: '*.tgz'
@@ -48,7 +48,7 @@ jobs:
         run: node --run build
       - name: Pack
         run: npm pack
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: source-packages
           path: '*.tgz'
@@ -72,14 +72,14 @@ jobs:
           path: ./source-packages
       - name: Analyze Dependencies
         id: analyze
-        uses: e18e/action-dependency-diff@f825d5b5c5ce0a42dc46c47ec20de24460affcd8 # v1.5.0
+        uses: e18e/action-dependency-diff@5d3c6ac2ad2de2eaca1dc120c5accfd9590764b6 # v1.5.1
         with:
           mode: artifact
           base-packages: ./base-packages/*.tgz
           source-packages: ./source-packages/*.tgz
       - name: Upload Artifact
         if: steps.analyze.outputs.artifact-path
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: e18e-diff-result
           path: ${{ steps.analyze.outputs.artifact-path }}
