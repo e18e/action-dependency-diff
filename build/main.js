@@ -23568,9 +23568,15 @@ async function parseNpm(input) {
   };
   return parsed;
 }
+function isPackageLink(pkg) {
+  return "link" in pkg && pkg.link;
+}
 function processPackages(input) {
   const packageMap = {};
   for (const [pkgKey, pkg] of Object.entries(input)) {
+    if (isPackageLink(pkg)) {
+      continue;
+    }
     const modulesIndex = pkgKey.lastIndexOf("node_modules/");
     let name = pkg.name;
     if (modulesIndex !== -1) {
@@ -23586,6 +23592,9 @@ function processPackages(input) {
     };
   }
   for (const [pkgKey, pkg] of Object.entries(input)) {
+    if (isPackageLink(pkg)) {
+      continue;
+    }
     const parsedPkg = packageMap[pkgKey];
     processDependencyMap(pkg, parsedPkg, packageMap, pkgKey);
   }
@@ -23961,7 +23970,7 @@ async function parseBun(input) {
   }
   const rootPackage = lockFile.workspaces?.[""];
   if (!rootPackage) {
-    throw new Error("Invalid npm lock file: missing root package");
+    throw new Error("Invalid bun lock file: missing root package");
   }
   const { packages, root } = processPackages2(rootPackage, lockFile.packages);
   const parsed = {
@@ -23998,6 +24007,9 @@ function processPackages2(rootPackage, input) {
   }
   for (const [pkgKey, pkgInfo] of Object.entries(input)) {
     const [, , packageInfo] = pkgInfo;
+    if (!packageInfo) {
+      continue;
+    }
     const pkg = packageMap[pkgKey];
     processDependencies(packageInfo, pkg, packageMap, pkgKey);
   }
@@ -24008,7 +24020,7 @@ function processDependencies(rootInfo, root, packageMap, prefix) {
   for (const depType of dependencyTypes) {
     const collection = rootInfo[depType];
     if (!collection) {
-      return;
+      continue;
     }
     for (const name of Object.keys(collection)) {
       let pkg;
