@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import type {PackageJson} from 'pkg-types';
-import {getTrustLevel, getTrustStatus, TrustStatus} from 'packumeta';
+import {getTrustLevel, getTrustStatus, type TrustStatus} from 'packumeta';
 
 export interface PackageMetadata {
   name: string;
