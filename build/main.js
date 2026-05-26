@@ -24198,6 +24198,16 @@ function getTrustLevel(status) {
   }
   return 0;
 }
+var trustLevelNames = {
+  0: "none",
+  1: "provenance",
+  2: "trustedPublisher",
+  3: "stagedPublish"
+};
+function getTrustLevelName(status) {
+  const level = getTrustLevel(status);
+  return trustLevelNames[level] ?? "none";
+}
 
 // src/npm.ts
 async function getProvenanceForPackageVersions(packageName, versions) {
@@ -24215,17 +24225,13 @@ function getMinTrustLevel(statuses) {
   for (const status of statuses) {
     const level = getTrustLevel(status);
     if (result === null || level < result.level) {
-      result = { level, status };
+      result = { level, status: getTrustLevelName(status) };
     }
   }
   if (!result) {
     return {
       level: 0,
-      status: {
-        provenance: false,
-        stagedPublish: false,
-        trustedPublisher: false
-      }
+      status: "none"
     };
   }
   return result;

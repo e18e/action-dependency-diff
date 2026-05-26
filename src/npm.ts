@@ -1,6 +1,12 @@
 import * as core from '@actions/core';
 import type {PackageJson} from 'pkg-types';
-import {getTrustLevel, getTrustStatus, type TrustStatus} from 'packumeta';
+import {
+  getTrustLevel,
+  getTrustLevelName,
+  getTrustStatus,
+  type TrustLevelName,
+  type TrustStatus
+} from 'packumeta';
 
 export interface PackageMetadata {
   name: string;
@@ -43,7 +49,7 @@ export async function getProvenanceForPackageVersions(
 
 export interface MinTrustLevelResult {
   level: number;
-  status: TrustStatus;
+  status: TrustLevelName;
 }
 
 export function getMinTrustLevel(
@@ -53,17 +59,13 @@ export function getMinTrustLevel(
   for (const status of statuses) {
     const level = getTrustLevel(status);
     if (result === null || level < result.level) {
-      result = {level, status};
+      result = {level, status: getTrustLevelName(status)};
     }
   }
   if (!result) {
     return {
       level: 0,
-      status: {
-        provenance: false,
-        stagedPublish: false,
-        trustedPublisher: false
-      }
+      status: 'none'
     };
   }
   return result;
