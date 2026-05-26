@@ -287,11 +287,7 @@ describe('getMinTrustLevel', () => {
     const result = getMinTrustLevel(statuses);
     expect(result).toEqual({
       level: 0,
-      status: {
-        provenance: false,
-        trustedPublisher: false,
-        stagedPublish: false
-      }
+      status: 'none'
     });
   });
 
@@ -300,11 +296,7 @@ describe('getMinTrustLevel', () => {
     const result = getMinTrustLevel(statuses);
     expect(result).toEqual({
       level: 0,
-      status: {
-        provenance: false,
-        trustedPublisher: false,
-        stagedPublish: false
-      }
+      status: 'none'
     });
   });
 });
