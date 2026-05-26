@@ -11,17 +11,15 @@ import {
 import {
   fetchPackageMetadata,
   metaCache,
-  getProvenance,
-  getTrustLevel,
   getProvenanceForPackageVersions,
   isSupportedArchitecture,
   getMinTrustLevel,
   getDependenciesFromPackageJson,
-  type ProvenanceStatus,
   type PackageMetadata,
   calculateTotalDependencySizeIncrease
 } from '../src/npm.js';
 import {coreLogs, clearCoreLogs} from './util.js';
+import {TrustStatus} from 'packumeta';
 
 describe('fetchPackageMetadata', () => {
   let fetchMock: MockInstance<typeof globalThis.fetch>;
@@ -183,69 +181,6 @@ describe('calculateTotalDependencySizeIncrease', () => {
   });
 });
 
-describe('getProvenance', () => {
-  it('returns trusted-with-provenance for trusted publisher', () => {
-    const meta: PackageMetadata = {
-      name: 'foo',
-      version: '1.0.0',
-      _npmUser: {
-        name: 'bob',
-        email: 'bob@bill.com',
-        trustedPublisher: {}
-      }
-    };
-    expect(getProvenance(meta)).toBe('trusted-with-provenance');
-  });
-
-  it('returns provenance if attestations with provenance exist', () => {
-    const meta: PackageMetadata = {
-      name: 'foo',
-      version: '1.0.0',
-      _npmUser: {
-        name: 'bob',
-        email: 'bob@bill.com'
-      },
-      dist: {
-        attestations: {
-          url: 'https://example.com',
-          provenance: {}
-        }
-      }
-    };
-    expect(getProvenance(meta)).toBe('provenance');
-  });
-
-  it('returns none if no provenance information is available', () => {
-    const meta: PackageMetadata = {
-      name: 'foo',
-      version: '1.0.0',
-      _npmUser: {
-        name: 'bob',
-        email: 'bob@bill.com'
-      }
-    };
-    expect(getProvenance(meta)).toBe('none');
-  });
-});
-
-describe('getTrustLevel', () => {
-  it('returns 2 for trusted-with-provenance', () => {
-    expect(getTrustLevel('trusted-with-provenance')).toBe(2);
-  });
-
-  it('returns 1 for provenance', () => {
-    expect(getTrustLevel('provenance')).toBe(1);
-  });
-
-  it('returns 0 for none', () => {
-    expect(getTrustLevel('none')).toBe(0);
-  });
-
-  it('returns 0 for unknown status', () => {
-    expect(getTrustLevel('unknown' as never)).toBe(0);
-  });
-});
-
 describe('getProvenanceForPackageVersions', () => {
   let fetchMock: MockInstance<typeof globalThis.fetch>;
 
@@ -290,6 +225,12 @@ describe('getProvenanceForPackageVersions', () => {
           name: 'jg',
           email: 'jg@example.com',
           trustedPublisher: {}
+        },
+        dist: {
+          attestations: {
+            url: 'https://example.com/attestation-1.0.0',
+            provenance: {}
+          }
         }
       }
     };
@@ -317,28 +258,46 @@ describe('getProvenanceForPackageVersions', () => {
       versions
     );
 
-    expect(result.get('1.0.0')).toBe('provenance');
-    expect(result.get('2.0.0')).toBe('none');
-    expect(result.get('3.0.0')).toBe('trusted-with-provenance');
+    expect(result.get('1.0.0')).toEqual({
+      provenance: true,
+      trustedPublisher: false,
+      stagedPublish: false
+    });
+    expect(result.get('2.0.0')).toEqual({
+      provenance: false,
+      trustedPublisher: false,
+      stagedPublish: false
+    });
+    expect(result.get('3.0.0')).toEqual({
+      provenance: true,
+      trustedPublisher: true,
+      stagedPublish: false
+    });
   });
 });
 
 describe('getMinTrustLevel', () => {
   it('returns the minimum trust level and corresponding status', () => {
-    const statuses: ProvenanceStatus[] = [
-      'trusted-with-provenance',
-      'provenance',
-      'none',
-      'provenance'
+    const statuses: TrustStatus[] = [
+      {provenance: true, trustedPublisher: true, stagedPublish: false},
+      {provenance: true, trustedPublisher: false, stagedPublish: false},
+      {provenance: false, trustedPublisher: false, stagedPublish: false},
+      {provenance: true, trustedPublisher: false, stagedPublish: false}
     ];
     const result = getMinTrustLevel(statuses);
-    expect(result).toEqual({level: 0, status: 'none'});
+    expect(result).toEqual({
+      level: 0,
+      status: 'none'
+    });
   });
 
   it('returns level 0 and none for empty input', () => {
-    const statuses: ProvenanceStatus[] = [];
+    const statuses: TrustStatus[] = [];
     const result = getMinTrustLevel(statuses);
-    expect(result).toEqual({level: 0, status: 'none'});
+    expect(result).toEqual({
+      level: 0,
+      status: 'none'
+    });
   });
 });
 

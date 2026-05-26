@@ -23568,9 +23568,15 @@ async function parseNpm(input) {
   };
   return parsed;
 }
+function isPackageLink(pkg) {
+  return "link" in pkg && pkg.link;
+}
 function processPackages(input) {
   const packageMap = {};
   for (const [pkgKey, pkg] of Object.entries(input)) {
+    if (isPackageLink(pkg)) {
+      continue;
+    }
     const modulesIndex = pkgKey.lastIndexOf("node_modules/");
     let name = pkg.name;
     if (modulesIndex !== -1) {
@@ -23586,6 +23592,9 @@ function processPackages(input) {
     };
   }
   for (const [pkgKey, pkg] of Object.entries(input)) {
+    if (isPackageLink(pkg)) {
+      continue;
+    }
     const parsedPkg = packageMap[pkgKey];
     processDependencyMap(pkg, parsedPkg, packageMap, pkgKey);
   }
@@ -23961,7 +23970,7 @@ async function parseBun(input) {
   }
   const rootPackage = lockFile.workspaces?.[""];
   if (!rootPackage) {
-    throw new Error("Invalid npm lock file: missing root package");
+    throw new Error("Invalid bun lock file: missing root package");
   }
   const { packages, root } = processPackages2(rootPackage, lockFile.packages);
   const parsed = {
@@ -23998,6 +24007,9 @@ function processPackages2(rootPackage, input) {
   }
   for (const [pkgKey, pkgInfo] of Object.entries(input)) {
     const [, , packageInfo] = pkgInfo;
+    if (!packageInfo) {
+      continue;
+    }
     const pkg = packageMap[pkgKey];
     processDependencies(packageInfo, pkg, packageMap, pkgKey);
   }
@@ -24008,7 +24020,7 @@ function processDependencies(rootInfo, root, packageMap, prefix) {
   for (const depType of dependencyTypes) {
     const collection = rootInfo[depType];
     if (!collection) {
-      return;
+      continue;
     }
     for (const name of Object.keys(collection)) {
       let pkg;
@@ -24154,34 +24166,56 @@ function getCurrentRef() {
   return context2.payload.pull_request?.head.sha ?? context2.sha;
 }
 
-// src/npm.ts
-function getProvenance(meta) {
-  if (meta._npmUser?.trustedPublisher) {
-    return "trusted-with-provenance";
+// node_modules/packumeta/lib/main.js
+var isObject = (value) => typeof value === "object" && value !== null;
+var hasOwn = (obj, key) => Object.hasOwn(obj, key);
+function getTrustStatus(meta) {
+  const status = {
+    provenance: false,
+    trustedPublisher: false,
+    stagedPublish: false
+  };
+  if (!isObject(meta)) {
+    return status;
   }
-  if (meta.dist?.attestations?.provenance) {
-    return "provenance";
+  if (hasOwn(meta, "_npmUser") && isObject(meta._npmUser) && hasOwn(meta._npmUser, "trustedPublisher") && meta._npmUser.trustedPublisher) {
+    status.trustedPublisher = true;
   }
-  return "none";
+  if (hasOwn(meta, "dist") && isObject(meta.dist) && hasOwn(meta.dist, "attestations") && isObject(meta.dist.attestations) && hasOwn(meta.dist.attestations, "provenance") && meta.dist.attestations.provenance) {
+    status.provenance = true;
+  }
+  return status;
 }
 function getTrustLevel(status) {
-  switch (status) {
-    case "trusted-with-provenance":
-      return 2;
-    case "provenance":
-      return 1;
-    case "none":
-      return 0;
-    default:
-      return 0;
+  if (status.stagedPublish) {
+    return 3;
   }
+  if (status.trustedPublisher && status.provenance) {
+    return 2;
+  }
+  if (status.provenance) {
+    return 1;
+  }
+  return 0;
 }
+var trustLevelNames = {
+  0: "none",
+  1: "provenance",
+  2: "trustedPublisher",
+  3: "stagedPublish"
+};
+function getTrustLevelName(status) {
+  const level = getTrustLevel(status);
+  return trustLevelNames[level] ?? "none";
+}
+
+// src/npm.ts
 async function getProvenanceForPackageVersions(packageName, versions) {
   const result = /* @__PURE__ */ new Map();
   for (const version of versions) {
     const metadata = await fetchPackageMetadata(packageName, version);
     if (metadata) {
-      result.set(version, getProvenance(metadata));
+      result.set(version, getTrustStatus(metadata));
     }
   }
   return result;
@@ -24191,11 +24225,14 @@ function getMinTrustLevel(statuses) {
   for (const status of statuses) {
     const level = getTrustLevel(status);
     if (result === null || level < result.level) {
-      result = { level, status };
+      result = { level, status: getTrustLevelName(status) };
     }
   }
   if (!result) {
-    return { level: 0, status: "none" };
+    return {
+      level: 0,
+      status: "none"
+    };
   }
   return result;
 }

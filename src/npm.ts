@@ -1,5 +1,12 @@
 import * as core from '@actions/core';
 import type {PackageJson} from 'pkg-types';
+import {
+  getTrustLevel,
+  getTrustLevelName,
+  getTrustStatus,
+  type TrustLevelName,
+  type TrustStatus
+} from 'packumeta';
 
 export interface PackageMetadata {
   name: string;
@@ -26,43 +33,15 @@ export interface PackageIndex {
   versions: Record<string, PackageMetadata>;
 }
 
-export type ProvenanceStatus =
-  | 'trusted-with-provenance'
-  | 'provenance'
-  | 'none';
-
-export function getProvenance(meta: PackageMetadata): ProvenanceStatus {
-  if (meta._npmUser?.trustedPublisher) {
-    return 'trusted-with-provenance';
-  }
-  if (meta.dist?.attestations?.provenance) {
-    return 'provenance';
-  }
-  return 'none';
-}
-
-export function getTrustLevel(status: ProvenanceStatus): number {
-  switch (status) {
-    case 'trusted-with-provenance':
-      return 2;
-    case 'provenance':
-      return 1;
-    case 'none':
-      return 0;
-    default:
-      return 0;
-  }
-}
-
 export async function getProvenanceForPackageVersions(
   packageName: string,
   versions: Set<string>
-): Promise<Map<string, ProvenanceStatus>> {
-  const result = new Map<string, ProvenanceStatus>();
+): Promise<Map<string, TrustStatus>> {
+  const result = new Map<string, TrustStatus>();
   for (const version of versions) {
     const metadata = await fetchPackageMetadata(packageName, version);
     if (metadata) {
-      result.set(version, getProvenance(metadata));
+      result.set(version, getTrustStatus(metadata));
     }
   }
   return result;
@@ -70,21 +49,24 @@ export async function getProvenanceForPackageVersions(
 
 export interface MinTrustLevelResult {
   level: number;
-  status: ProvenanceStatus;
+  status: TrustLevelName;
 }
 
 export function getMinTrustLevel(
-  statuses: Iterable<ProvenanceStatus>
+  statuses: Iterable<TrustStatus>
 ): MinTrustLevelResult {
   let result: MinTrustLevelResult | null = null;
   for (const status of statuses) {
     const level = getTrustLevel(status);
     if (result === null || level < result.level) {
-      result = {level, status};
+      result = {level, status: getTrustLevelName(status)};
     }
   }
   if (!result) {
-    return {level: 0, status: 'none'};
+    return {
+      level: 0,
+      status: 'none'
+    };
   }
   return result;
 }
