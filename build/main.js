@@ -24178,8 +24178,13 @@ function getTrustStatus(meta) {
   if (!isObject(meta)) {
     return status;
   }
-  if (hasOwn(meta, "_npmUser") && isObject(meta._npmUser) && hasOwn(meta._npmUser, "trustedPublisher") && meta._npmUser.trustedPublisher) {
-    status.trustedPublisher = true;
+  if (hasOwn(meta, "_npmUser") && isObject(meta._npmUser)) {
+    if (hasOwn(meta._npmUser, "trustedPublisher") && meta._npmUser.trustedPublisher) {
+      status.trustedPublisher = true;
+    }
+    if (hasOwn(meta._npmUser, "approver") && meta._npmUser.approver) {
+      status.stagedPublish = true;
+    }
   }
   if (hasOwn(meta, "dist") && isObject(meta.dist) && hasOwn(meta.dist, "attestations") && isObject(meta.dist.attestations) && hasOwn(meta.dist.attestations, "provenance") && meta.dist.attestations.provenance) {
     status.provenance = true;
