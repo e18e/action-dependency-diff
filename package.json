@@ -43,14 +43,14 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.1",
     "esbuild": "^0.28.0",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "lockparse": "^0.5.2",
     "module-replacements": "^2.11.0",
     "packumeta": "^0.4.1",
     "pkg-types": "^2.3.1",
     "prettier": "^3.8.3",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0",
-    "vitest": "^4.1.7"
+    "typescript-eslint": "^8.60.1",
+    "vitest": "^4.1.8"
   }
 }
