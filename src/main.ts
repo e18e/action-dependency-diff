@@ -168,13 +168,16 @@ async function analyzeAndComment(): Promise<void> {
   const messages: string[] = [];
 
   scanForDependencyCount(messages, dependencyThreshold, currentDeps, baseDeps);
-  scanForDuplicates(
-    messages,
-    duplicateThreshold,
-    currentDeps,
-    lockfilePath,
-    parsedCurrentLock
-  );
+
+  if (duplicateThreshold > 0) {
+    scanForDuplicates(
+      messages,
+      duplicateThreshold,
+      currentDeps,
+      lockfilePath,
+      parsedCurrentLock
+    );
+  }
 
   await scanForDependencySize(
     messages,

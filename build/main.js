@@ -25085,13 +25085,15 @@ async function analyzeAndComment() {
   info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
   const messages = [];
   scanForDependencyCount(messages, dependencyThreshold, currentDeps, baseDeps);
-  scanForDuplicates(
-    messages,
-    duplicateThreshold,
-    currentDeps,
-    lockfilePath,
-    parsedCurrentLock
-  );
+  if (duplicateThreshold > 0) {
+    scanForDuplicates(
+      messages,
+      duplicateThreshold,
+      currentDeps,
+      lockfilePath,
+      parsedCurrentLock
+    );
+  }
   await scanForDependencySize(
     messages,
     sizeThreshold,
