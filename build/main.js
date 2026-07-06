@@ -14,7 +14,11 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
   throw Error('Dynamic require of "' + x + '" is not supported');
 });
 var __commonJS = (cb, mod) => function __require2() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -24471,47 +24475,82 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
   };
 }
 
+// node_modules/module-replacements/dist/main.js
+import nativeRaw from "./native-KFM4GA2L.json" with { type: "json" };
+import microUtilsRaw from "./micro-utilities-TIPUUG5E.json" with { type: "json" };
+import preferredRaw from "./preferred-U26KKZIW.json" with { type: "json" };
+
+// node_modules/module-replacements/dist/util.js
+function resolveDocUrl(url) {
+  if (!url)
+    return null;
+  if (typeof url === "string")
+    return url;
+  switch (url.type) {
+    case "mdn":
+      return `https://developer.mozilla.org/en-US/docs/${url.id}`;
+    case "node":
+      return `https://nodejs.org/${url.id}`;
+    case "e18e":
+      return `https://e18e.dev/docs/replacements/${url.id}`;
+    default:
+      return null;
+  }
+}
+
+// node_modules/module-replacements/dist/main.js
+var nativeReplacements = nativeRaw;
+var microUtilsReplacements = microUtilsRaw;
+var preferredReplacements = preferredRaw;
+var all = {
+  replacements: {
+    ...nativeReplacements.replacements,
+    ...microUtilsReplacements.replacements,
+    ...preferredReplacements.replacements
+  },
+  mappings: {
+    ...nativeReplacements.mappings,
+    ...microUtilsReplacements.mappings,
+    ...preferredReplacements.mappings
+  }
+};
+
 // src/checks/replacements.ts
-import nativeManifest from "./native-O77SEK3D.json" with { type: "json" };
-import microUtilsManifest from "./micro-utilities-N7NZTMHQ.json" with { type: "json" };
-import preferredManifest from "./preferred-I55DJLLT.json" with { type: "json" };
-var allReplacements = [
-  ...nativeManifest.moduleReplacements,
-  ...microUtilsManifest.moduleReplacements,
-  ...preferredManifest.moduleReplacements
-];
 function scanForReplacements(messages, baseDependencies, currentDependencies) {
   const replacementMessages = [];
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
-      const replacement = allReplacements.find(
-        (modReplacement) => modReplacement.moduleName === name
+      const mapping = Object.values(all.mappings).find(
+        (modReplacement) => modReplacement.moduleName === name && modReplacement.type === "module"
       );
-      if (replacement) {
-        switch (replacement.type) {
-          case "none":
-            replacementMessages.push(
-              `| ${name} | This package is no longer necessary |`
-            );
-            break;
-          case "native": {
-            const mdnUrl = replacement.mdnPath ? `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/${replacement.mdnPath}` : "";
-            const nativeReplacement = mdnUrl ? `[${replacement.replacement}](${mdnUrl})` : replacement.replacement;
-            replacementMessages.push(`| ${name} | Use ${nativeReplacement} |`);
-            break;
-          }
-          case "simple":
-            replacementMessages.push(
-              `| ${name} | ${replacement.replacement} |`
-            );
-            break;
-          case "documented": {
-            const docUrl = `https://github.com/e18e/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
-            replacementMessages.push(
-              `| ${name} | [See documentation](${docUrl}) |`
-            );
-            break;
-          }
+      if (!mapping) {
+        continue;
+      }
+      const replacementKey = mapping.replacements[0];
+      const replacement = all.replacements[replacementKey];
+      if (!replacement) {
+        continue;
+      }
+      switch (replacement.type) {
+        case "removal":
+          replacementMessages.push(`| ${name} | ${replacement.description} |`);
+          break;
+        case "native": {
+          const url = resolveDocUrl(mapping.url ?? replacement.url);
+          const nativeReplacement = url ? `[${replacement.id}](${url})` : replacement.id;
+          replacementMessages.push(`| ${name} | Use ${nativeReplacement} |`);
+          break;
+        }
+        case "simple":
+          replacementMessages.push(`| ${name} | ${replacement.description} |`);
+          break;
+        case "documented": {
+          const url = resolveDocUrl(mapping.url ?? replacement.url);
+          const documentedReplacement = url ? `[${replacement.replacementModule}](${url})` : replacement.replacementModule;
+          replacementMessages.push(
+            `| ${name} | Use ${documentedReplacement} |`
+          );
+          break;
         }
       }
     }

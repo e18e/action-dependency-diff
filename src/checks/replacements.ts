@@ -1,13 +1,4 @@
-import type {ModuleReplacement} from 'module-replacements';
-import nativeManifest from 'module-replacements/manifests/native.json' with {type: 'json'};
-import microUtilsManifest from 'module-replacements/manifests/micro-utilities.json' with {type: 'json'};
-import preferredManifest from 'module-replacements/manifests/preferred.json' with {type: 'json'};
-
-const allReplacements = [
-  ...nativeManifest.moduleReplacements,
-  ...microUtilsManifest.moduleReplacements,
-  ...preferredManifest.moduleReplacements
-] as ModuleReplacement[];
+import {all as allReplacements, resolveDocUrl} from 'module-replacements';
 
 export function scanForReplacements(
   messages: string[],
@@ -18,39 +9,46 @@ export function scanForReplacements(
 
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
-      const replacement = allReplacements.find(
-        (modReplacement) => modReplacement.moduleName === name
+      const mapping = Object.values(allReplacements.mappings).find(
+        (modReplacement) =>
+          modReplacement.moduleName === name && modReplacement.type === 'module'
       );
 
-      if (replacement) {
-        switch (replacement.type) {
-          case 'none':
-            replacementMessages.push(
-              `| ${name} | This package is no longer necessary |`
-            );
-            break;
-          case 'native': {
-            const mdnUrl = replacement.mdnPath
-              ? `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/${replacement.mdnPath}`
-              : '';
-            const nativeReplacement = mdnUrl
-              ? `[${replacement.replacement}](${mdnUrl})`
-              : replacement.replacement;
-            replacementMessages.push(`| ${name} | Use ${nativeReplacement} |`);
-            break;
-          }
-          case 'simple':
-            replacementMessages.push(
-              `| ${name} | ${replacement.replacement} |`
-            );
-            break;
-          case 'documented': {
-            const docUrl = `https://github.com/e18e/module-replacements/blob/main/docs/modules/${replacement.docPath}.md`;
-            replacementMessages.push(
-              `| ${name} | [See documentation](${docUrl}) |`
-            );
-            break;
-          }
+      if (!mapping) {
+        continue;
+      }
+
+      const replacementKey = mapping.replacements[0];
+      const replacement = allReplacements.replacements[replacementKey];
+
+      if (!replacement) {
+        continue;
+      }
+
+      switch (replacement.type) {
+        case 'removal':
+          replacementMessages.push(`| ${name} | ${replacement.description} |`);
+          break;
+        case 'native': {
+          const url = resolveDocUrl(mapping.url ?? replacement.url);
+          const nativeReplacement = url
+            ? `[${replacement.id}](${url})`
+            : replacement.id;
+          replacementMessages.push(`| ${name} | Use ${nativeReplacement} |`);
+          break;
+        }
+        case 'simple':
+          replacementMessages.push(`| ${name} | ${replacement.description} |`);
+          break;
+        case 'documented': {
+          const url = resolveDocUrl(mapping.url ?? replacement.url);
+          const documentedReplacement = url
+            ? `[${replacement.replacementModule}](${url})`
+            : replacement.replacementModule;
+          replacementMessages.push(
+            `| ${name} | Use ${documentedReplacement} |`
+          );
+          break;
         }
       }
     }
