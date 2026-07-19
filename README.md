@@ -9,7 +9,7 @@ This action compares dependencies between your base branch and current branch, a
 - 🔒 **Package trust levels** - Detects decreases in package trust levels (provenance and trusted publisher status)
 - 📈 **Dependency growth** - Warns when dependency count increases significantly
 - 📦 **Install size** - Warns when package size increases significantly
-- 🔄 **Duplicate versions** - Detects packages with multiple versions installed
+- 🔄 **Duplicate versions** - Detects packages which gain newly introduced duplicate versions
 - ⚠️ **Module replacements** - Identifies new packages that have community-recommended alternatives
 
 ## Usage
@@ -44,7 +44,7 @@ jobs:
 | `pr-number`            | The number of the pull request to comment on                                                                               | Yes      | `${{ github.event.pull_request.number }}` |
 | `dependency-threshold` | Threshold for warning about significant increase in number of dependencies                                                 | No       | `10`                                      |
 | `size-threshold`       | Threshold (in bytes) for warning about significant increase in package size                                                | No       | `100000`                                  |
-| `duplicate-threshold`  | Threshold for warning about packages with multiple versions                                                                | No       | `1`                                       |
+| `duplicate-threshold`  | Threshold for warning about packages which gain newly introduced duplicate versions                                        | No       | `1`                                       |
 | `base-packages`        | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)                                                     | No       | None                                      |
 | `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)                                                 | No       | None                                      |
 | `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |

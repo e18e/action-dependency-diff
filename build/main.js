@@ -24615,11 +24615,12 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
   traverse(lockfile.root, visitor);
   return parentPaths;
 }
-function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, lockfile) {
+function scanForDuplicates(messages, threshold, dependencyMap, baseDependencyMap, lockfilePath, lockfile) {
   const duplicateRows = [];
   const duplicateDependencyNames = /* @__PURE__ */ new Set();
   for (const [packageName, currentVersionSet] of dependencyMap) {
-    if (currentVersionSet.size > threshold) {
+    const baseVersionCount = baseDependencyMap.get(packageName)?.size ?? 0;
+    if (currentVersionSet.size > threshold && currentVersionSet.size > baseVersionCount) {
       duplicateDependencyNames.add(packageName);
     }
   }
@@ -24673,7 +24674,7 @@ function scanForDuplicates(messages, threshold, dependencyMap, lockfilePath, loc
 
 \u{1F4A1} To find out what depends on a specific package, run: \`${exampleCommand}\`` : "";
     messages.push(
-      `## \u26A0\uFE0F Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
+      `## \u26A0\uFE0F New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
 
 | \u{1F4E6} Package | \u{1F4CB} Versions |
 | --- | --- |
@@ -25129,6 +25130,7 @@ async function analyzeAndComment() {
       messages,
       duplicateThreshold,
       currentDeps,
+      baseDeps,
       lockfilePath,
       parsedCurrentLock
     );

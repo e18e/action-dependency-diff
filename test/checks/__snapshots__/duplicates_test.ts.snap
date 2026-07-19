@@ -1,8 +1,20 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`scanForDuplicates > should only report packages with more versions than the base 1`] = `
+[
+  "## ⚠️ New Duplicate Dependencies (found: 1, threshold: 1)
+
+| 📦 Package | 📋 Versions |
+| --- | --- |
+| package-a | <details><summary>2 versions</summary><br><ul><li>root-package@1.0.0<ul><li>**package-a@1.0.0**</li></ul></li></ul><br><ul><li>root-package@1.0.0<ul><li>package-b@3.0.0<ul><li>**package-a@1.1.0**</li></ul></li></ul></li></ul><br></details> |
+
+💡 To find out what depends on a specific package, run: \`npm ls example-package\`",
+]
+`;
+
 exports[`scanForDuplicates > should report duplicates when threshold is exceeded 1`] = `
 [
-  "## ⚠️ Duplicate Dependencies (found: 1, threshold: 1)
+  "## ⚠️ New Duplicate Dependencies (found: 1, threshold: 1)
 
 | 📦 Package | 📋 Versions |
 | --- | --- |
@@ -14,7 +26,7 @@ exports[`scanForDuplicates > should report duplicates when threshold is exceeded
 
 exports[`scanForDuplicates > should truncate long parent paths in the report 1`] = `
 [
-  "## ⚠️ Duplicate Dependencies (found: 1, threshold: 1)
+  "## ⚠️ New Duplicate Dependencies (found: 1, threshold: 1)
 
 | 📦 Package | 📋 Versions |
 | --- | --- |

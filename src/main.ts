@@ -174,6 +174,7 @@ async function analyzeAndComment(): Promise<void> {
       messages,
       duplicateThreshold,
       currentDeps,
+      baseDeps,
       lockfilePath,
       parsedCurrentLock
     );

@@ -56,6 +56,7 @@ export function scanForDuplicates(
   messages: string[],
   threshold: number,
   dependencyMap: Map<string, Set<string>>,
+  baseDependencyMap: Map<string, Set<string>>,
   lockfilePath: string,
   lockfile: ParsedLockFile
 ): void {
@@ -63,7 +64,11 @@ export function scanForDuplicates(
   const duplicateDependencyNames = new Set<string>();
 
   for (const [packageName, currentVersionSet] of dependencyMap) {
-    if (currentVersionSet.size > threshold) {
+    const baseVersionCount = baseDependencyMap.get(packageName)?.size ?? 0;
+    if (
+      currentVersionSet.size > threshold &&
+      currentVersionSet.size > baseVersionCount
+    ) {
       duplicateDependencyNames.add(packageName);
     }
   }
@@ -126,7 +131,7 @@ export function scanForDuplicates(
       ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
       : '';
     messages.push(
-      `## ⚠️ Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
+      `## ⚠️ New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
 
 | 📦 Package | 📋 Versions |
 | --- | --- |
