@@ -28,6 +28,7 @@ describe('scanForDuplicates', () => {
       messages,
       threshold,
       dependencyMap,
+      new Map(),
       lockfilePath,
       lockfile
     );
@@ -84,6 +85,7 @@ describe('scanForDuplicates', () => {
       messages,
       threshold,
       dependencyMap,
+      new Map(),
       lockfilePath,
       lockfile
     );
@@ -140,6 +142,7 @@ describe('scanForDuplicates', () => {
       messages,
       threshold,
       dependencyMap,
+      new Map(),
       lockfilePath,
       lockfile
     );
@@ -203,6 +206,189 @@ describe('scanForDuplicates', () => {
       messages,
       threshold,
       dependencyMap,
+      new Map(),
+      lockfilePath,
+      lockfile
+    );
+
+    expect(messages).toMatchSnapshot();
+  });
+
+  it('should not report duplicates which already exist in the base', () => {
+    const messages: string[] = [];
+    const threshold = 1;
+    const dependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])]
+    ]);
+    const baseDependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])]
+    ]);
+    const lockfilePath = 'package-lock.json';
+    const lockfile: ParsedLockFile = {
+      type: 'npm',
+      packages: [],
+      root: {
+        name: 'root-package',
+        version: '1.0.0',
+        dependencies: [],
+        devDependencies: [],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+
+    scanForDuplicates(
+      messages,
+      threshold,
+      dependencyMap,
+      baseDependencyMap,
+      lockfilePath,
+      lockfile
+    );
+
+    expect(messages).toHaveLength(0);
+  });
+
+  it('should not report duplicates when the version count is unchanged', () => {
+    const messages: string[] = [];
+    const threshold = 1;
+    const dependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.2.0'])]
+    ]);
+    const baseDependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])]
+    ]);
+    const lockfilePath = 'package-lock.json';
+    const lockfile: ParsedLockFile = {
+      type: 'npm',
+      packages: [],
+      root: {
+        name: 'root-package',
+        version: '1.0.0',
+        dependencies: [],
+        devDependencies: [],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+
+    scanForDuplicates(
+      messages,
+      threshold,
+      dependencyMap,
+      baseDependencyMap,
+      lockfilePath,
+      lockfile
+    );
+
+    expect(messages).toHaveLength(0);
+  });
+
+  it('should not report duplicates when versions are removed', () => {
+    const messages: string[] = [];
+    const threshold = 1;
+    const dependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])]
+    ]);
+    const baseDependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0', '1.2.0'])]
+    ]);
+    const lockfilePath = 'package-lock.json';
+    const lockfile: ParsedLockFile = {
+      type: 'npm',
+      packages: [],
+      root: {
+        name: 'root-package',
+        version: '1.0.0',
+        dependencies: [],
+        devDependencies: [],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+
+    scanForDuplicates(
+      messages,
+      threshold,
+      dependencyMap,
+      baseDependencyMap,
+      lockfilePath,
+      lockfile
+    );
+
+    expect(messages).toHaveLength(0);
+  });
+
+  it('should only report packages with more versions than the base', () => {
+    const messages: string[] = [];
+    const threshold = 1;
+    const dependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0', '1.1.0'])],
+      ['package-c', new Set(['2.0.0', '2.1.0'])]
+    ]);
+    const baseDependencyMap = new Map<string, Set<string>>([
+      ['package-a', new Set(['1.0.0'])],
+      ['package-c', new Set(['2.0.0', '2.1.0'])]
+    ]);
+    const lockfilePath = 'package-lock.json';
+    const packageA: ParsedDependency = {
+      name: 'package-a',
+      version: '1.0.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const packageAAlt: ParsedDependency = {
+      name: 'package-a',
+      version: '1.1.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const packageC: ParsedDependency = {
+      name: 'package-c',
+      version: '2.0.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const packageCAlt: ParsedDependency = {
+      name: 'package-c',
+      version: '2.1.0',
+      dependencies: [],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const packageB: ParsedDependency = {
+      name: 'package-b',
+      version: '3.0.0',
+      dependencies: [packageAAlt, packageCAlt],
+      devDependencies: [],
+      optionalDependencies: [],
+      peerDependencies: []
+    };
+    const lockfile: ParsedLockFile = {
+      type: 'npm',
+      packages: [packageA, packageAAlt, packageB, packageC, packageCAlt],
+      root: {
+        name: 'root-package',
+        version: '1.0.0',
+        dependencies: [packageA, packageB, packageC],
+        devDependencies: [],
+        optionalDependencies: [],
+        peerDependencies: []
+      }
+    };
+
+    scanForDuplicates(
+      messages,
+      threshold,
+      dependencyMap,
+      baseDependencyMap,
       lockfilePath,
       lockfile
     );

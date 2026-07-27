@@ -37,7 +37,7 @@ inputs:
     required: false
     default: '50000'
   duplicate-threshold:
-    description: 'Threshold for warning about packages with multiple versions'
+    description: 'Threshold (number of duplicates) for warning about newly introduced duplicate packages'
     required: false
     default: '1'
   detect-replacements:
