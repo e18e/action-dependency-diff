@@ -44,7 +44,7 @@ jobs:
 | `pr-number`            | The number of the pull request to comment on                                                                               | Yes      | `${{ github.event.pull_request.number }}` |
 | `dependency-threshold` | Threshold for warning about significant increase in number of dependencies                                                 | No       | `10`                                      |
 | `size-threshold`       | Threshold (in bytes) for warning about significant increase in package size                                                | No       | `100000`                                  |
-| `duplicate-threshold`  | Threshold for warning about packages which gain newly introduced duplicate versions                                        | No       | `1`                                       |
+| `duplicate-threshold`  | Threshold (number of duplicates) for warning about newly introduced duplicate packages                                     | No       | `1`                                       |
 | `base-packages`        | Glob pattern for base branch pack files (e.g., `"./base-packs/*.tgz"`)                                                     | No       | None                                      |
 | `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)                                                 | No       | None                                      |
 | `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |
