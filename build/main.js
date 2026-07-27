@@ -24476,9 +24476,9 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
 }
 
 // node_modules/module-replacements/dist/main.js
-import nativeRaw from "./native-KFM4GA2L.json" with { type: "json" };
-import microUtilsRaw from "./micro-utilities-TIPUUG5E.json" with { type: "json" };
-import preferredRaw from "./preferred-U26KKZIW.json" with { type: "json" };
+import nativeRaw from "./native-7HWYIGGW.json" with { type: "json" };
+import microUtilsRaw from "./micro-utilities-PCCWHRB5.json" with { type: "json" };
+import preferredRaw from "./preferred-UHEGOVP6.json" with { type: "json" };
 
 // node_modules/module-replacements/dist/util.js
 function resolveDocUrl(url) {

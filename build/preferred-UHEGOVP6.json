@@ -12,12 +12,6 @@
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
     },
-    "@iarna/toml": {
-      "type": "module",
-      "moduleName": "@iarna/toml",
-      "replacements": ["smol-toml", "Bun.TOML"],
-      "url": {"type": "e18e", "id": "toml"}
-    },
     "@jsdevtools/ez-spawn": {
       "type": "module",
       "moduleName": "@jsdevtools/ez-spawn",
@@ -150,12 +144,6 @@
       "replacements": ["util.styleText", "picocolors", "ansis"],
       "url": {"type": "e18e", "id": "chalk"}
     },
-    "commander": {
-      "type": "module",
-      "moduleName": "commander",
-      "replacements": ["sade", "cleye"],
-      "url": {"type": "e18e", "id": "cli-builders"}
-    },
     "copy-text-to-clipboard": {
       "type": "module",
       "moduleName": "copy-text-to-clipboard",
@@ -253,7 +241,7 @@
     "dotenv": {
       "type": "module",
       "moduleName": "dotenv",
-      "replacements": ["--env-file"],
+      "replacements": ["process.loadEnvFile", "--env-file"],
       "url": {"type": "e18e", "id": "dotenv"}
     },
     "dottie": {
@@ -436,6 +424,16 @@
       "replacements": ["fs"],
       "url": {"type": "e18e", "id": "fs-extra"}
     },
+    "fs-temp": {
+      "type": "module",
+      "moduleName": "fs-temp",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
     "fs.extra": {
       "type": "module",
       "moduleName": "fs.extra",
@@ -573,12 +571,6 @@
       "moduleName": "jsx-ast-utils",
       "replacements": ["jsx-ast-utils-x"],
       "url": {"type": "e18e", "id": "jsx-ast-utils"}
-    },
-    "lint-staged": {
-      "type": "module",
-      "moduleName": "lint-staged",
-      "replacements": ["nano-staged"],
-      "url": {"type": "e18e", "id": "lint-staged"}
     },
     "lodash": {
       "type": "module",
@@ -2320,6 +2312,12 @@
       "replacements": ["sade", "cleye"],
       "url": {"type": "e18e", "id": "cli-builders"}
     },
+    "mime": {
+      "type": "module",
+      "moduleName": "mime",
+      "replacements": ["mrmime"],
+      "url": {"type": "e18e", "id": "mime"}
+    },
     "minimist": {
       "type": "module",
       "moduleName": "minimist",
@@ -2361,6 +2359,12 @@
       "moduleName": "node-telegram-bot-api",
       "replacements": ["grammy"],
       "url": {"type": "e18e", "id": "node-telegram-bot-api"}
+    },
+    "node-uuid": {
+      "type": "module",
+      "moduleName": "node-uuid",
+      "replacements": ["crypto.randomUUID"],
+      "url": {"type": "e18e", "id": "uuidv4"}
     },
     "npm-run-all": {
       "type": "module",
@@ -2625,13 +2629,21 @@
     "temp": {
       "type": "module",
       "moduleName": "temp",
-      "replacements": ["fs.promises.mkdtemp", "Deno.makeTempDir"],
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
       "url": {"type": "e18e", "id": "tempy"}
     },
     "tempy": {
       "type": "module",
       "moduleName": "tempy",
-      "replacements": ["fs.promises.mkdtemp", "Deno.makeTempDir"],
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
       "url": {"type": "e18e", "id": "tempy"}
     },
     "then-request": {
@@ -2652,17 +2664,31 @@
       "replacements": ["node:stream"],
       "url": {"type": "e18e", "id": "through"}
     },
+    "tmp": {
+      "type": "module",
+      "moduleName": "tmp",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
+    "tmp-promise": {
+      "type": "module",
+      "moduleName": "tmp-promise",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
     "tokml": {
       "type": "module",
       "moduleName": "tokml",
       "replacements": ["@placemarkio/tokml"],
       "url": {"type": "e18e", "id": "tokml"}
-    },
-    "toml": {
-      "type": "module",
-      "moduleName": "toml",
-      "replacements": ["smol-toml", "Bun.TOML"],
-      "url": {"type": "e18e", "id": "toml"}
     },
     "traverse": {
       "type": "module",
@@ -2896,12 +2922,6 @@
       "id": "Bun.Shell",
       "type": "native",
       "url": "https://bun.com/docs/runtime/shell",
-      "engines": [{"engine": "bun", "minVersion": "1.0.0"}]
-    },
-    "Bun.TOML": {
-      "id": "Bun.TOML",
-      "type": "native",
-      "url": "https://bun.com/docs/runtime/toml",
       "engines": [{"engine": "bun", "minVersion": "1.0.0"}]
     },
     "Bun.YAML": {
@@ -3505,6 +3525,19 @@
         {"engine": "nodejs", "minVersion": "10.0.0"}
       ]
     },
+    "fs.promises.mkdtempDisposable": {
+      "id": "fs.promises.mkdtempDisposable",
+      "type": "native",
+      "nodeFeatureId": {
+        "moduleName": "node:fs/promises",
+        "exportName": "mkdtempDisposable"
+      },
+      "url": {
+        "type": "node",
+        "id": "api/fs.html#fspromisesmkdtempdisposableprefix-options"
+      },
+      "engines": [{"engine": "nodejs", "minVersion": "24.4.0"}]
+    },
     "fs.promises.rm": {
       "id": "fs.promises.rm",
       "type": "native",
@@ -3655,10 +3688,10 @@
       "replacementModule": "modern-tar"
     },
     "mri": {"id": "mri", "type": "documented", "replacementModule": "mri"},
-    "nano-staged": {
-      "id": "nano-staged",
+    "mrmime": {
+      "id": "mrmime",
       "type": "documented",
-      "replacementModule": "nano-staged"
+      "replacementModule": "mrmime"
     },
     "nanoexec": {
       "id": "nanoexec",
@@ -3799,6 +3832,11 @@
       "type": "documented",
       "replacementModule": "premove"
     },
+    "process.loadEnvFile": {
+      "id": "process.loadEnvFile",
+      "type": "native",
+      "url": {"type": "node", "id": "api/process.html#processloadenvfilepath"}
+    },
     "react-helmet-async": {
       "id": "react-helmet-async",
       "type": "documented",
@@ -3832,11 +3870,6 @@
       "replacementModule": "rollup-plugin-visualizer"
     },
     "sade": {"id": "sade", "type": "documented", "replacementModule": "sade"},
-    "smol-toml": {
-      "id": "smol-toml",
-      "type": "documented",
-      "replacementModule": "smol-toml"
-    },
     "sonda": {
       "id": "sonda",
       "type": "documented",
@@ -3866,7 +3899,8 @@
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
         {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"}
+        {"engine": "netlify", "minVersion": "0.0.1"},
+        {"engine": "nodejs", "minVersion": "0.9.4"}
       ]
     },
     "streams": {
