@@ -156,6 +156,12 @@
       "description": "You can check the first two bytes of a buffer to detect if it's compressed using deflate.",
       "example": "function isDeflate(buf) {\n  if (buf.length < 2 || buf[0] !== 0x78) return false;\n  const b = buf[1];\n  return b === 1 || b === 0x9c || b === 0xda;\n}"
     },
+    "snippet::is-electron": {
+      "id": "snippet::is-electron",
+      "type": "simple",
+      "description": "You can detect Electron by checking the renderer process type, `process.versions.electron`, or the user agent.",
+      "example": "function isElectron() {\n  return Boolean(\n    globalThis.window?.process?.type === \"renderer\" ||\n      globalThis.process?.versions?.electron ||\n      globalThis.navigator?.userAgent?.includes(\"Electron\")\n  );\n}"
+    },
     "snippet::is-equal": {
       "id": "snippet::is-equal",
       "type": "simple",
@@ -172,7 +178,7 @@
       "id": "snippet::is-function",
       "type": "simple",
       "description": "You can use `typeof` to check if a value is a function.",
-      "example": "const isString = (value) => typeof value === \"function\";"
+      "example": "typeof value === \"function\""
     },
     "snippet::is-generator-function": {
       "id": "snippet::is-generator-function",
@@ -252,6 +258,12 @@
       "description": "You can use `instanceof RegExp` to check if a value is a regular expression, or if cross-realm, use `Object.prototype.toString.call(v) === \"[object RegExp]\"`.",
       "example": "const isRegExp = (v) => v instanceof RegExp;\n// for cross-realm\nconst isRegExpCrossRealm = Object.prototype.toString.call(v) === \"[object RegExp]\";"
     },
+    "snippet::is-set": {
+      "id": "snippet::is-set",
+      "type": "simple",
+      "description": "You can use `instanceof Set` to check if a value is a `Set`, or if cross-realm, use `Object.prototype.toString.call(v) === \"[object Set]\"`",
+      "example": "const isSet = v instanceof Set;\n// for cross-realm\nconst isSetCrossRealm = Object.prototype.toString.call(v) === \"[object Set]\""
+    },
     "snippet::is-stream": {
       "id": "snippet::is-stream",
       "type": "simple",
@@ -294,6 +306,12 @@
       "description": "You can check if the current environment is Windows by checking if `process.platform` is equal to \"win32\".",
       "example": "const isWindows = () => process.platform === \"win32\";"
     },
+    "snippet::is-wsl": {
+      "id": "snippet::is-wsl",
+      "type": "simple",
+      "description": "You can check if the current environment is WSL by checking if the `WSL_DISTRO_NAME` environment variable is set.",
+      "example": "const isWsl = Boolean(process.env.WSL_DISTRO_NAME);"
+    },
     "snippet::json-file": {
       "id": "snippet::json-file",
       "type": "simple",
@@ -335,6 +353,12 @@
       "type": "simple",
       "description": "You can use `Object.entries` and `Array.prototype.reduce`.",
       "example": "const objectReduce = (obj, fn, initial) => Object.entries(obj).reduce((acc, [k, v]) => fn(acc, k, v), initial);"
+    },
+    "snippet::path-key": {
+      "id": "snippet::path-key",
+      "type": "simple",
+      "description": "You can use `Object.keys` with `Array.prototype.findLast` to find the case-insensitive `PATH` environment variable key.",
+      "example": "const pathKey = Object.keys(process.env).findLast((k) => k.toUpperCase() === 'PATH') ?? 'PATH';"
     },
     "snippet::regexp-copy": {
       "id": "snippet::regexp-copy",
@@ -563,6 +587,11 @@
       "moduleName": "is-deflate",
       "replacements": ["snippet::is-deflate-buffer"]
     },
+    "is-electron": {
+      "type": "module",
+      "moduleName": "is-electron",
+      "replacements": ["snippet::is-electron"]
+    },
     "is-even": {
       "type": "module",
       "moduleName": "is-even",
@@ -653,6 +682,11 @@
       "moduleName": "is-regexp",
       "replacements": ["snippet::is-regexp"]
     },
+    "is-set": {
+      "type": "module",
+      "moduleName": "is-set",
+      "replacements": ["snippet::is-set"]
+    },
     "is-stream": {
       "type": "module",
       "moduleName": "is-stream",
@@ -682,6 +716,11 @@
       "type": "module",
       "moduleName": "is-windows",
       "replacements": ["snippet::is-windows"]
+    },
+    "is-wsl": {
+      "type": "module",
+      "moduleName": "is-wsl",
+      "replacements": ["snippet::is-wsl"]
     },
     "isobject": {
       "type": "module",
@@ -803,6 +842,11 @@
       "moduleName": "object.reduce",
       "replacements": ["snippet::object-reduce"]
     },
+    "path-key": {
+      "type": "module",
+      "moduleName": "path-key",
+      "replacements": ["snippet::path-key"]
+    },
     "shebang-regex": {
       "type": "module",
       "moduleName": "shebang-regex",
@@ -842,6 +886,11 @@
       "type": "module",
       "moduleName": "upper-case",
       "replacements": ["snippet::to-uppercase"]
+    },
+    "validate.io-function": {
+      "type": "module",
+      "moduleName": "validate.io-function",
+      "replacements": ["snippet::is-function"]
     },
     "year": {
       "type": "module",
