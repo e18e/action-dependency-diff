@@ -9,7 +9,7 @@ This action compares dependencies between your base branch and current branch, a
 - 🔒 **Package trust levels** - Detects decreases in package trust levels (provenance and trusted publisher status)
 - 📈 **Dependency growth** - Warns when dependency count increases significantly
 - 📦 **Install size** - Warns when package size increases significantly
-- 🔄 **Duplicate versions** - Detects packages which gain newly introduced duplicate versions
+- 🔄 **Duplicate versions** - Detects when multiple versions of a package are introduced
 - ⚠️ **Module replacements** - Identifies new packages that have community-recommended alternatives
 
 ## Usage
