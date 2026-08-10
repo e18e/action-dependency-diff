@@ -41,7 +41,7 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "esbuild": "^0.28.1",
     "eslint": "^10.8.0",
     "lockparse": "^0.5.2",
@@ -49,8 +49,8 @@
     "packumeta": "^0.4.1",
     "pkg-types": "^2.3.1",
     "prettier": "^3.9.6",
-    "typescript": "^6.0.3",
-    "typescript-eslint": "^8.65.0",
+    "typescript": "^7.0.2",
+    "typescript-eslint": "^8.66.0",
     "vitest": "^4.1.10"
   }
 }
