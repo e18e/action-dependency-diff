@@ -30,19 +30,20 @@ describe('getBaseRef', () => {
     }
   });
 
-  it('should return pull request base ref if in PR context', () => {
+  it('should return pull request base sha if in PR context', () => {
     const originalPayload = github.context.payload;
     try {
       github.context.payload = {
         pull_request: {
           number: 303,
           base: {
-            ref: 'develop'
+            ref: 'develop',
+            sha: 'base-sha'
           }
         }
       };
       const baseRef = git.getBaseRef();
-      expect(baseRef).toBe('origin/develop');
+      expect(baseRef).toBe('base-sha');
     } finally {
       github.context.payload = originalPayload;
     }
