@@ -24160,9 +24160,9 @@ function getBaseRef() {
   if (inputBaseRef) {
     return inputBaseRef.includes("/") ? inputBaseRef : `origin/${inputBaseRef}`;
   }
-  const githubBaseRef = context2.payload.pull_request?.base.ref;
-  if (githubBaseRef) {
-    return `origin/${githubBaseRef}`;
+  const githubBaseSha = context2.payload.pull_request?.base.sha;
+  if (githubBaseSha) {
+    return githubBaseSha;
   }
   return "origin/main";
 }

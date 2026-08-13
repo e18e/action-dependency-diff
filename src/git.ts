@@ -46,10 +46,10 @@ export function getBaseRef(): string {
     return inputBaseRef.includes('/') ? inputBaseRef : `origin/${inputBaseRef}`;
   }
 
-  const githubBaseRef = github.context.payload.pull_request?.base.ref;
+  const githubBaseSha = github.context.payload.pull_request?.base.sha;
 
-  if (githubBaseRef) {
-    return `origin/${githubBaseRef}`;
+  if (githubBaseSha) {
+    return githubBaseSha;
   }
 
   return 'origin/main';
