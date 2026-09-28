@@ -41,16 +41,16 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.6.1",
+    "@types/node": "^26.6.2",
     "esbuild": "^0.28.2",
-    "eslint": "^10.10.0",
+    "eslint": "^10.11.0",
     "lockparse": "^0.5.2",
-    "module-replacements": "^3.3.0",
+    "module-replacements": "^3.4.0",
     "packumeta": "^0.4.1",
     "pkg-types": "^2.3.3",
-    "prettier": "^3.9.8",
+    "prettier": "^3.9.9",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "typescript-eslint": "^8.70.0",
-    "vitest": "^5.0.1"
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.2"
   }
 }
