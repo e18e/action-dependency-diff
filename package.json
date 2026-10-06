@@ -41,7 +41,7 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.4",
     "esbuild": "^0.28.2",
     "eslint": "^10.11.0",
     "lockparse": "^0.5.2",
@@ -50,7 +50,7 @@
     "pkg-types": "^2.3.3",
     "prettier": "^3.9.9",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.2"
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
   }
 }
