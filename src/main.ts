@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
-import {join} from 'node:path';
+import {join, resolve, sep} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {detectLockfile, computeDependencyVersions} from './lockfile.js';
 import {
@@ -39,10 +39,23 @@ async function postCommentFromArtifact(): Promise<void> {
     );
   }
 
-  core.info(`Reading artifact from ${artifactPath}`);
+  const baseWorkspace = process.env.GITHUB_WORKSPACE || process.cwd();
+  const resolvedWorkspace = resolve(baseWorkspace);
+  const resolvedArtifactPath = resolve(resolvedWorkspace, artifactPath);
+
+  if (
+    resolvedArtifactPath !== resolvedWorkspace &&
+    !resolvedArtifactPath.startsWith(resolvedWorkspace + sep)
+  ) {
+    throw new Error(
+      'artifact-path must resolve to a location within the workspace directory.'
+    );
+  }
+
+  core.info(`Reading artifact from ${resolvedArtifactPath}`);
 
   const result: ArtifactResult = JSON.parse(
-    await fs.readFile(artifactPath, 'utf-8')
+    await fs.readFile(resolvedArtifactPath, 'utf-8')
   );
 
   core.info(`Posting comment to PR #${result.pr_number}`);
