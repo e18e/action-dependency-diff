@@ -24122,12 +24122,22 @@ function parseCommaList(input) {
   return result;
 }
 function matchesPattern(value, pattern) {
-  if (pattern === "*") return true;
-  if (!pattern.includes("*")) {
-    return value === pattern;
+  const parts = pattern.split("*");
+  if (parts.length === 1) return value === pattern;
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  if (value.length < first.length + last.length || !value.startsWith(first) || !value.endsWith(last)) {
+    return false;
   }
-  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
-  return new RegExp(`^${escaped}$`).test(value);
+  let pos = first.length;
+  const end = value.length - last.length;
+  for (let i = 1; i < parts.length - 1; i++) {
+    const part = parts[i];
+    const index = value.indexOf(part, pos);
+    if (index === -1 || index + part.length > end) return false;
+    pos = index + part.length;
+  }
+  return true;
 }
 function matchesAnyPattern(value, patterns) {
   for (const pattern of patterns) {
