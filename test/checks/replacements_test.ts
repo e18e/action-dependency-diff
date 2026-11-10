@@ -22,20 +22,4 @@ describe('scanForReplacements', () => {
 
     expect(messages).toHaveLength(0);
   });
-
-  it('should ignore dependencies matching excludePackages patterns', () => {
-    const messages: string[] = [];
-    const baseDeps = new Map<string, string>();
-    const currentDeps = new Map<string, string>([
-      ['is-odd', '^3.0.0'],
-      ['is-even', '^1.0.0'],
-      ['array-includes', '^3.1.0']
-    ]);
-
-    scanForReplacements(messages, baseDeps, currentDeps, {
-      excludePackages: ['is-*', 'array-includes']
-    });
-
-    expect(messages).toHaveLength(0);
-  });
 });

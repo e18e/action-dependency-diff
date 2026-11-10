@@ -1,28 +1,14 @@
 import {all as allReplacements, resolveDocUrl} from 'module-replacements';
-import {matchesAnyPattern} from '../common.js';
-
-export interface ScanReplacementsOptions {
-  excludePackages?: string[];
-}
 
 export function scanForReplacements(
   messages: string[],
   baseDependencies: Map<string, string>,
-  currentDependencies: Map<string, string>,
-  options?: ScanReplacementsOptions
+  currentDependencies: Map<string, string>
 ): void {
   const replacementMessages: string[] = [];
-  const excludePatterns = options?.excludePackages ?? [];
 
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
-      if (
-        excludePatterns.length > 0 &&
-        matchesAnyPattern(name, excludePatterns)
-      ) {
-        continue;
-      }
-
       const mapping = Object.values(allReplacements.mappings).find(
         (modReplacement) =>
           modReplacement.moduleName === name && modReplacement.type === 'module'

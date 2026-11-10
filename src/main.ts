@@ -257,9 +257,7 @@ async function analyzeAndComment(): Promise<void> {
       excludePackages
     );
 
-    scanForReplacements(messages, baseDependencies, currentDependencies, {
-      excludePackages
-    });
+    scanForReplacements(messages, baseDependencies, currentDependencies);
   }
 
   const commentBody =

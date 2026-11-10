@@ -24605,14 +24605,10 @@ var all = {
 };
 
 // src/checks/replacements.ts
-function scanForReplacements(messages, baseDependencies, currentDependencies, options) {
+function scanForReplacements(messages, baseDependencies, currentDependencies) {
   const replacementMessages = [];
-  const excludePatterns = options?.excludePackages ?? [];
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
-      if (excludePatterns.length > 0 && matchesAnyPattern(name, excludePatterns)) {
-        continue;
-      }
       const mapping = Object.values(all.mappings).find(
         (modReplacement) => modReplacement.moduleName === name && modReplacement.type === "module"
       );
@@ -25277,9 +25273,7 @@ async function analyzeAndComment() {
       depTypes,
       excludePackages
     );
-    scanForReplacements(messages, baseDependencies, currentDependencies, {
-      excludePackages
-    });
+    scanForReplacements(messages, baseDependencies, currentDependencies);
   }
   const commentBody = messages.length === 0 ? `${COMMENT_TAG}
 ## e18e dependency analysis
