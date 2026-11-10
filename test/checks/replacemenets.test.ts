@@ -23,7 +23,7 @@ describe('scanForReplacements', () => {
     expect(messages).toHaveLength(0);
   });
 
-  it('should ignore dependencies matching excludeDependencies patterns', () => {
+  it('should ignore dependencies matching excludePackages patterns', () => {
     const messages: string[] = [];
     const baseDeps = new Map<string, string>();
     const currentDeps = new Map<string, string>([
@@ -33,7 +33,7 @@ describe('scanForReplacements', () => {
     ]);
 
     scanForReplacements(messages, baseDeps, currentDeps, {
-      excludeDependencies: ['is-*', 'array-includes']
+      excludePackages: ['is-*', 'array-includes']
     });
 
     expect(messages).toHaveLength(0);

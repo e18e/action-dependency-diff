@@ -77,10 +77,8 @@ async function analyzeAndComment(): Promise<void> {
   const token = core.getInput('github-token', {required: true});
   const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
   const detectReplacements = getBool('detect-replacements', true);
-  const excludeDev = getBool('exclude-dev', false);
-  const excludeDependencies = parseCommaList(
-    core.getInput('exclude-dependencies')
-  );
+  const excludeDevDependencies = getBool('exclude-dev-dependencies', false);
+  const excludePackages = parseCommaList(core.getInput('exclude-packages'));
   const dependencyThreshold = parseInt(
     core.getInput('dependency-threshold') || '10',
     10
@@ -173,8 +171,8 @@ async function analyzeAndComment(): Promise<void> {
   }
 
   const filterOptions: ComputeDependencyOptions = {
-    excludeDev,
-    excludeDependencies
+    excludeDevDependencies,
+    excludePackages
   };
 
   const currentDeps = computeDependencyVersions(
@@ -248,23 +246,23 @@ async function analyzeAndComment(): Promise<void> {
       );
     }
 
-    const depTypes: DependencyType[] = excludeDev
+    const depTypes: DependencyType[] = excludeDevDependencies
       ? ['optional', 'peer', 'prod']
       : ['optional', 'peer', 'dev', 'prod'];
 
     const baseDependencies = getDependenciesFromPackageJson(
       basePackageJson,
       depTypes,
-      excludeDependencies
+      excludePackages
     );
     const currentDependencies = getDependenciesFromPackageJson(
       currentPackageJson,
       depTypes,
-      excludeDependencies
+      excludePackages
     );
 
     scanForReplacements(messages, baseDependencies, currentDependencies, {
-      excludeDependencies
+      excludePackages
     });
   }
 

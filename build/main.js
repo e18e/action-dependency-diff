@@ -24150,10 +24150,10 @@ function hasRootChildren(root) {
   return (root.dependencies?.length ?? 0) > 0 || (root.devDependencies?.length ?? 0) > 0 || (root.optionalDependencies?.length ?? 0) > 0;
 }
 function filterPackages(lockFile, options) {
-  const excludeDev = options?.excludeDev ?? false;
-  const excludePatterns = options?.excludeDependencies ?? [];
+  const excludeDevDependencies = options?.excludeDevDependencies ?? false;
+  const excludePatterns = options?.excludePackages ?? [];
   const isIncluded = (dep) => !matchesAnyPattern(dep.name, excludePatterns);
-  if (!excludeDev && excludePatterns.length === 0) {
+  if (!excludeDevDependencies && excludePatterns.length === 0) {
     return lockFile.packages;
   }
   if (!hasRootChildren(lockFile.root)) {
@@ -24167,7 +24167,7 @@ function filterPackages(lockFile, options) {
     for (const deps of [
       current.dependencies,
       current.optionalDependencies,
-      current === root && !excludeDev ? root.devDependencies : void 0
+      current === root && !excludeDevDependencies ? root.devDependencies : void 0
     ]) {
       if (!deps) continue;
       for (const child of deps) {
@@ -24597,7 +24597,7 @@ var all = {
 // src/checks/replacements.ts
 function scanForReplacements(messages, baseDependencies, currentDependencies, options) {
   const replacementMessages = [];
-  const excludePatterns = options?.excludeDependencies ?? [];
+  const excludePatterns = options?.excludePackages ?? [];
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
       if (excludePatterns.length > 0 && matchesAnyPattern(name, excludePatterns)) {
@@ -24651,7 +24651,7 @@ ${replacementMessages.join("\n")}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the \`exclude-dependencies\` input if you want to ignore any of them in future.
+> and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
     );
   }
@@ -25112,10 +25112,8 @@ async function analyzeAndComment() {
   const token = getInput("github-token", { required: true });
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
   const detectReplacements = getBool("detect-replacements", true);
-  const excludeDev = getBool("exclude-dev", false);
-  const excludeDependencies = parseCommaList(
-    getInput("exclude-dependencies")
-  );
+  const excludeDevDependencies = getBool("exclude-dev-dependencies", false);
+  const excludePackages = parseCommaList(getInput("exclude-packages"));
   const dependencyThreshold = parseInt(
     getInput("dependency-threshold") || "10",
     10
@@ -25199,8 +25197,8 @@ async function analyzeAndComment() {
     });
   }
   const filterOptions = {
-    excludeDev,
-    excludeDependencies
+    excludeDevDependencies,
+    excludePackages
   };
   const currentDeps = computeDependencyVersions(
     filterPackages(parsedCurrentLock, filterOptions)
@@ -25261,19 +25259,19 @@ async function analyzeAndComment() {
         "detect-replacements requires both base and current package.json to be present"
       );
     }
-    const depTypes = excludeDev ? ["optional", "peer", "prod"] : ["optional", "peer", "dev", "prod"];
+    const depTypes = excludeDevDependencies ? ["optional", "peer", "prod"] : ["optional", "peer", "dev", "prod"];
     const baseDependencies = getDependenciesFromPackageJson(
       basePackageJson,
       depTypes,
-      excludeDependencies
+      excludePackages
     );
     const currentDependencies = getDependenciesFromPackageJson(
       currentPackageJson,
       depTypes,
-      excludeDependencies
+      excludePackages
     );
     scanForReplacements(messages, baseDependencies, currentDependencies, {
-      excludeDependencies
+      excludePackages
     });
   }
   const commentBody = messages.length === 0 ? `${COMMENT_TAG}

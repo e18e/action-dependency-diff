@@ -97,7 +97,7 @@ describe('computeDependencyVersions', () => {
     expect(result.get('foo')).toEqual(new Set(['1.0.0']));
   });
 
-  it('should exclude devDependencies and their exclusive transitive dependencies when excludeDev is true', () => {
+  it('should exclude devDependencies and their exclusive transitive dependencies when excludeDevDependencies is true', () => {
     const sharedTransitive = {
       name: 'shared-pkg',
       version: '1.0.0',
@@ -145,7 +145,7 @@ describe('computeDependencyVersions', () => {
     };
 
     const result = computeDependencyVersions(
-      filterPackages(lockFile, {excludeDev: true})
+      filterPackages(lockFile, {excludeDevDependencies: true})
     );
     expect(result.has('prod-pkg')).toBe(true);
     expect(result.has('shared-pkg')).toBe(true);
@@ -153,7 +153,7 @@ describe('computeDependencyVersions', () => {
     expect(result.has('dev-transitive')).toBe(false);
   });
 
-  it('should exclude packages matching excludeDependencies patterns and their subtrees', () => {
+  it('should exclude packages matching excludePackages patterns and their subtrees', () => {
     const childOfIgnored = {
       name: 'secret-child',
       version: '1.0.0',
@@ -194,7 +194,7 @@ describe('computeDependencyVersions', () => {
 
     const result = computeDependencyVersions(
       filterPackages(lockFile, {
-        excludeDependencies: ['eslint-*']
+        excludePackages: ['eslint-*']
       })
     );
     expect(result.size).toBe(1);
@@ -236,7 +236,7 @@ describe('computeDependencyVersions', () => {
     };
 
     const result = computeDependencyVersions(
-      filterPackages(lockFile, {excludeDev: true})
+      filterPackages(lockFile, {excludeDevDependencies: true})
     );
     expect(result.size).toBe(2);
     expect(result.get('pkg-a')).toEqual(new Set(['1.0.0']));
@@ -276,7 +276,7 @@ describe('computeDependencyVersions', () => {
 
     const result = computeDependencyVersions(
       filterPackages(lockFile, {
-        excludeDependencies: ['@types/*', 'lodash.*']
+        excludePackages: ['@types/*', 'lodash.*']
       })
     );
     expect(result.size).toBe(1);

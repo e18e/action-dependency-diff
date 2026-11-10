@@ -2,7 +2,7 @@ import {all as allReplacements, resolveDocUrl} from 'module-replacements';
 import {matchesAnyPattern} from '../common.js';
 
 export interface ScanReplacementsOptions {
-  excludeDependencies?: string[];
+  excludePackages?: string[];
 }
 
 export function scanForReplacements(
@@ -12,7 +12,7 @@ export function scanForReplacements(
   options?: ScanReplacementsOptions
 ): void {
   const replacementMessages: string[] = [];
-  const excludePatterns = options?.excludeDependencies ?? [];
+  const excludePatterns = options?.excludePackages ?? [];
 
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
@@ -81,7 +81,7 @@ ${replacementMessages.join('\n')}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the \`exclude-dependencies\` input if you want to ignore any of them in future.
+> and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
     );
   }
