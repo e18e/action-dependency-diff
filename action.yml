@@ -44,6 +44,10 @@ inputs:
     description: 'Detect modules which have community suggested alternatives'
     required: false
     default: true
+  detect-license-changes:
+    description: 'Detect when a dependency changes its license between versions'
+    required: false
+    default: true
   exclude-dev-dependencies:
     description: 'Exclude devDependencies and their exclusive transitive dependencies from analysis'
     required: false

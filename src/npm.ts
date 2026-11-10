@@ -12,6 +12,8 @@ import {matchesAnyPattern} from './common.js';
 export interface PackageMetadata {
   name: string;
   version: string;
+  license?: string | {type?: string};
+  licenses?: Array<{type?: string}>;
   os?: string[];
   cpu?: string[];
   libc?: string[];
@@ -233,4 +235,41 @@ export function isSupportedArchitecture(
   const libcMatches =
     pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
+}
+
+export function normalizeLicense(meta: PackageMetadata): string | null {
+  if (typeof meta.license === 'string') {
+    return meta.license.trim() || null;
+  }
+  if (
+    typeof meta.license === 'object' &&
+    meta.license !== null &&
+    typeof meta.license.type === 'string'
+  ) {
+    return meta.license.type.trim() || null;
+  }
+  if (Array.isArray(meta.licenses)) {
+    const types: string[] = [];
+    for (const l of meta.licenses) {
+      if (typeof l?.type === 'string' && l.type.trim() !== '') {
+        types.push(l.type.trim());
+      }
+    }
+    return types.length > 0 ? types.join(', ') : null;
+  }
+  return null;
+}
+
+export async function getLicensesForPackageVersions(
+  packageName: string,
+  versions: Set<string>
+): Promise<Map<string, string | null>> {
+  const result = new Map<string, string | null>();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, normalizeLicense(metadata));
+    }
+  }
+  return result;
 }
