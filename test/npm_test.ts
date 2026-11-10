@@ -384,7 +384,7 @@ describe('getDependenciesFromPackageJson', () => {
         ['vitest', '^1.0.0']
       ])
     );
-});
+  });
 });
 
 describe('isSupportedArchitecture', () => {

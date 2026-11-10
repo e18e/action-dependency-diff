@@ -1,5 +1,5 @@
 import {all as allReplacements, resolveDocUrl} from 'module-replacements';
-import { matchesAnyPattern } from '../common.js';
+import {matchesAnyPattern} from '../common.js';
 
 export interface ScanReplacementsOptions {
   excludeDependencies?: string[];
