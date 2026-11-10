@@ -24097,16 +24097,111 @@ function parse2(input, typeOrFileName, packageJson) {
 // src/lockfile.ts
 import { existsSync as existsSync3 } from "node:fs";
 import { join } from "node:path";
+
+// src/common.ts
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  const absBytes = Math.abs(bytes);
+  const k = 1e3;
+  const sizes = ["B", "kB", "MB", "GB"];
+  const i = Math.floor(Math.log(absBytes) / Math.log(k));
+  const byteValue = parseFloat((absBytes / Math.pow(k, i)).toFixed(1));
+  return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
+}
+function parseCommaList(input) {
+  if (!input) return [];
+  const result = [];
+  const seen = /* @__PURE__ */ new Set();
+  for (const raw of input.split(",")) {
+    const trimmed = raw.trim();
+    if (trimmed.length > 0 && !seen.has(trimmed)) {
+      seen.add(trimmed);
+      result.push(trimmed);
+    }
+  }
+  return result;
+}
+function matchesPattern(value, pattern) {
+  if (pattern === "*") return true;
+  if (!pattern.includes("*")) {
+    return value === pattern;
+  }
+  const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  return new RegExp(`^${escaped}$`).test(value);
+}
+function matchesAnyPattern(value, patterns) {
+  for (const pattern of patterns) {
+    if (matchesPattern(value, pattern)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// src/lockfile.ts
 var supportedLockfiles = [
   "pnpm-lock.yaml",
   "package-lock.json",
   "yarn.lock",
   "bun.lock"
 ];
-function computeDependencyVersions(lockFile) {
+function hasRootChildren(root) {
+  if (!root) return false;
+  return (root.dependencies?.length ?? 0) > 0 || (root.devDependencies?.length ?? 0) > 0 || (root.optionalDependencies?.length ?? 0) > 0;
+}
+function computeDependencyVersions(lockFile, options) {
   const result = /* @__PURE__ */ new Map();
+  const excludeDev = options?.excludeDev ?? false;
+  const excludePatterns = options?.excludeDependencies ?? [];
+  if (!excludeDev && excludePatterns.length === 0) {
+    for (const pkg of lockFile.packages) {
+      if (!pkg.name || !pkg.version) continue;
+      addVersion(result, pkg.name, pkg.version);
+    }
+    return result;
+  }
+  if (hasRootChildren(lockFile.root)) {
+    const visited = /* @__PURE__ */ new Set();
+    const queue = [];
+    const rootDeps = [
+      ...lockFile.root.dependencies ?? [],
+      ...lockFile.root.optionalDependencies ?? [],
+      ...excludeDev ? [] : lockFile.root.devDependencies ?? []
+    ];
+    for (const dep of rootDeps) {
+      if (!dep.name || !dep.version) continue;
+      if (excludePatterns.length > 0 && matchesAnyPattern(dep.name, excludePatterns)) {
+        continue;
+      }
+      if (!visited.has(dep)) {
+        visited.add(dep);
+        queue.push(dep);
+      }
+    }
+    while (queue.length > 0) {
+      const current = queue.pop();
+      addVersion(result, current.name, current.version);
+      const children = [
+        ...current.dependencies ?? [],
+        ...current.optionalDependencies ?? []
+      ];
+      for (const child of children) {
+        if (!child.name || !child.version) continue;
+        if (visited.has(child)) continue;
+        if (excludePatterns.length > 0 && matchesAnyPattern(child.name, excludePatterns)) {
+          continue;
+        }
+        visited.add(child);
+        queue.push(child);
+      }
+    }
+    return result;
+  }
   for (const pkg of lockFile.packages) {
     if (!pkg.name || !pkg.version) continue;
+    if (excludePatterns.length > 0 && matchesAnyPattern(pkg.name, excludePatterns)) {
+      continue;
+    }
     addVersion(result, pkg.name, pkg.version);
   }
   return result;
@@ -24197,9 +24292,12 @@ function getTrustStatus(meta) {
 }
 function getTrustLevel(status) {
   if (status.stagedPublish) {
-    return 3;
+    return 4;
   }
   if (status.trustedPublisher && status.provenance) {
+    return 3;
+  }
+  if (status.trustedPublisher) {
     return 2;
   }
   if (status.provenance) {
@@ -24211,7 +24309,8 @@ var trustLevelNames = {
   0: "none",
   1: "provenance",
   2: "trustedPublisher",
-  3: "stagedPublish"
+  3: "trustedPublisherWithProvenance",
+  4: "stagedPublish"
 };
 function getTrustLevelName(status) {
   const level = getTrustLevel(status);
@@ -24331,7 +24430,7 @@ var dependencyTypeMap = {
   optional: "optionalDependencies",
   peer: "peerDependencies"
 };
-function getDependenciesFromPackageJson(pkg, types) {
+function getDependenciesFromPackageJson(pkg, types, excludePatterns = []) {
   const result = /* @__PURE__ */ new Map();
   for (const type of types) {
     const value = pkg[dependencyTypeMap[type]];
@@ -24340,6 +24439,9 @@ function getDependenciesFromPackageJson(pkg, types) {
     }
     for (const [name, version] of Object.entries(value)) {
       if (typeof version !== "string") {
+        continue;
+      }
+      if (excludePatterns.length > 0 && matchesAnyPattern(name, excludePatterns)) {
         continue;
       }
       result.set(name, version);
@@ -24476,9 +24578,9 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
 }
 
 // node_modules/module-replacements/dist/main.js
-import nativeRaw from "./native-7HWYIGGW.json" with { type: "json" };
-import microUtilsRaw from "./micro-utilities-PCCWHRB5.json" with { type: "json" };
-import preferredRaw from "./preferred-UHEGOVP6.json" with { type: "json" };
+import nativeRaw from "./native-YITS6F5J.json" with { type: "json" };
+import microUtilsRaw from "./micro-utilities-4653YRA3.json" with { type: "json" };
+import preferredRaw from "./preferred-SDDUH75S.json" with { type: "json" };
 
 // node_modules/module-replacements/dist/util.js
 function resolveDocUrl(url) {
@@ -24516,10 +24618,14 @@ var all = {
 };
 
 // src/checks/replacements.ts
-function scanForReplacements(messages, baseDependencies, currentDependencies) {
+function scanForReplacements(messages, baseDependencies, currentDependencies, options) {
   const replacementMessages = [];
+  const excludePatterns = options?.excludeDependencies ?? [];
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
+      if (excludePatterns.length > 0 && matchesAnyPattern(name, excludePatterns)) {
+        continue;
+      }
       const mapping = Object.values(all.mappings).find(
         (modReplacement) => modReplacement.moduleName === name && modReplacement.type === "module"
       );
@@ -24568,7 +24674,7 @@ ${replacementMessages.join("\n")}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the exclusion feature if you want to ignore any of them in future.
+> and use the \`exclude-dependencies\` input if you want to ignore any of them in future.
 `
     );
   }
@@ -24704,17 +24810,6 @@ function scanForDependencyCount(messages, threshold, currentDeps, baseDeps) {
 This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${threshold}.`
     );
   }
-}
-
-// src/common.ts
-function formatBytes(bytes) {
-  if (bytes === 0) return "0 B";
-  const absBytes = Math.abs(bytes);
-  const k = 1e3;
-  const sizes = ["B", "kB", "MB", "GB"];
-  const i = Math.floor(Math.log(absBytes) / Math.log(k));
-  const byteValue = parseFloat((absBytes / Math.pow(k, i)).toFixed(1));
-  return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
 }
 
 // src/checks/dependency-size.ts
@@ -25032,9 +25127,18 @@ async function analyzeAndComment() {
   const currentRef = getCurrentRef();
   const lockfileFilename = detectLockfile(workspacePath);
   info(`Detected lockfile ${lockfileFilename}`);
+  const getBool = (name, defaultValue) => {
+    const val = getInput(name);
+    if (val === "") return defaultValue;
+    return getBooleanInput(name);
+  };
   const token = getInput("github-token", { required: true });
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
-  const detectReplacements = getBooleanInput("detect-replacements");
+  const detectReplacements = getBool("detect-replacements", true);
+  const excludeDev = getBool("exclude-dev", false);
+  const excludeDependencies = parseCommaList(
+    getInput("exclude-dependencies")
+  );
   const dependencyThreshold = parseInt(
     getInput("dependency-threshold") || "10",
     10
@@ -25117,8 +25221,15 @@ async function analyzeAndComment() {
       cause: err
     });
   }
-  const currentDeps = computeDependencyVersions(parsedCurrentLock);
-  const baseDeps = computeDependencyVersions(parsedBaseLock);
+  const filterOptions = {
+    excludeDev,
+    excludeDependencies
+  };
+  const currentDeps = computeDependencyVersions(
+    parsedCurrentLock,
+    filterOptions
+  );
+  const baseDeps = computeDependencyVersions(parsedBaseLock, filterOptions);
   info(`Dependency threshold set to ${dependencyThreshold}`);
   info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
   info(`Duplicate threshold set to ${duplicateThreshold}`);
@@ -25172,17 +25283,20 @@ async function analyzeAndComment() {
         "detect-replacements requires both base and current package.json to be present"
       );
     }
-    const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
-      "optional",
-      "peer",
-      "dev",
-      "prod"
-    ]);
+    const depTypes = excludeDev ? ["optional", "peer", "prod"] : ["optional", "peer", "dev", "prod"];
+    const baseDependencies = getDependenciesFromPackageJson(
+      basePackageJson,
+      depTypes,
+      excludeDependencies
+    );
     const currentDependencies = getDependenciesFromPackageJson(
       currentPackageJson,
-      ["optional", "peer", "dev", "prod"]
+      depTypes,
+      excludeDependencies
     );
-    scanForReplacements(messages, baseDependencies, currentDependencies);
+    scanForReplacements(messages, baseDependencies, currentDependencies, {
+      excludeDependencies
+    });
   }
   const commentBody = messages.length === 0 ? `${COMMENT_TAG}
 ## e18e dependency analysis
