@@ -9,7 +9,7 @@ import {
   detectLockfile,
   computeDependencyVersions,
   filterPackages,
-  type ComputeDependencyOptions
+  type FilterPackagesOptions
 } from './lockfile.js';
 import {
   getFileFromRef,
@@ -166,7 +166,7 @@ async function analyzeAndComment(): Promise<void> {
     });
   }
 
-  const filterOptions: ComputeDependencyOptions = {
+  const filterOptions: FilterPackagesOptions = {
     excludeDevDependencies,
     excludePackages
   };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type {ParsedDependency, ParsedLockFile} from 'lockparse';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
@@ -13,7 +12,7 @@ export const supportedLockfiles = [
   'bun.lock'
 ] as const;
 
-export interface ComputeDependencyOptions {
+export interface FilterPackagesOptions {
   excludeDevDependencies?: boolean;
   excludePackages?: Set<string>;
 }
@@ -29,7 +28,7 @@ function hasRootChildren(root: ParsedDependency): boolean {
 
 export function filterPackages(
   lockFile: ParsedLockFile,
-  options?: ComputeDependencyOptions
+  options?: FilterPackagesOptions
 ): ParsedDependency[] {
   const excludeDevDependencies = options?.excludeDevDependencies ?? false;
   const excludePatterns = options?.excludePackages;
@@ -48,8 +47,7 @@ export function filterPackages(
   const visited = new Set<ParsedDependency>();
   const queue: ParsedDependency[] = [root];
 
-  while (queue.length > 0) {
-    const current = queue.pop()!;
+  for (let current = queue.pop(); current; current = queue.pop()) {
     for (const deps of [
       current.dependencies,
       current.optionalDependencies,
@@ -73,10 +71,12 @@ export function computeDependencyVersions(
   packages: ParsedDependency[]
 ): VersionsSet {
   const result: VersionsSet = new Map();
+
   for (const pkg of packages) {
     if (!pkg.name || !pkg.version) continue;
     addVersion(result, pkg.name, pkg.version);
   }
+
   return result;
 }
 

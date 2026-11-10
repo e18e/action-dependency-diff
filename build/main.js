@@ -24167,8 +24167,7 @@ function filterPackages(lockFile, options) {
   const root = lockFile.root;
   const visited = /* @__PURE__ */ new Set();
   const queue = [root];
-  while (queue.length > 0) {
-    const current = queue.pop();
+  for (let current = queue.pop(); current; current = queue.pop()) {
     for (const deps of [
       current.dependencies,
       current.optionalDependencies,
