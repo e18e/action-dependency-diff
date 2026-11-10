@@ -1,14 +1,28 @@
 import {all as allReplacements, resolveDocUrl} from 'module-replacements';
+import { matchesAnyPattern } from '../common.js';
+
+export interface ScanReplacementsOptions {
+  excludeDependencies?: string[];
+}
 
 export function scanForReplacements(
   messages: string[],
   baseDependencies: Map<string, string>,
-  currentDependencies: Map<string, string>
+  currentDependencies: Map<string, string>,
+  options?: ScanReplacementsOptions
 ): void {
   const replacementMessages: string[] = [];
+  const excludePatterns = options?.excludeDependencies ?? [];
 
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
+      if (
+        excludePatterns.length > 0 &&
+        matchesAnyPattern(name, excludePatterns)
+      ) {
+        continue;
+      }
+
       const mapping = Object.values(allReplacements.mappings).find(
         (modReplacement) =>
           modReplacement.moduleName === name && modReplacement.type === 'module'
@@ -67,7 +81,7 @@ ${replacementMessages.join('\n')}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the exclusion feature if you want to ignore any of them in future.
+> and use the \`exclude-dependencies\` input if you want to ignore any of them in future.
 `
     );
   }
