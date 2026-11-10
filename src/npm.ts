@@ -12,8 +12,7 @@ import {matchesAnyPattern} from './common.js';
 export interface PackageMetadata {
   name: string;
   version: string;
-  license?: string | {type?: string};
-  licenses?: Array<{type?: string}>;
+  license?: string;
   os?: string[];
   cpu?: string[];
   libc?: string[];
@@ -237,29 +236,6 @@ export function isSupportedArchitecture(
   return osMatches && cpuMatches && libcMatches;
 }
 
-export function normalizeLicense(meta: PackageMetadata): string | null {
-  if (typeof meta.license === 'string') {
-    return meta.license.trim() || null;
-  }
-  if (
-    typeof meta.license === 'object' &&
-    meta.license !== null &&
-    typeof meta.license.type === 'string'
-  ) {
-    return meta.license.type.trim() || null;
-  }
-  if (Array.isArray(meta.licenses)) {
-    const types: string[] = [];
-    for (const l of meta.licenses) {
-      if (typeof l?.type === 'string' && l.type.trim() !== '') {
-        types.push(l.type.trim());
-      }
-    }
-    return types.length > 0 ? types.join(', ') : null;
-  }
-  return null;
-}
-
 export async function getLicensesForPackageVersions(
   packageName: string,
   versions: Set<string>
@@ -268,7 +244,7 @@ export async function getLicensesForPackageVersions(
   for (const version of versions) {
     const metadata = await fetchPackageMetadata(packageName, version);
     if (metadata) {
-      result.set(version, normalizeLicense(metadata));
+      result.set(version, metadata.license?.trim() || null);
     }
   }
   return result;
