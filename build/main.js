@@ -24440,30 +24440,12 @@ function isSupportedArchitecture(pkg, os5, cpu, libc) {
   const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }
-function normalizeLicense(meta) {
-  if (typeof meta.license === "string") {
-    return meta.license.trim() || null;
-  }
-  if (typeof meta.license === "object" && meta.license !== null && typeof meta.license.type === "string") {
-    return meta.license.type.trim() || null;
-  }
-  if (Array.isArray(meta.licenses)) {
-    const types = [];
-    for (const l of meta.licenses) {
-      if (typeof l?.type === "string" && l.type.trim() !== "") {
-        types.push(l.type.trim());
-      }
-    }
-    return types.length > 0 ? types.join(", ") : null;
-  }
-  return null;
-}
 async function getLicensesForPackageVersions(packageName, versions) {
   const result = /* @__PURE__ */ new Map();
   for (const version of versions) {
     const metadata = await fetchPackageMetadata(packageName, version);
     if (metadata) {
-      result.set(version, normalizeLicense(metadata));
+      result.set(version, metadata.license?.trim() || null);
     }
   }
   return result;
