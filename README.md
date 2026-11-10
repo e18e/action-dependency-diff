@@ -49,6 +49,8 @@ jobs:
 | `source-packages`      | Glob pattern for source branch pack files (e.g., `"./source-packs/*.tgz"`)                                                 | No       | None                                      |
 | `pack-size-threshold`  | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |
 | `detect-replacements`  | Detect modules which have community suggested alternatives                                                                 | No       | `true`                                    |
+| `exclude-dev`          | Exclude devDependencies and their exclusive transitive dependencies from analysis                                          | No       | `false`                                   |
+| `exclude-dependencies` | Comma-separated package names or wildcard patterns (e.g., `"@types/*, eslint-*"`) to exclude with their dependency trees   | No       | None                                      |
 | `working-directory`    | Working directory to scan for package lock file                                                                            | No       | None                                      |
 | `mode`                 | Run mode: `comment`, `artifact`, or `comment-from-artifact`                                                                | No       | `comment`                                 |
 | `artifact-path`        | Path to the artifact JSON file (for `comment-from-artifact` mode)                                                          | No       | None                                      |
@@ -123,7 +125,7 @@ The recommendations come from the [e18e community](https://e18e.dev) and include
 - Generally preferred packages
 
 > [!NOTE]
-> Module replacement suggestions are advisory and may not always be straightforward migrations. Review each recommendation carefully and use exclusion features if needed.
+> Module replacement suggestions are advisory and may not always be straightforward migrations. Review each recommendation carefully and use the `exclude-dependencies` input if needed.
 
 ## Supported package managers
 
