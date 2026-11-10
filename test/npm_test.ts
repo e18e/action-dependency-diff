@@ -357,6 +357,34 @@ describe('getDependenciesFromPackageJson', () => {
       ])
     );
   });
+
+  it('excludes dependencies matching exact names or wildcard patterns', () => {
+    const packageJson = {
+      dependencies: {
+        react: '^18.0.0',
+        'lodash.get': '^4.0.0'
+      },
+      devDependencies: {
+        '@types/node': '^20.0.0',
+        '@types/react': '^18.0.0',
+        'eslint-plugin-import': '^2.0.0',
+        vitest: '^1.0.0'
+      }
+    };
+
+    const deps = getDependenciesFromPackageJson(
+      packageJson,
+      ['prod', 'dev'],
+      new Set(['@types/*', 'eslint-*', 'lodash.*'])
+    );
+
+    expect(deps).toEqual(
+      new Map([
+        ['react', '^18.0.0'],
+        ['vitest', '^1.0.0']
+      ])
+    );
+  });
 });
 
 describe('isSupportedArchitecture', () => {

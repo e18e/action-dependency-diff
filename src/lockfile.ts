@@ -1,6 +1,7 @@
-import type {ParsedLockFile} from 'lockparse';
+import type {ParsedDependency, ParsedLockFile} from 'lockparse';
 import {existsSync} from 'node:fs';
 import {join} from 'node:path';
+import {matchesAnyPattern} from './common.js';
 
 export type VersionsSet = Map<string, Set<string>>;
 
@@ -11,12 +12,67 @@ export const supportedLockfiles = [
   'bun.lock'
 ] as const;
 
+export interface FilterPackagesOptions {
+  excludeDevDependencies?: boolean;
+  excludePackages?: Set<string>;
+}
+
+function hasRootChildren(root: ParsedDependency): boolean {
+  if (!root) return false;
+  return (
+    (root.dependencies?.length ?? 0) > 0 ||
+    (root.devDependencies?.length ?? 0) > 0 ||
+    (root.optionalDependencies?.length ?? 0) > 0
+  );
+}
+
+export function filterPackages(
+  lockFile: ParsedLockFile,
+  options?: FilterPackagesOptions
+): ParsedDependency[] {
+  const excludeDevDependencies = options?.excludeDevDependencies ?? false;
+  const excludePatterns = options?.excludePackages;
+  const isIncluded = (dep: ParsedDependency) =>
+    !excludePatterns || !matchesAnyPattern(dep.name, excludePatterns);
+
+  if (!excludeDevDependencies && !excludePatterns?.size) {
+    return lockFile.packages;
+  }
+
+  if (!hasRootChildren(lockFile.root)) {
+    return lockFile.packages.filter(isIncluded);
+  }
+
+  const root = lockFile.root;
+  const visited = new Set<ParsedDependency>();
+  const queue: ParsedDependency[] = [root];
+
+  for (let current = queue.pop(); current; current = queue.pop()) {
+    for (const deps of [
+      current.dependencies,
+      current.optionalDependencies,
+      current === root && !excludeDevDependencies
+        ? root.devDependencies
+        : undefined
+    ]) {
+      if (!deps) continue;
+      for (const child of deps) {
+        if (visited.has(child) || !isIncluded(child)) continue;
+        visited.add(child);
+        queue.push(child);
+      }
+    }
+  }
+
+  return [...visited];
+}
+
 export function computeDependencyVersions(
-  lockFile: ParsedLockFile
+  packages: ParsedDependency[]
 ): VersionsSet {
   const result: VersionsSet = new Map();
 
-  for (const pkg of lockFile.packages) {
+  for (const pkg of packages) {
     if (!pkg.name || !pkg.version) continue;
     addVersion(result, pkg.name, pkg.version);
   }

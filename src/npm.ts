@@ -7,6 +7,7 @@ import {
   type TrustLevelName,
   type TrustStatus
 } from 'packumeta';
+import {matchesAnyPattern} from './common.js';
 
 export interface PackageMetadata {
   name: string;
@@ -194,7 +195,8 @@ const dependencyTypeMap = {
 
 export function getDependenciesFromPackageJson(
   pkg: PackageJson,
-  types: DependencyType[]
+  types: DependencyType[],
+  excludePatterns?: Set<string>
 ): Map<string, string> {
   const result = new Map<string, string>();
 
@@ -206,6 +208,9 @@ export function getDependenciesFromPackageJson(
 
     for (const [name, version] of Object.entries(value)) {
       if (typeof version !== 'string') {
+        continue;
+      }
+      if (excludePatterns && matchesAnyPattern(name, excludePatterns)) {
         continue;
       }
       result.set(name, version);

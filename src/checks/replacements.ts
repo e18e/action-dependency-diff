@@ -67,7 +67,7 @@ ${replacementMessages.join('\n')}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the exclusion feature if you want to ignore any of them in future.
+> and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
     );
   }

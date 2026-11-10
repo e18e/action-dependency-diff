@@ -24097,15 +24097,95 @@ function parse2(input, typeOrFileName, packageJson) {
 // src/lockfile.ts
 import { existsSync as existsSync3 } from "node:fs";
 import { join } from "node:path";
+
+// src/common.ts
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  const absBytes = Math.abs(bytes);
+  const k = 1e3;
+  const sizes = ["B", "kB", "MB", "GB"];
+  const i = Math.floor(Math.log(absBytes) / Math.log(k));
+  const byteValue = parseFloat((absBytes / Math.pow(k, i)).toFixed(1));
+  return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
+}
+function parseCommaList(input) {
+  const result = /* @__PURE__ */ new Set();
+  for (const raw of input.split(",")) {
+    const trimmed = raw.trim();
+    if (trimmed !== "") result.add(trimmed);
+  }
+  return result;
+}
+function matchesPattern(value, pattern) {
+  const parts = pattern.split("*");
+  if (parts.length === 1) return value === pattern;
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  if (value.length < first.length + last.length || !value.startsWith(first) || !value.endsWith(last)) {
+    return false;
+  }
+  let pos = first.length;
+  const end = value.length - last.length;
+  for (let i = 1; i < parts.length - 1; i++) {
+    const part = parts[i];
+    const index = value.indexOf(part, pos);
+    if (index === -1 || index + part.length > end) return false;
+    pos = index + part.length;
+  }
+  return true;
+}
+function matchesAnyPattern(value, patterns) {
+  for (const pattern of patterns) {
+    if (matchesPattern(value, pattern)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// src/lockfile.ts
 var supportedLockfiles = [
   "pnpm-lock.yaml",
   "package-lock.json",
   "yarn.lock",
   "bun.lock"
 ];
-function computeDependencyVersions(lockFile) {
+function hasRootChildren(root) {
+  if (!root) return false;
+  return (root.dependencies?.length ?? 0) > 0 || (root.devDependencies?.length ?? 0) > 0 || (root.optionalDependencies?.length ?? 0) > 0;
+}
+function filterPackages(lockFile, options) {
+  const excludeDevDependencies = options?.excludeDevDependencies ?? false;
+  const excludePatterns = options?.excludePackages;
+  const isIncluded = (dep) => !excludePatterns || !matchesAnyPattern(dep.name, excludePatterns);
+  if (!excludeDevDependencies && !excludePatterns?.size) {
+    return lockFile.packages;
+  }
+  if (!hasRootChildren(lockFile.root)) {
+    return lockFile.packages.filter(isIncluded);
+  }
+  const root = lockFile.root;
+  const visited = /* @__PURE__ */ new Set();
+  const queue = [root];
+  for (let current = queue.pop(); current; current = queue.pop()) {
+    for (const deps of [
+      current.dependencies,
+      current.optionalDependencies,
+      current === root && !excludeDevDependencies ? root.devDependencies : void 0
+    ]) {
+      if (!deps) continue;
+      for (const child of deps) {
+        if (visited.has(child) || !isIncluded(child)) continue;
+        visited.add(child);
+        queue.push(child);
+      }
+    }
+  }
+  return [...visited];
+}
+function computeDependencyVersions(packages) {
   const result = /* @__PURE__ */ new Map();
-  for (const pkg of lockFile.packages) {
+  for (const pkg of packages) {
     if (!pkg.name || !pkg.version) continue;
     addVersion(result, pkg.name, pkg.version);
   }
@@ -24331,7 +24411,7 @@ var dependencyTypeMap = {
   optional: "optionalDependencies",
   peer: "peerDependencies"
 };
-function getDependenciesFromPackageJson(pkg, types) {
+function getDependenciesFromPackageJson(pkg, types, excludePatterns) {
   const result = /* @__PURE__ */ new Map();
   for (const type of types) {
     const value = pkg[dependencyTypeMap[type]];
@@ -24340,6 +24420,9 @@ function getDependenciesFromPackageJson(pkg, types) {
     }
     for (const [name, version] of Object.entries(value)) {
       if (typeof version !== "string") {
+        continue;
+      }
+      if (excludePatterns && matchesAnyPattern(name, excludePatterns)) {
         continue;
       }
       result.set(name, version);
@@ -24568,7 +24651,7 @@ ${replacementMessages.join("\n")}
 > [!NOTE]
 > These recommendations have been defined by the [e18e](https://e18e.dev) community.
 > They may not always be a straightforward migration, so please review carefully
-> and use the exclusion feature if you want to ignore any of them in future.
+> and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
     );
   }
@@ -24704,17 +24787,6 @@ function scanForDependencyCount(messages, threshold, currentDeps, baseDeps) {
 This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${threshold}.`
     );
   }
-}
-
-// src/common.ts
-function formatBytes(bytes) {
-  if (bytes === 0) return "0 B";
-  const absBytes = Math.abs(bytes);
-  const k = 1e3;
-  const sizes = ["B", "kB", "MB", "GB"];
-  const i = Math.floor(Math.log(absBytes) / Math.log(k));
-  const byteValue = parseFloat((absBytes / Math.pow(k, i)).toFixed(1));
-  return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
 }
 
 // src/checks/dependency-size.ts
@@ -25035,6 +25107,10 @@ async function analyzeAndComment() {
   const token = getInput("github-token", { required: true });
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
   const detectReplacements = getBooleanInput("detect-replacements");
+  const excludeDevDependencies = getBooleanInput(
+    "exclude-dev-dependencies"
+  );
+  const excludePackages = parseCommaList(getInput("exclude-packages"));
   const dependencyThreshold = parseInt(
     getInput("dependency-threshold") || "10",
     10
@@ -25117,8 +25193,16 @@ async function analyzeAndComment() {
       cause: err
     });
   }
-  const currentDeps = computeDependencyVersions(parsedCurrentLock);
-  const baseDeps = computeDependencyVersions(parsedBaseLock);
+  const filterOptions = {
+    excludeDevDependencies,
+    excludePackages
+  };
+  const currentDeps = computeDependencyVersions(
+    filterPackages(parsedCurrentLock, filterOptions)
+  );
+  const baseDeps = computeDependencyVersions(
+    filterPackages(parsedBaseLock, filterOptions)
+  );
   info(`Dependency threshold set to ${dependencyThreshold}`);
   info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
   info(`Duplicate threshold set to ${duplicateThreshold}`);
@@ -25172,15 +25256,16 @@ async function analyzeAndComment() {
         "detect-replacements requires both base and current package.json to be present"
       );
     }
-    const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
-      "optional",
-      "peer",
-      "dev",
-      "prod"
-    ]);
+    const depTypes = excludeDevDependencies ? ["optional", "peer", "prod"] : ["optional", "peer", "dev", "prod"];
+    const baseDependencies = getDependenciesFromPackageJson(
+      basePackageJson,
+      depTypes,
+      excludePackages
+    );
     const currentDependencies = getDependenciesFromPackageJson(
       currentPackageJson,
-      ["optional", "peer", "dev", "prod"]
+      depTypes,
+      excludePackages
     );
     scanForReplacements(messages, baseDependencies, currentDependencies);
   }

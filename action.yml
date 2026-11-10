@@ -44,6 +44,13 @@ inputs:
     description: 'Detect modules which have community suggested alternatives'
     required: false
     default: true
+  exclude-dev-dependencies:
+    description: 'Exclude devDependencies and their exclusive transitive dependencies from analysis'
+    required: false
+    default: 'false'
+  exclude-packages:
+    description: 'Comma-separated list of package names or wildcard patterns (e.g., "@types/*, eslint-*") to exclude along with their dependency trees'
+    required: false
   working-directory:
     description: 'Working directory to scan for package lock file'
     required: false

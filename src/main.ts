@@ -5,14 +5,19 @@ import * as github from '@actions/github';
 import type {PackageJson} from 'pkg-types';
 import {join} from 'node:path';
 import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
-import {detectLockfile, computeDependencyVersions} from './lockfile.js';
+import {
+  detectLockfile,
+  computeDependencyVersions,
+  filterPackages,
+  type FilterPackagesOptions
+} from './lockfile.js';
 import {
   getFileFromRef,
   getBaseRef,
   getCurrentRef,
   tryGetJSONFromRef
 } from './git.js';
-import {getDependenciesFromPackageJson} from './npm.js';
+import {getDependenciesFromPackageJson, type DependencyType} from './npm.js';
 import {getPacksFromPattern} from './packs.js';
 import {scanForReplacements} from './checks/replacements.js';
 import {scanForDuplicates} from './checks/duplicates.js';
@@ -20,7 +25,7 @@ import {scanForDependencyCount} from './checks/dependency-count.js';
 import {scanForDependencySize} from './checks/dependency-size.js';
 import {scanForProvenance} from './checks/provenance.js';
 import {scanForBundleSize} from './checks/bundle-size.js';
-import {formatBytes} from './common.js';
+import {formatBytes, parseCommaList} from './common.js';
 import {ARTIFACT_FILENAME, COMMENT_TAG} from './constants.js';
 import {findExistingComment, upsertComment} from './github.js';
 
@@ -66,6 +71,10 @@ async function analyzeAndComment(): Promise<void> {
   const token = core.getInput('github-token', {required: true});
   const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
   const detectReplacements = core.getBooleanInput('detect-replacements');
+  const excludeDevDependencies = core.getBooleanInput(
+    'exclude-dev-dependencies'
+  );
+  const excludePackages = parseCommaList(core.getInput('exclude-packages'));
   const dependencyThreshold = parseInt(
     core.getInput('dependency-threshold') || '10',
     10
@@ -157,8 +166,17 @@ async function analyzeAndComment(): Promise<void> {
     });
   }
 
-  const currentDeps = computeDependencyVersions(parsedCurrentLock);
-  const baseDeps = computeDependencyVersions(parsedBaseLock);
+  const filterOptions: FilterPackagesOptions = {
+    excludeDevDependencies,
+    excludePackages
+  };
+
+  const currentDeps = computeDependencyVersions(
+    filterPackages(parsedCurrentLock, filterOptions)
+  );
+  const baseDeps = computeDependencyVersions(
+    filterPackages(parsedBaseLock, filterOptions)
+  );
 
   core.info(`Dependency threshold set to ${dependencyThreshold}`);
   core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
@@ -224,15 +242,19 @@ async function analyzeAndComment(): Promise<void> {
       );
     }
 
-    const baseDependencies = getDependenciesFromPackageJson(basePackageJson, [
-      'optional',
-      'peer',
-      'dev',
-      'prod'
-    ]);
+    const depTypes: DependencyType[] = excludeDevDependencies
+      ? ['optional', 'peer', 'prod']
+      : ['optional', 'peer', 'dev', 'prod'];
+
+    const baseDependencies = getDependenciesFromPackageJson(
+      basePackageJson,
+      depTypes,
+      excludePackages
+    );
     const currentDependencies = getDependenciesFromPackageJson(
       currentPackageJson,
-      ['optional', 'peer', 'dev', 'prod']
+      depTypes,
+      excludePackages
     );
 
     scanForReplacements(messages, baseDependencies, currentDependencies);
