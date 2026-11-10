@@ -194,7 +194,7 @@ describe('computeDependencyVersions', () => {
 
     const result = computeDependencyVersions(
       filterPackages(lockFile, {
-        excludePackages: ['eslint-*']
+        excludePackages: new Set(['eslint-*'])
       })
     );
     expect(result.size).toBe(1);
@@ -276,7 +276,7 @@ describe('computeDependencyVersions', () => {
 
     const result = computeDependencyVersions(
       filterPackages(lockFile, {
-        excludePackages: ['@types/*', 'lodash.*']
+        excludePackages: new Set(['@types/*', 'lodash.*'])
       })
     );
     expect(result.size).toBe(1);

@@ -24109,15 +24109,10 @@ function formatBytes(bytes) {
   return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
 }
 function parseCommaList(input) {
-  if (!input) return [];
-  const result = [];
-  const seen = /* @__PURE__ */ new Set();
+  const result = /* @__PURE__ */ new Set();
   for (const raw of input.split(",")) {
     const trimmed = raw.trim();
-    if (trimmed.length > 0 && !seen.has(trimmed)) {
-      seen.add(trimmed);
-      result.push(trimmed);
-    }
+    if (trimmed !== "") result.add(trimmed);
   }
   return result;
 }
@@ -24161,9 +24156,9 @@ function hasRootChildren(root) {
 }
 function filterPackages(lockFile, options) {
   const excludeDevDependencies = options?.excludeDevDependencies ?? false;
-  const excludePatterns = options?.excludePackages ?? [];
-  const isIncluded = (dep) => !matchesAnyPattern(dep.name, excludePatterns);
-  if (!excludeDevDependencies && excludePatterns.length === 0) {
+  const excludePatterns = options?.excludePackages;
+  const isIncluded = (dep) => !excludePatterns || !matchesAnyPattern(dep.name, excludePatterns);
+  if (!excludeDevDependencies && !excludePatterns?.size) {
     return lockFile.packages;
   }
   if (!hasRootChildren(lockFile.root)) {
@@ -24417,7 +24412,7 @@ var dependencyTypeMap = {
   optional: "optionalDependencies",
   peer: "peerDependencies"
 };
-function getDependenciesFromPackageJson(pkg, types, excludePatterns = []) {
+function getDependenciesFromPackageJson(pkg, types, excludePatterns) {
   const result = /* @__PURE__ */ new Map();
   for (const type of types) {
     const value = pkg[dependencyTypeMap[type]];
@@ -24428,7 +24423,7 @@ function getDependenciesFromPackageJson(pkg, types, excludePatterns = []) {
       if (typeof version !== "string") {
         continue;
       }
-      if (excludePatterns.length > 0 && matchesAnyPattern(name, excludePatterns)) {
+      if (excludePatterns && matchesAnyPattern(name, excludePatterns)) {
         continue;
       }
       result.set(name, version);

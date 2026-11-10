@@ -375,7 +375,7 @@ describe('getDependenciesFromPackageJson', () => {
     const deps = getDependenciesFromPackageJson(
       packageJson,
       ['prod', 'dev'],
-      ['@types/*', 'eslint-*', 'lodash.*']
+      new Set(['@types/*', 'eslint-*', 'lodash.*'])
     );
 
     expect(deps).toEqual(

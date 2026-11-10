@@ -15,7 +15,7 @@ export const supportedLockfiles = [
 
 export interface ComputeDependencyOptions {
   excludeDevDependencies?: boolean;
-  excludePackages?: string[];
+  excludePackages?: Set<string>;
 }
 
 function hasRootChildren(root: ParsedDependency): boolean {
@@ -32,11 +32,11 @@ export function filterPackages(
   options?: ComputeDependencyOptions
 ): ParsedDependency[] {
   const excludeDevDependencies = options?.excludeDevDependencies ?? false;
-  const excludePatterns = options?.excludePackages ?? [];
+  const excludePatterns = options?.excludePackages;
   const isIncluded = (dep: ParsedDependency) =>
-    !matchesAnyPattern(dep.name, excludePatterns);
+    !excludePatterns || !matchesAnyPattern(dep.name, excludePatterns);
 
-  if (!excludeDevDependencies && excludePatterns.length === 0) {
+  if (!excludeDevDependencies && !excludePatterns?.size) {
     return lockFile.packages;
   }
 

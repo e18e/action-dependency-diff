@@ -196,7 +196,7 @@ const dependencyTypeMap = {
 export function getDependenciesFromPackageJson(
   pkg: PackageJson,
   types: DependencyType[],
-  excludePatterns: string[] = []
+  excludePatterns?: Set<string>
 ): Map<string, string> {
   const result = new Map<string, string>();
 
@@ -210,10 +210,7 @@ export function getDependenciesFromPackageJson(
       if (typeof version !== 'string') {
         continue;
       }
-      if (
-        excludePatterns.length > 0 &&
-        matchesAnyPattern(name, excludePatterns)
-      ) {
+      if (excludePatterns && matchesAnyPattern(name, excludePatterns)) {
         continue;
       }
       result.set(name, version);

@@ -8,16 +8,11 @@ export function formatBytes(bytes: number): string {
   return `${bytes < 0 ? -byteValue : byteValue} ${sizes[i]}`;
 }
 
-export function parseCommaList(input: string | undefined): string[] {
-  if (!input) return [];
-  const result: string[] = [];
-  const seen = new Set<string>();
+export function parseCommaList(input: string): Set<string> {
+  const result = new Set<string>();
   for (const raw of input.split(',')) {
     const trimmed = raw.trim();
-    if (trimmed.length > 0 && !seen.has(trimmed)) {
-      seen.add(trimmed);
-      result.push(trimmed);
-    }
+    if (trimmed !== '') result.add(trimmed);
   }
   return result;
 }
