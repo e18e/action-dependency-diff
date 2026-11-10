@@ -25114,15 +25114,12 @@ async function analyzeAndComment() {
   const currentRef = getCurrentRef();
   const lockfileFilename = detectLockfile(workspacePath);
   info(`Detected lockfile ${lockfileFilename}`);
-  const getBool = (name, defaultValue) => {
-    const val = getInput(name);
-    if (val === "") return defaultValue;
-    return getBooleanInput(name);
-  };
   const token = getInput("github-token", { required: true });
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
-  const detectReplacements = getBool("detect-replacements", true);
-  const excludeDevDependencies = getBool("exclude-dev-dependencies", false);
+  const detectReplacements = getBooleanInput("detect-replacements");
+  const excludeDevDependencies = getBooleanInput(
+    "exclude-dev-dependencies"
+  );
   const excludePackages = parseCommaList(getInput("exclude-packages"));
   const dependencyThreshold = parseInt(
     getInput("dependency-threshold") || "10",

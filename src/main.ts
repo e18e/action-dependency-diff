@@ -68,16 +68,12 @@ async function analyzeAndComment(): Promise<void> {
   const lockfileFilename = detectLockfile(workspacePath);
   core.info(`Detected lockfile ${lockfileFilename}`);
 
-  const getBool = (name: string, defaultValue: boolean): boolean => {
-    const val = core.getInput(name);
-    if (val === '') return defaultValue;
-    return core.getBooleanInput(name);
-  };
-
   const token = core.getInput('github-token', {required: true});
   const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
-  const detectReplacements = getBool('detect-replacements', true);
-  const excludeDevDependencies = getBool('exclude-dev-dependencies', false);
+  const detectReplacements = core.getBooleanInput('detect-replacements');
+  const excludeDevDependencies = core.getBooleanInput(
+    'exclude-dev-dependencies'
+  );
   const excludePackages = parseCommaList(core.getInput('exclude-packages'));
   const dependencyThreshold = parseInt(
     core.getInput('dependency-threshold') || '10',
