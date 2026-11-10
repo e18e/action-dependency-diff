@@ -27,83 +27,54 @@ function hasRootChildren(root: ParsedDependency): boolean {
   );
 }
 
-export function computeDependencyVersions(
+export function filterPackages(
   lockFile: ParsedLockFile,
   options?: ComputeDependencyOptions
-): VersionsSet {
-  const result: VersionsSet = new Map();
+): ParsedDependency[] {
   const excludeDev = options?.excludeDev ?? false;
   const excludePatterns = options?.excludeDependencies ?? [];
+  const isIncluded = (dep: ParsedDependency) =>
+    !matchesAnyPattern(dep.name, excludePatterns);
 
   if (!excludeDev && excludePatterns.length === 0) {
-    for (const pkg of lockFile.packages) {
-      if (!pkg.name || !pkg.version) continue;
-      addVersion(result, pkg.name, pkg.version);
-    }
-    return result;
+    return lockFile.packages;
   }
 
-  if (hasRootChildren(lockFile.root)) {
-    const visited = new Set<ParsedDependency>();
-    const queue: ParsedDependency[] = [];
+  if (!hasRootChildren(lockFile.root)) {
+    return lockFile.packages.filter(isIncluded);
+  }
 
-    const rootDeps = [
-      ...(lockFile.root.dependencies ?? []),
-      ...(lockFile.root.optionalDependencies ?? []),
-      ...(excludeDev ? [] : (lockFile.root.devDependencies ?? []))
-    ];
+  const root = lockFile.root;
+  const visited = new Set<ParsedDependency>();
+  const queue: ParsedDependency[] = [root];
 
-    for (const dep of rootDeps) {
-      if (!dep.name || !dep.version) continue;
-      if (
-        excludePatterns.length > 0 &&
-        matchesAnyPattern(dep.name, excludePatterns)
-      ) {
-        continue;
-      }
-      if (!visited.has(dep)) {
-        visited.add(dep);
-        queue.push(dep);
-      }
-    }
-
-    while (queue.length > 0) {
-      const current = queue.pop()!;
-      addVersion(result, current.name, current.version);
-
-      const children = [
-        ...(current.dependencies ?? []),
-        ...(current.optionalDependencies ?? [])
-      ];
-
-      for (const child of children) {
-        if (!child.name || !child.version) continue;
-        if (visited.has(child)) continue;
-        if (
-          excludePatterns.length > 0 &&
-          matchesAnyPattern(child.name, excludePatterns)
-        ) {
-          continue;
-        }
+  while (queue.length > 0) {
+    const current = queue.pop()!;
+    for (const deps of [
+      current.dependencies,
+      current.optionalDependencies,
+      current === root && !excludeDev ? root.devDependencies : undefined
+    ]) {
+      if (!deps) continue;
+      for (const child of deps) {
+        if (visited.has(child) || !isIncluded(child)) continue;
         visited.add(child);
         queue.push(child);
       }
     }
-
-    return result;
   }
 
-  for (const pkg of lockFile.packages) {
+  return [...visited];
+}
+
+export function computeDependencyVersions(
+  packages: ParsedDependency[]
+): VersionsSet {
+  const result: VersionsSet = new Map();
+  for (const pkg of packages) {
     if (!pkg.name || !pkg.version) continue;
-    if (
-      excludePatterns.length > 0 &&
-      matchesAnyPattern(pkg.name, excludePatterns)
-    ) {
-      continue;
-    }
     addVersion(result, pkg.name, pkg.version);
   }
-
   return result;
 }
 

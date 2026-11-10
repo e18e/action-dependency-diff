@@ -8,6 +8,7 @@ import {parse as parseLockfile, type ParsedLockFile} from 'lockparse';
 import {
   detectLockfile,
   computeDependencyVersions,
+  filterPackages,
   type ComputeDependencyOptions
 } from './lockfile.js';
 import {
@@ -177,10 +178,11 @@ async function analyzeAndComment(): Promise<void> {
   };
 
   const currentDeps = computeDependencyVersions(
-    parsedCurrentLock,
-    filterOptions
+    filterPackages(parsedCurrentLock, filterOptions)
   );
-  const baseDeps = computeDependencyVersions(parsedBaseLock, filterOptions);
+  const baseDeps = computeDependencyVersions(
+    filterPackages(parsedBaseLock, filterOptions)
+  );
 
   core.info(`Dependency threshold set to ${dependencyThreshold}`);
   core.info(`Size threshold set to ${formatBytes(sizeThreshold)}`);

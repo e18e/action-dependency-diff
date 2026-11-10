@@ -2,7 +2,8 @@ import type {ParsedLockFile} from 'lockparse';
 import {describe, it, expect} from 'vitest';
 import {
   computeDependencyVersions,
-  diffDependencySets
+  diffDependencySets,
+  filterPackages
 } from '../src/lockfile.js';
 
 const mockLockFile: ParsedLockFile = {
@@ -21,7 +22,7 @@ const mockLockFile: ParsedLockFile = {
 describe('computeDependencyVersions', () => {
   it('should return an empty map for an empty lock file', () => {
     const lockFile: ParsedLockFile = {...mockLockFile};
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile.packages);
     expect(result.size).toBe(0);
   });
 
@@ -55,7 +56,7 @@ describe('computeDependencyVersions', () => {
         }
       ]
     };
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile.packages);
     expect(result.size).toBe(2);
     expect(result.get('foo')).toEqual(new Set(['1.0.0', '1.1.0']));
     expect(result.get('bar')).toEqual(new Set(['2.0.0']));
@@ -91,7 +92,7 @@ describe('computeDependencyVersions', () => {
         }
       ]
     };
-    const result = computeDependencyVersions(lockFile);
+    const result = computeDependencyVersions(lockFile.packages);
     expect(result.size).toBe(1);
     expect(result.get('foo')).toEqual(new Set(['1.0.0']));
   });
@@ -143,7 +144,9 @@ describe('computeDependencyVersions', () => {
       }
     };
 
-    const result = computeDependencyVersions(lockFile, {excludeDev: true});
+    const result = computeDependencyVersions(
+      filterPackages(lockFile, {excludeDev: true})
+    );
     expect(result.has('prod-pkg')).toBe(true);
     expect(result.has('shared-pkg')).toBe(true);
     expect(result.has('dev-pkg')).toBe(false);
@@ -189,9 +192,11 @@ describe('computeDependencyVersions', () => {
       }
     };
 
-    const result = computeDependencyVersions(lockFile, {
-      excludeDependencies: ['eslint-*']
-    });
+    const result = computeDependencyVersions(
+      filterPackages(lockFile, {
+        excludeDependencies: ['eslint-*']
+      })
+    );
     expect(result.size).toBe(1);
     expect(result.has('react')).toBe(true);
     expect(result.has('eslint-plugin-foo')).toBe(false);
@@ -230,7 +235,9 @@ describe('computeDependencyVersions', () => {
       }
     };
 
-    const result = computeDependencyVersions(lockFile, {excludeDev: true});
+    const result = computeDependencyVersions(
+      filterPackages(lockFile, {excludeDev: true})
+    );
     expect(result.size).toBe(2);
     expect(result.get('pkg-a')).toEqual(new Set(['1.0.0']));
     expect(result.get('pkg-b')).toEqual(new Set(['1.0.0']));
@@ -267,9 +274,11 @@ describe('computeDependencyVersions', () => {
       ]
     };
 
-    const result = computeDependencyVersions(lockFile, {
-      excludeDependencies: ['@types/*', 'lodash.*']
-    });
+    const result = computeDependencyVersions(
+      filterPackages(lockFile, {
+        excludeDependencies: ['@types/*', 'lodash.*']
+      })
+    );
     expect(result.size).toBe(1);
     expect(result.has('zod')).toBe(true);
   });

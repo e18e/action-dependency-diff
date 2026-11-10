@@ -24149,59 +24149,40 @@ function hasRootChildren(root) {
   if (!root) return false;
   return (root.dependencies?.length ?? 0) > 0 || (root.devDependencies?.length ?? 0) > 0 || (root.optionalDependencies?.length ?? 0) > 0;
 }
-function computeDependencyVersions(lockFile, options) {
-  const result = /* @__PURE__ */ new Map();
+function filterPackages(lockFile, options) {
   const excludeDev = options?.excludeDev ?? false;
   const excludePatterns = options?.excludeDependencies ?? [];
+  const isIncluded = (dep) => !matchesAnyPattern(dep.name, excludePatterns);
   if (!excludeDev && excludePatterns.length === 0) {
-    for (const pkg of lockFile.packages) {
-      if (!pkg.name || !pkg.version) continue;
-      addVersion(result, pkg.name, pkg.version);
-    }
-    return result;
+    return lockFile.packages;
   }
-  if (hasRootChildren(lockFile.root)) {
-    const visited = /* @__PURE__ */ new Set();
-    const queue = [];
-    const rootDeps = [
-      ...lockFile.root.dependencies ?? [],
-      ...lockFile.root.optionalDependencies ?? [],
-      ...excludeDev ? [] : lockFile.root.devDependencies ?? []
-    ];
-    for (const dep of rootDeps) {
-      if (!dep.name || !dep.version) continue;
-      if (excludePatterns.length > 0 && matchesAnyPattern(dep.name, excludePatterns)) {
-        continue;
-      }
-      if (!visited.has(dep)) {
-        visited.add(dep);
-        queue.push(dep);
-      }
-    }
-    while (queue.length > 0) {
-      const current = queue.pop();
-      addVersion(result, current.name, current.version);
-      const children = [
-        ...current.dependencies ?? [],
-        ...current.optionalDependencies ?? []
-      ];
-      for (const child of children) {
-        if (!child.name || !child.version) continue;
-        if (visited.has(child)) continue;
-        if (excludePatterns.length > 0 && matchesAnyPattern(child.name, excludePatterns)) {
-          continue;
-        }
+  if (!hasRootChildren(lockFile.root)) {
+    return lockFile.packages.filter(isIncluded);
+  }
+  const root = lockFile.root;
+  const visited = /* @__PURE__ */ new Set();
+  const queue = [root];
+  while (queue.length > 0) {
+    const current = queue.pop();
+    for (const deps of [
+      current.dependencies,
+      current.optionalDependencies,
+      current === root && !excludeDev ? root.devDependencies : void 0
+    ]) {
+      if (!deps) continue;
+      for (const child of deps) {
+        if (visited.has(child) || !isIncluded(child)) continue;
         visited.add(child);
         queue.push(child);
       }
     }
-    return result;
   }
-  for (const pkg of lockFile.packages) {
+  return [...visited];
+}
+function computeDependencyVersions(packages) {
+  const result = /* @__PURE__ */ new Map();
+  for (const pkg of packages) {
     if (!pkg.name || !pkg.version) continue;
-    if (excludePatterns.length > 0 && matchesAnyPattern(pkg.name, excludePatterns)) {
-      continue;
-    }
     addVersion(result, pkg.name, pkg.version);
   }
   return result;
@@ -24292,12 +24273,9 @@ function getTrustStatus(meta) {
 }
 function getTrustLevel(status) {
   if (status.stagedPublish) {
-    return 4;
-  }
-  if (status.trustedPublisher && status.provenance) {
     return 3;
   }
-  if (status.trustedPublisher) {
+  if (status.trustedPublisher && status.provenance) {
     return 2;
   }
   if (status.provenance) {
@@ -24309,8 +24287,7 @@ var trustLevelNames = {
   0: "none",
   1: "provenance",
   2: "trustedPublisher",
-  3: "trustedPublisherWithProvenance",
-  4: "stagedPublish"
+  3: "stagedPublish"
 };
 function getTrustLevelName(status) {
   const level = getTrustLevel(status);
@@ -24578,9 +24555,9 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
 }
 
 // node_modules/module-replacements/dist/main.js
-import nativeRaw from "./native-YITS6F5J.json" with { type: "json" };
-import microUtilsRaw from "./micro-utilities-4653YRA3.json" with { type: "json" };
-import preferredRaw from "./preferred-SDDUH75S.json" with { type: "json" };
+import nativeRaw from "./native-7HWYIGGW.json" with { type: "json" };
+import microUtilsRaw from "./micro-utilities-PCCWHRB5.json" with { type: "json" };
+import preferredRaw from "./preferred-UHEGOVP6.json" with { type: "json" };
 
 // node_modules/module-replacements/dist/util.js
 function resolveDocUrl(url) {
@@ -25226,10 +25203,11 @@ async function analyzeAndComment() {
     excludeDependencies
   };
   const currentDeps = computeDependencyVersions(
-    parsedCurrentLock,
-    filterOptions
+    filterPackages(parsedCurrentLock, filterOptions)
   );
-  const baseDeps = computeDependencyVersions(parsedBaseLock, filterOptions);
+  const baseDeps = computeDependencyVersions(
+    filterPackages(parsedBaseLock, filterOptions)
+  );
   info(`Dependency threshold set to ${dependencyThreshold}`);
   info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
   info(`Duplicate threshold set to ${duplicateThreshold}`);
