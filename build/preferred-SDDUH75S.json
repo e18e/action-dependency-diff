@@ -6,11 +6,23 @@
       "replacements": ["defu", "@fastify/deepmerge"],
       "url": {"type": "e18e", "id": "deep-merge"}
     },
+    "@better-auth/cli": {
+      "type": "module",
+      "moduleName": "@better-auth/cli",
+      "replacements": ["auth"],
+      "url": {"type": "e18e", "id": "better-auth-cli"}
+    },
     "@cypress/request": {
       "type": "module",
       "moduleName": "@cypress/request",
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
+    },
+    "@img/colour": {
+      "type": "module",
+      "moduleName": "@img/colour",
+      "replacements": ["color"],
+      "url": {"type": "e18e", "id": "img-colour"}
     },
     "@jsdevtools/ez-spawn": {
       "type": "module",
@@ -29,6 +41,12 @@
       "moduleName": "@supabase/node-fetch",
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
+    },
+    "@typescript/native-preview": {
+      "type": "module",
+      "moduleName": "@typescript/native-preview",
+      "replacements": ["typescript"],
+      "url": {"type": "e18e", "id": "typescript-native-preview"}
     },
     "@whatwg-node/fetch": {
       "type": "module",
@@ -63,6 +81,12 @@
     "bluebird": {
       "type": "module",
       "moduleName": "bluebird",
+      "replacements": ["Promise", "nativebird"],
+      "url": {"type": "e18e", "id": "bluebird-q"}
+    },
+    "bluebird-lst": {
+      "type": "module",
+      "moduleName": "bluebird-lst",
       "replacements": ["Promise", "nativebird"],
       "url": {"type": "e18e", "id": "bluebird-q"}
     },
@@ -138,11 +162,23 @@
       "replacements": ["tinyclip", "ClipboardAPI"],
       "url": {"type": "e18e", "id": "clipboardy"}
     },
+    "coa": {
+      "type": "module",
+      "moduleName": "coa",
+      "replacements": ["sade", "cleye", "cac"],
+      "url": {"type": "e18e", "id": "cli-builders"}
+    },
     "colors": {
       "type": "module",
       "moduleName": "colors",
       "replacements": ["util.styleText", "picocolors", "ansis"],
       "url": {"type": "e18e", "id": "chalk"}
+    },
+    "copy-paste": {
+      "type": "module",
+      "moduleName": "copy-paste",
+      "replacements": ["tinyclip", "ClipboardAPI"],
+      "url": {"type": "e18e", "id": "clipboardy"}
     },
     "copy-text-to-clipboard": {
       "type": "module",
@@ -190,11 +226,23 @@
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
     },
+    "cross-spawn": {
+      "type": "module",
+      "moduleName": "cross-spawn",
+      "replacements": ["tinyexec"],
+      "url": {"type": "e18e", "id": "cross-spawn"}
+    },
     "crypto-js": {
       "type": "module",
       "moduleName": "crypto-js",
       "replacements": ["node:crypto", "crypto", "Bun.CryptoHasher"],
       "url": {"type": "e18e", "id": "crypto-js"}
+    },
+    "css-loader": {
+      "type": "module",
+      "moduleName": "css-loader",
+      "replacements": ["webpack.experiments.css"],
+      "url": {"type": "e18e", "id": "css-loader"}
     },
     "cwd": {
       "type": "module",
@@ -220,6 +268,18 @@
       "replacements": ["dequal", "util.isDeepStrictEqual", "Bun.deepEquals"],
       "url": {"type": "e18e", "id": "deep-equal"}
     },
+    "deep-extend": {
+      "type": "module",
+      "moduleName": "deep-extend",
+      "replacements": ["defu", "@fastify/deepmerge"],
+      "url": {"type": "e18e", "id": "deep-merge"}
+    },
+    "deepmerge": {
+      "type": "module",
+      "moduleName": "deepmerge",
+      "replacements": ["defu", "@fastify/deepmerge"],
+      "url": {"type": "e18e", "id": "deep-merge"}
+    },
     "depcheck": {
       "type": "module",
       "moduleName": "depcheck",
@@ -231,6 +291,12 @@
       "moduleName": "detect-package-manager",
       "replacements": ["package-manager-detector"],
       "url": {"type": "e18e", "id": "detect-package-manager"}
+    },
+    "dev-null": {
+      "type": "module",
+      "moduleName": "dev-null",
+      "replacements": ["node:stream"],
+      "url": {"type": "e18e", "id": "dev-null"}
     },
     "dot-prop": {
       "type": "module",
@@ -250,35 +316,17 @@
       "replacements": ["dlv", "dset"],
       "url": {"type": "e18e", "id": "dot-prop"}
     },
-    "duplexer": {
-      "type": "module",
-      "moduleName": "duplexer",
-      "replacements": ["stream.Duplex"],
-      "url": {"type": "e18e", "id": "duplexer"}
-    },
-    "duplexer2": {
-      "type": "module",
-      "moduleName": "duplexer2",
-      "replacements": ["stream.Duplex"],
-      "url": {"type": "e18e", "id": "duplexer"}
-    },
-    "duplexer3": {
-      "type": "module",
-      "moduleName": "duplexer3",
-      "replacements": ["stream.Duplex"],
-      "url": {"type": "e18e", "id": "duplexer"}
-    },
-    "duplexify": {
-      "type": "module",
-      "moduleName": "duplexify",
-      "replacements": ["stream.Duplex"],
-      "url": {"type": "e18e", "id": "duplexer"}
-    },
     "emoji-regex": {
       "type": "module",
       "moduleName": "emoji-regex",
       "replacements": ["emoji-regex-xs", "unicodeClassEscape"],
       "url": {"type": "e18e", "id": "emoji-regex"}
+    },
+    "error-stack-parser": {
+      "type": "module",
+      "moduleName": "error-stack-parser",
+      "replacements": ["error-stack-parser-es"],
+      "url": {"type": "e18e", "id": "error-stack-parser"}
     },
     "eslint-config-airbnb": {
       "type": "module",
@@ -303,12 +351,6 @@
       "moduleName": "eslint-plugin-import",
       "replacements": ["eslint-plugin-import-x", "oxlint"],
       "url": {"type": "e18e", "id": "eslint-plugin-import"}
-    },
-    "eslint-plugin-jest-dom": {
-      "type": "module",
-      "moduleName": "eslint-plugin-jest-dom",
-      "replacements": ["eslint-plugin-jest-dom-ya"],
-      "url": {"type": "e18e", "id": "eslint-plugin-jest-dom"}
     },
     "eslint-plugin-node": {
       "type": "module",
@@ -405,6 +447,12 @@
       "moduleName": "find-pkg",
       "replacements": ["empathic"],
       "url": {"type": "e18e", "id": "find-pkg"}
+    },
+    "find-process": {
+      "type": "module",
+      "moduleName": "find-process",
+      "replacements": ["find-proc"],
+      "url": {"type": "e18e", "id": "find-process"}
     },
     "find-up": {
       "type": "module",
@@ -506,6 +554,12 @@
       "replacements": ["zlib.gzipSync"],
       "url": {"type": "e18e", "id": "gzip-size"}
     },
+    "has-yarn": {
+      "type": "module",
+      "moduleName": "has-yarn",
+      "replacements": ["empathic"],
+      "url": {"type": "e18e", "id": "has-yarn"}
+    },
     "html-minifier": {
       "type": "module",
       "moduleName": "html-minifier",
@@ -517,12 +571,6 @@
       "moduleName": "http-proxy",
       "replacements": ["httpxy", "http-proxy-3"],
       "url": {"type": "e18e", "id": "http-proxy"}
-    },
-    "inherits": {
-      "type": "module",
-      "moduleName": "inherits",
-      "replacements": ["extends", "util.inherits"],
-      "url": {"type": "e18e", "id": "inherits"}
     },
     "invariant": {
       "type": "module",
@@ -547,6 +595,18 @@
       "moduleName": "isomorphic-fetch",
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
+    },
+    "istanbul-lib-coverage": {
+      "type": "module",
+      "moduleName": "istanbul-lib-coverage",
+      "replacements": ["@vitest/istanbul-lib-coverage"],
+      "url": {"type": "e18e", "id": "istanbul-lib-coverage"}
+    },
+    "istanbul-lib-instrument": {
+      "type": "module",
+      "moduleName": "istanbul-lib-instrument",
+      "replacements": ["@vitest/istanbul-lib-instrument"],
+      "url": {"type": "e18e", "id": "istanbul-lib-instrument"}
     },
     "jquery": {
       "type": "module",
@@ -1088,12 +1148,6 @@
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
-    "lodash.groupby": {
-      "type": "module",
-      "moduleName": "lodash.groupby",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
     "lodash.gt": {
       "type": "module",
       "moduleName": "lodash.gt",
@@ -1208,12 +1262,6 @@
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
-    "lodash.isarraybuffer": {
-      "type": "module",
-      "moduleName": "lodash.isarraybuffer",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
     "lodash.isarraylike": {
       "type": "module",
       "moduleName": "lodash.isarraylike",
@@ -1223,12 +1271,6 @@
     "lodash.isarraylikeobject": {
       "type": "module",
       "moduleName": "lodash.isarraylikeobject",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.isdate": {
-      "type": "module",
-      "moduleName": "lodash.isdate",
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
@@ -1262,12 +1304,6 @@
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
-    "lodash.ismap": {
-      "type": "module",
-      "moduleName": "lodash.ismap",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
     "lodash.ismatch": {
       "type": "module",
       "moduleName": "lodash.ismatch",
@@ -1286,45 +1322,9 @@
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
-    "lodash.isnil": {
-      "type": "module",
-      "moduleName": "lodash.isnil",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
     "lodash.isobjectlike": {
       "type": "module",
       "moduleName": "lodash.isobjectlike",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.issafeinteger": {
-      "type": "module",
-      "moduleName": "lodash.issafeinteger",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.isset": {
-      "type": "module",
-      "moduleName": "lodash.isset",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.istypedarray": {
-      "type": "module",
-      "moduleName": "lodash.istypedarray",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.isweakmap": {
-      "type": "module",
-      "moduleName": "lodash.isweakmap",
-      "replacements": ["lodash-underscore", "es-toolkit"],
-      "url": {"type": "e18e", "id": "lodash-underscore"}
-    },
-    "lodash.isweakset": {
-      "type": "module",
-      "moduleName": "lodash.isweakset",
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
@@ -2288,12 +2288,6 @@
       "replacements": ["lodash-underscore", "es-toolkit"],
       "url": {"type": "e18e", "id": "lodash-underscore"}
     },
-    "make-dir": {
-      "type": "module",
-      "moduleName": "make-dir",
-      "replacements": ["fs.promises.mkdir"],
-      "url": {"type": "e18e", "id": "mkdirp"}
-    },
     "materialize-css": {
       "type": "module",
       "moduleName": "materialize-css",
@@ -2330,11 +2324,15 @@
       "replacements": ["node:stream"],
       "url": {"type": "e18e", "id": "mississippi"}
     },
-    "mkdirp": {
+    "mktemp": {
       "type": "module",
-      "moduleName": "mkdirp",
-      "replacements": ["fs.promises.mkdir"],
-      "url": {"type": "e18e", "id": "mkdirp"}
+      "moduleName": "mktemp",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
     },
     "mockdate": {
       "type": "module",
@@ -2345,7 +2343,7 @@
     "moment": {
       "type": "module",
       "moduleName": "moment",
-      "replacements": ["day.js", "date-fns", "luxon", "Date"],
+      "replacements": ["day.js", "date-fns", "luxon", "Date", "Temporal"],
       "url": {"type": "e18e", "id": "moment"}
     },
     "node-fetch": {
@@ -2366,6 +2364,12 @@
       "replacements": ["crypto.randomUUID"],
       "url": {"type": "e18e", "id": "uuidv4"}
     },
+    "npm-check": {
+      "type": "module",
+      "moduleName": "npm-check",
+      "replacements": ["npm-check", "taze"],
+      "url": {"type": "e18e", "id": "npm-check"}
+    },
     "npm-run-all": {
       "type": "module",
       "moduleName": "npm-run-all",
@@ -2383,6 +2387,12 @@
       "moduleName": "object-path",
       "replacements": ["dlv", "dset"],
       "url": {"type": "e18e", "id": "dot-prop"}
+    },
+    "open": {
+      "type": "module",
+      "moduleName": "open",
+      "replacements": ["tiny-open"],
+      "url": {"type": "e18e", "id": "open"}
     },
     "ora": {
       "type": "module",
@@ -2466,6 +2476,16 @@
       ],
       "url": {"type": "e18e", "id": "qs"}
     },
+    "quick-temp": {
+      "type": "module",
+      "moduleName": "quick-temp",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
     "randomatic": {
       "type": "module",
       "moduleName": "randomatic",
@@ -2532,6 +2552,12 @@
       "replacements": ["fs.promises.rm", "fs.promises.rmdir", "premove"],
       "url": {"type": "e18e", "id": "rimraf"}
     },
+    "rollup-plugin-terser": {
+      "type": "module",
+      "moduleName": "rollup-plugin-terser",
+      "replacements": ["@rollup/plugin-terser"],
+      "url": {"type": "e18e", "id": "rollup-plugin-terser"}
+    },
     "safe-compare": {
       "type": "module",
       "moduleName": "safe-compare",
@@ -2549,6 +2575,18 @@
       "moduleName": "secure-compare",
       "replacements": ["crypto.timingSafeEqual"],
       "url": {"type": "e18e", "id": "buffer-equal-constant-time"}
+    },
+    "semver": {
+      "type": "module",
+      "moduleName": "semver",
+      "replacements": ["verkit"],
+      "url": {"type": "e18e", "id": "semver"}
+    },
+    "semver-diff": {
+      "type": "module",
+      "moduleName": "semver-diff",
+      "replacements": ["verkit"],
+      "url": {"type": "e18e", "id": "semver"}
     },
     "set-value": {
       "type": "module",
@@ -2593,7 +2631,7 @@
     "sqlite3": {
       "type": "module",
       "moduleName": "sqlite3",
-      "replacements": ["node:sqlite", "better-sqlite3"],
+      "replacements": ["node:sqlite", "better-sqlite3", "@libsql/client"],
       "url": {"type": "e18e", "id": "sqlite3"}
     },
     "stream-buffers": {
@@ -2614,9 +2652,21 @@
       "replacements": ["util.stripVTControlCharacters", "Bun.stripANSI"],
       "url": {"type": "e18e", "id": "strip-ansi"}
     },
+    "tar": {
+      "type": "module",
+      "moduleName": "tar",
+      "replacements": ["modern-tar"],
+      "url": {"type": "e18e", "id": "tar-fs"}
+    },
     "tar-fs": {
       "type": "module",
       "moduleName": "tar-fs",
+      "replacements": ["modern-tar"],
+      "url": {"type": "e18e", "id": "tar-fs"}
+    },
+    "tar-stream": {
+      "type": "module",
+      "moduleName": "tar-stream",
       "replacements": ["modern-tar"],
       "url": {"type": "e18e", "id": "tar-fs"}
     },
@@ -2629,6 +2679,26 @@
     "temp": {
       "type": "module",
       "moduleName": "temp",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
+    "temp-dir": {
+      "type": "module",
+      "moduleName": "temp-dir",
+      "replacements": [
+        "fs.promises.mkdtempDisposable",
+        "fs.promises.mkdtemp",
+        "Deno.makeTempDir"
+      ],
+      "url": {"type": "e18e", "id": "tempy"}
+    },
+    "tempfile": {
+      "type": "module",
+      "moduleName": "tempfile",
       "replacements": [
         "fs.promises.mkdtempDisposable",
         "fs.promises.mkdtemp",
@@ -2750,6 +2820,18 @@
       "replacements": ["crypto.randomUUID"],
       "url": {"type": "e18e", "id": "uuidv4"}
     },
+    "vue3-markdown-it": {
+      "type": "module",
+      "moduleName": "vue3-markdown-it",
+      "replacements": ["vue-markdown-render"],
+      "url": {"type": "e18e", "id": "vue3-markdown-it"}
+    },
+    "wait-for-expect": {
+      "type": "module",
+      "moduleName": "wait-for-expect",
+      "replacements": ["node:test", "vitest"],
+      "url": {"type": "e18e", "id": "wait-for-expect"}
+    },
     "wellknown": {
       "type": "module",
       "moduleName": "wellknown",
@@ -2762,6 +2844,12 @@
       "replacements": ["fetch", "ofetch", "ky"],
       "url": {"type": "e18e", "id": "fetch"}
     },
+    "which-pm": {
+      "type": "module",
+      "moduleName": "which-pm",
+      "replacements": ["package-manager-detector"],
+      "url": {"type": "e18e", "id": "detect-package-manager"}
+    },
     "wrap-ansi": {
       "type": "module",
       "moduleName": "wrap-ansi",
@@ -2773,6 +2861,12 @@
       "moduleName": "xmldom",
       "replacements": ["@xmldom/xmldom"],
       "url": {"type": "e18e", "id": "xmldom"}
+    },
+    "yaml-ast-parser": {
+      "type": "module",
+      "moduleName": "yaml-ast-parser",
+      "replacements": ["yaml"],
+      "url": {"type": "e18e", "id": "yaml-ast-parser"}
     },
     "yamljs": {
       "type": "module",
@@ -2791,6 +2885,12 @@
       "moduleName": "yargs-parser",
       "replacements": ["util.parseArgs", "mri"],
       "url": {"type": "e18e", "id": "parseargs"}
+    },
+    "yup": {
+      "type": "module",
+      "moduleName": "yup",
+      "replacements": ["valibot", "zod/mini"],
+      "url": {"type": "e18e", "id": "schema-validation"}
     }
   },
   "replacements": {
@@ -2824,6 +2924,11 @@
       "type": "documented",
       "replacementModule": "@fastify/deepmerge"
     },
+    "@libsql/client": {
+      "id": "@libsql/client",
+      "type": "documented",
+      "replacementModule": "@libsql/client"
+    },
     "@material/web": {
       "id": "@material/web",
       "type": "documented",
@@ -2844,10 +2949,25 @@
       "type": "documented",
       "replacementModule": "@placemarkio/tokml"
     },
+    "@rollup/plugin-terser": {
+      "id": "@rollup/plugin-terser",
+      "type": "documented",
+      "replacementModule": "@rollup/plugin-terser"
+    },
     "@vitest/eslint-plugin": {
       "id": "@vitest/eslint-plugin",
       "type": "documented",
       "replacementModule": "@vitest/eslint-plugin"
+    },
+    "@vitest/istanbul-lib-coverage": {
+      "id": "@vitest/istanbul-lib-coverage",
+      "type": "documented",
+      "replacementModule": "@vitest/istanbul-lib-coverage"
+    },
+    "@vitest/istanbul-lib-instrument": {
+      "id": "@vitest/istanbul-lib-instrument",
+      "type": "documented",
+      "replacementModule": "@vitest/istanbul-lib-instrument"
     },
     "@xmldom/xmldom": {
       "id": "@xmldom/xmldom",
@@ -2861,7 +2981,6 @@
       "url": {"type": "node", "id": "api/buffer.html"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.90"}
@@ -2877,7 +2996,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.90"}
@@ -2890,7 +3008,6 @@
       "url": {"type": "node", "id": "api/buffer.html#bufequalsotherbuffer"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.90"}
@@ -2906,7 +3023,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.90"}
@@ -3079,6 +3195,30 @@
       "type": "documented",
       "replacementModule": "Teleport"
     },
+    "Temporal": {
+      "id": "Temporal",
+      "type": "native",
+      "webFeatureId": {
+        "featureId": "temporal",
+        "compatKey": "javascript.builtins.Temporal"
+      },
+      "url": {
+        "type": "mdn",
+        "id": "Web/JavaScript/Reference/Global_Objects/Temporal"
+      },
+      "engines": [
+        {"engine": "chrome", "minVersion": "144"},
+        {"engine": "chrome_android", "minVersion": "144"},
+        {"engine": "edge", "minVersion": "144"},
+        {"engine": "firefox", "minVersion": "139"},
+        {"engine": "firefox_android", "minVersion": "139"},
+        {"engine": "deno", "minVersion": "2.7"},
+        {"engine": "opera", "minVersion": "128"},
+        {"engine": "opera_android", "minVersion": "95"},
+        {"engine": "safari", "minVersion": "preview"},
+        {"engine": "webview_android", "minVersion": "144"}
+      ]
+    },
     "TextEncoder": {
       "id": "TextEncoder",
       "type": "native",
@@ -3160,6 +3300,7 @@
       "type": "documented",
       "replacementModule": "ansis"
     },
+    "auth": {"id": "auth", "type": "documented", "replacementModule": "auth"},
     "bcryptjs": {
       "id": "bcryptjs",
       "type": "documented",
@@ -3185,9 +3326,7 @@
       "url": {"type": "node", "id": "api/module.html#modulebuiltinmodules"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"},
-        {"engine": "nodejs", "minVersion": "6.13.0"}
+        {"engine": "netlify", "minVersion": "0.0.1"}
       ]
     },
     "bun:test": {
@@ -3195,10 +3334,16 @@
       "type": "native",
       "url": "https://bun.com/docs/test"
     },
+    "cac": {"id": "cac", "type": "documented", "replacementModule": "cac"},
     "cleye": {
       "id": "cleye",
       "type": "documented",
       "replacementModule": "cleye"
+    },
+    "color": {
+      "id": "color",
+      "type": "documented",
+      "replacementModule": "color"
     },
     "concurrently": {
       "id": "concurrently",
@@ -3244,7 +3389,6 @@
       "nodeFeatureId": {"moduleName": "crypto", "exportName": "createHmac"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.94"}
       ]
@@ -3314,7 +3458,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "6.6.0"}
       ]
@@ -3352,6 +3495,11 @@
       "type": "documented",
       "replacementModule": "empathic"
     },
+    "error-stack-parser-es": {
+      "id": "error-stack-parser-es",
+      "type": "documented",
+      "replacementModule": "error-stack-parser-es"
+    },
     "es-toolkit": {
       "id": "es-toolkit",
       "type": "documented",
@@ -3372,11 +3520,6 @@
       "type": "documented",
       "replacementModule": "eslint-plugin-import-x"
     },
-    "eslint-plugin-jest-dom-ya": {
-      "id": "eslint-plugin-jest-dom-ya",
-      "type": "documented",
-      "replacementModule": "eslint-plugin-jest-dom-ya"
-    },
     "eslint-plugin-n": {
       "id": "eslint-plugin-n",
       "type": "documented",
@@ -3386,12 +3529,6 @@
       "id": "exsolve",
       "type": "documented",
       "replacementModule": "exsolve"
-    },
-    "extends": {
-      "id": "extends",
-      "type": "native",
-      "description": "You can use ES6 classes `extends` syntax for prototype inheritance.",
-      "url": {"type": "mdn", "id": "Web/JavaScript/Reference/Classes/extends"}
     },
     "fast-querystring": {
       "id": "fast-querystring",
@@ -3443,6 +3580,11 @@
         {"engine": "webview_ios", "minVersion": "10.3"}
       ]
     },
+    "find-proc": {
+      "id": "find-proc",
+      "type": "documented",
+      "replacementModule": "find-proc"
+    },
     "fs": {
       "id": "fs",
       "type": "native",
@@ -3450,7 +3592,6 @@
       "url": {"type": "node", "id": "api/fs.html"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.10.0"}
       ]
@@ -3462,7 +3603,6 @@
       "url": {"type": "node", "id": "api/fs.html#fsexistssyncpath"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.1.21"}
       ]
@@ -3477,7 +3617,6 @@
       "url": {"type": "node", "id": "api/fs.html#fspromisesaccesspath-mode"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "10.0.0"}
       ]
@@ -3495,18 +3634,6 @@
         {"engine": "nodejs", "minVersion": "22.0.0"}
       ]
     },
-    "fs.promises.mkdir": {
-      "id": "fs.promises.mkdir",
-      "type": "native",
-      "nodeFeatureId": {"moduleName": "node:fs", "exportName": "mkdir"},
-      "url": {"type": "node", "id": "api/fs.html#fspromisesmkdirpath-options"},
-      "engines": [
-        {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"},
-        {"engine": "nodejs", "minVersion": "10.0.0"}
-      ]
-    },
     "fs.promises.mkdtemp": {
       "id": "fs.promises.mkdtemp",
       "type": "native",
@@ -3520,7 +3647,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "10.0.0"}
       ]
@@ -3545,7 +3671,6 @@
       "url": {"type": "node", "id": "api/fs.html#fspromisesrmpath-options"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "14.14.0"}
       ]
@@ -3560,7 +3685,6 @@
       "url": {"type": "node", "id": "api/fs.html#fspromisesrmdirpath-options"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "10.0.0"}
       ]
@@ -3632,9 +3756,7 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"},
-        {"engine": "nodejs", "minVersion": "16.17.0"}
+        {"engine": "netlify", "minVersion": "0.0.1"}
       ]
     },
     "jose": {"id": "jose", "type": "documented", "replacementModule": "jose"},
@@ -3730,7 +3852,6 @@
       "url": {"type": "node", "id": "api/crypto.html"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.3.6"}
       ]
@@ -3747,7 +3868,6 @@
       "nodeFeatureId": {"moduleName": "node:sqlite"},
       "url": {"type": "node", "id": "api/sqlite.html"},
       "engines": [
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "22.5.0"}
       ]
@@ -3759,7 +3879,6 @@
       "url": {"type": "node", "id": "api/stream.html"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.10.0"}
       ]
@@ -3771,10 +3890,15 @@
       "url": {"type": "node", "id": "api/test.html"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "18.0.0"}
       ]
+    },
+    "npm-check": {
+      "id": "npm-check",
+      "type": "removal",
+      "url": {"type": "e18e", "id": "npm-check"},
+      "description": "npm-check can be replaced with your package manager's built-in commands, such as `npm outdated` and `npm update`."
     },
     "npm-run-all2": {
       "id": "npm-run-all2",
@@ -3859,7 +3983,6 @@
         "id": "api/readline.html#readlinecreateinterfaceoptions"
       },
       "engines": [
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "17.0.0"}
       ]
@@ -3890,18 +4013,6 @@
       "id": "sortobject",
       "type": "documented",
       "replacementModule": "sortobject"
-    },
-    "stream.Duplex": {
-      "id": "stream.Duplex",
-      "type": "native",
-      "url": {"type": "node", "id": "api/stream.html#class-streamduplex"},
-      "nodeFeatureId": {"moduleName": "node:stream", "exportName": "Duplex"},
-      "engines": [
-        {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"},
-        {"engine": "nodejs", "minVersion": "0.9.4"}
-      ]
     },
     "streams": {
       "id": "streams",
@@ -3957,10 +4068,16 @@
         {"engine": "webview_ios", "minVersion": "15.4"}
       ]
     },
+    "taze": {"id": "taze", "type": "documented", "replacementModule": "taze"},
     "tiny-invariant": {
       "id": "tiny-invariant",
       "type": "documented",
       "replacementModule": "tiny-invariant"
+    },
+    "tiny-open": {
+      "id": "tiny-open",
+      "type": "documented",
+      "replacementModule": "tiny-open"
     },
     "tinyclip": {
       "id": "tinyclip",
@@ -3998,6 +4115,11 @@
       "type": "documented",
       "replacementModule": "tsdown"
     },
+    "typescript": {
+      "id": "typescript",
+      "type": "documented",
+      "replacementModule": "typescript"
+    },
     "unicode-segmenter": {
       "id": "unicode-segmenter",
       "type": "documented",
@@ -4016,22 +4138,6 @@
       "type": "documented",
       "replacementModule": "uri-js-replace"
     },
-    "util.inherits": {
-      "id": "util.inherits",
-      "type": "native",
-      "nodeFeatureId": {"moduleName": "node:util", "exportName": "inherits"},
-      "url": {
-        "type": "node",
-        "id": "api/util.html#utilinheritsconstructor-superconstructor"
-      },
-      "engines": [
-        {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
-        {"engine": "vercel", "minVersion": "0.0.1"},
-        {"engine": "netlify", "minVersion": "0.0.1"},
-        {"engine": "nodejs", "minVersion": "0.3.0"}
-      ]
-    },
     "util.isDeepStrictEqual": {
       "id": "util.isDeepStrictEqual",
       "type": "native",
@@ -4045,7 +4151,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "9.0.0"}
@@ -4058,7 +4163,6 @@
       "url": {"type": "node", "id": "api/util.html#utilparseargsconfig"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "16.17.0"}
@@ -4077,7 +4181,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "16.11.0"}
@@ -4093,7 +4196,6 @@
       },
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "20.12.0"}
       ]
@@ -4105,21 +4207,40 @@
       "url": {"type": "node", "id": "api/util.html#utiltypes"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "vercel", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "10.0.0"}
       ]
+    },
+    "valibot": {
+      "id": "valibot",
+      "type": "documented",
+      "replacementModule": "valibot"
+    },
+    "verkit": {
+      "id": "verkit",
+      "type": "documented",
+      "replacementModule": "verkit"
     },
     "vitest": {
       "id": "vitest",
       "type": "documented",
       "replacementModule": "vitest"
     },
+    "vue-markdown-render": {
+      "id": "vue-markdown-render",
+      "type": "documented",
+      "replacementModule": "vue-markdown-render"
+    },
     "webpack-bundle-analyzer": {
       "id": "webpack-bundle-analyzer",
       "type": "documented",
       "replacementModule": "webpack-bundle-analyzer"
+    },
+    "webpack.experiments.css": {
+      "id": "webpack.experiments.css",
+      "type": "documented",
+      "replacementModule": "webpack"
     },
     "webpack.output.clean": {
       "id": "webpack.output.clean",
@@ -4139,10 +4260,14 @@
       "url": {"type": "node", "id": "api/zlib.html#zlibgzipsyncbuffer-options"},
       "engines": [
         {"engine": "cloudflare", "minVersion": "0.0.1"},
-        {"engine": "deno", "minVersion": "0.0.1"},
         {"engine": "netlify", "minVersion": "0.0.1"},
         {"engine": "nodejs", "minVersion": "0.11.12"}
       ]
+    },
+    "zod/mini": {
+      "id": "zod/mini",
+      "type": "documented",
+      "replacementModule": "zod"
     }
   }
 }

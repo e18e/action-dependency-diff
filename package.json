@@ -29,7 +29,8 @@
     "test": "test"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "clean": "rm -rf build",
+    "build": "npm run clean && node scripts/build.mjs",
     "format": "prettier --write src test",
     "lint": "node --run lint:format && node --run lint:js && node --run lint:types",
     "lint:format": "prettier --check src test",
