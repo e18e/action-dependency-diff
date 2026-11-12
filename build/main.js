@@ -24440,6 +24440,16 @@ function isSupportedArchitecture(pkg, os5, cpu, libc) {
   const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }
+async function getLicensesForPackageVersions(packageName, versions) {
+  const result = /* @__PURE__ */ new Map();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, metadata.license?.trim() || null);
+    }
+  }
+  return result;
+}
 
 // src/packs.ts
 import * as fs3 from "node:fs/promises";
@@ -24992,6 +25002,67 @@ ${provenanceRows.join("\n")}`
   }
 }
 
+// src/checks/license.ts
+async function scanForLicenses(messages, currentDeps, baseDeps) {
+  const licenseRows = [];
+  for (const [packageName, currentVersionSet] of currentDeps) {
+    const baseVersionSet = baseDeps.get(packageName);
+    if (!baseVersionSet || baseVersionSet.size === 0) {
+      continue;
+    }
+    if (currentVersionSet.isSubsetOf(baseVersionSet)) {
+      continue;
+    }
+    try {
+      const baseLicensesMap = await getLicensesForPackageVersions(
+        packageName,
+        baseVersionSet
+      );
+      const currentLicensesMap = await getLicensesForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+      if (baseLicensesMap.size === 0 || currentLicensesMap.size === 0) {
+        continue;
+      }
+      const baseLicenses = /* @__PURE__ */ new Set();
+      const baseLicensesLower = /* @__PURE__ */ new Set();
+      for (const license of baseLicensesMap.values()) {
+        if (license) {
+          baseLicenses.add(license);
+          baseLicensesLower.add(license.toLowerCase());
+        }
+      }
+      if (baseLicenses.size === 0) {
+        continue;
+      }
+      const previousLicenseText = Array.from(baseLicenses).join(", ");
+      for (const [version, license] of currentLicensesMap) {
+        if (baseVersionSet.has(version)) {
+          continue;
+        }
+        const currentLicense = license ?? "Unknown";
+        if (!baseLicensesLower.has(currentLicense.toLowerCase())) {
+          licenseRows.push(
+            `| ${packageName}@${version} | ${previousLicenseText} | ${currentLicense} |`
+          );
+        }
+      }
+    } catch (err) {
+      info(`Failed to check license for ${packageName}: ${err}`);
+    }
+  }
+  if (licenseRows.length > 0) {
+    messages.push(
+      `## \u26A0\uFE0F License Changes
+
+| \u{1F4E6} Package | \u{1F4DC} Previous License | \u{1F4DC} New License |
+| --- | --- | --- |
+${licenseRows.join("\n")}`
+    );
+  }
+}
+
 // src/checks/bundle-size.ts
 function formatBytesSigned(bytes) {
   return `${bytes > 0 ? "+" : ""}${formatBytes(bytes)}`;
@@ -25111,6 +25182,7 @@ async function analyzeAndComment() {
   const token = getInput("github-token", { required: true });
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
   const detectReplacements = getBooleanInput("detect-replacements");
+  const detectLicenseChanges = getBooleanInput("detect-license-changes");
   const excludeDevDependencies = getBooleanInput(
     "exclude-dev-dependencies"
   );
@@ -25232,6 +25304,9 @@ async function analyzeAndComment() {
     parsedBaseLock
   );
   await scanForProvenance(messages, currentDeps, baseDeps);
+  if (detectLicenseChanges) {
+    await scanForLicenses(messages, currentDeps, baseDeps);
+  }
   const basePackagesPattern = getInput("base-packages");
   const sourcePackagesPattern = getInput("source-packages");
   if (basePackagesPattern && sourcePackagesPattern) {

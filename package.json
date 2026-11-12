@@ -31,9 +31,9 @@
   "scripts": {
     "clean": "rm -rf build",
     "build": "npm run clean && node scripts/build.mjs",
-    "format": "prettier --write src test",
+    "format": "prettier --write src test README.md",
     "lint": "node --run lint:format && node --run lint:js && node --run lint:types",
-    "lint:format": "prettier --check src test",
+    "lint:format": "prettier --check src test README.md",
     "lint:js": "eslint src test",
     "lint:types": "tsc --noEmit",
     "test": "vitest run"

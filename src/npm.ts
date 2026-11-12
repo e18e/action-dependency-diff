@@ -12,6 +12,7 @@ import {matchesAnyPattern} from './common.js';
 export interface PackageMetadata {
   name: string;
   version: string;
+  license?: string;
   os?: string[];
   cpu?: string[];
   libc?: string[];
@@ -233,4 +234,18 @@ export function isSupportedArchitecture(
   const libcMatches =
     pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
+}
+
+export async function getLicensesForPackageVersions(
+  packageName: string,
+  versions: Set<string>
+): Promise<Map<string, string | null>> {
+  const result = new Map<string, string | null>();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, metadata.license?.trim() || null);
+    }
+  }
+  return result;
 }
