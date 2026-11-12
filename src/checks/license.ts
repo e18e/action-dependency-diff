@@ -35,10 +35,10 @@ export async function scanForLicenses(
 
       const baseLicenses = new Set<string>();
       const baseLicensesLower = new Set<string>();
-      for (const lic of baseLicensesMap.values()) {
-        if (lic) {
-          baseLicenses.add(lic);
-          baseLicensesLower.add(lic.toLowerCase());
+      for (const license of baseLicensesMap.values()) {
+        if (license) {
+          baseLicenses.add(license);
+          baseLicensesLower.add(license.toLowerCase());
         }
       }
 
@@ -48,11 +48,11 @@ export async function scanForLicenses(
 
       const previousLicenseText = Array.from(baseLicenses).join(', ');
 
-      for (const [version, lic] of currentLicensesMap) {
+      for (const [version, license] of currentLicensesMap) {
         if (baseVersionSet.has(version)) {
           continue;
         }
-        const currentLicense = lic ?? 'Unknown';
+        const currentLicense = license ?? 'Unknown';
         if (!baseLicensesLower.has(currentLicense.toLowerCase())) {
           licenseRows.push(
             `| ${packageName}@${version} | ${previousLicenseText} | ${currentLicense} |`
