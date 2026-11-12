@@ -24277,9 +24277,12 @@ function getTrustStatus(meta) {
 }
 function getTrustLevel(status) {
   if (status.stagedPublish) {
-    return 3;
+    return 4;
   }
   if (status.trustedPublisher && status.provenance) {
+    return 3;
+  }
+  if (status.trustedPublisher) {
     return 2;
   }
   if (status.provenance) {
@@ -24291,7 +24294,8 @@ var trustLevelNames = {
   0: "none",
   1: "provenance",
   2: "trustedPublisher",
-  3: "stagedPublish"
+  3: "trustedPublisherWithProvenance",
+  4: "stagedPublish"
 };
 function getTrustLevelName(status) {
   const level = getTrustLevel(status);
@@ -24559,9 +24563,9 @@ function comparePackSizes(basePacks, sourcePacks, threshold) {
 }
 
 // node_modules/module-replacements/dist/main.js
-import nativeRaw from "./native-7HWYIGGW.json" with { type: "json" };
-import microUtilsRaw from "./micro-utilities-PCCWHRB5.json" with { type: "json" };
-import preferredRaw from "./preferred-UHEGOVP6.json" with { type: "json" };
+import nativeRaw from "./native-YITS6F5J.json" with { type: "json" };
+import microUtilsRaw from "./micro-utilities-4653YRA3.json" with { type: "json" };
+import preferredRaw from "./preferred-SDDUH75S.json" with { type: "json" };
 
 // node_modules/module-replacements/dist/util.js
 function resolveDocUrl(url) {
