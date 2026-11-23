@@ -13,6 +13,7 @@ export interface PackageMetadata {
   name: string;
   version: string;
   license?: string;
+  scripts?: Record<string, string>;
   os?: string[];
   cpu?: string[];
   libc?: string[];
@@ -33,6 +34,20 @@ export interface PackageMetadata {
 
 export interface PackageIndex {
   versions: Record<string, PackageMetadata>;
+}
+
+const installScriptNames = ['preinstall', 'install', 'postinstall'] as const;
+
+export function getInstallScriptNames(
+  metadata: PackageMetadata | null
+): string[] {
+  if (!metadata?.scripts) {
+    return [];
+  }
+  return installScriptNames.filter((name) => {
+    const script = metadata.scripts?.[name];
+    return typeof script === 'string' && script.trim() !== '';
+  });
 }
 
 export async function getProvenanceForPackageVersions(
