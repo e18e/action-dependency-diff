@@ -28,7 +28,7 @@ import {scanForLicenses} from './checks/license.js';
 import {scanForBundleSize} from './checks/bundle-size.js';
 import {formatBytes, parseCommaList} from './common.js';
 import {ARTIFACT_FILENAME, COMMENT_TAG} from './constants.js';
-import {findExistingComment, upsertComment} from './github.js';
+import {findExistingComment, upsertComment, writeJobSummary} from './github.js';
 
 interface ArtifactResult {
   pr_number: number;
@@ -266,10 +266,13 @@ async function analyzeAndComment(): Promise<void> {
     scanForReplacements(messages, baseDependencies, currentDependencies);
   }
 
-  const commentBody =
+  const report =
     messages.length === 0
-      ? `${COMMENT_TAG}\n## e18e dependency analysis\n\nNo dependency warnings found.\n`
-      : `${COMMENT_TAG}\n${messages.join('\n\n')}`;
+      ? '## e18e dependency analysis\n\nNo dependency warnings found.\n'
+      : messages.join('\n\n');
+  const commentBody = `${COMMENT_TAG}\n${report}`;
+
+  await writeJobSummary(report);
 
   if (mode === 'artifact') {
     const tmpDir = join(baseWorkspace, '.e18e-tmp');

@@ -19836,6 +19836,7 @@ var Summary = class {
   }
 };
 var _summary = new Summary();
+var summary = _summary;
 
 // node_modules/@actions/core/lib/platform.js
 import os3 from "os";
@@ -25130,6 +25131,13 @@ async function findExistingComment(octokit, prNumber) {
   }
   return void 0;
 }
+async function writeJobSummary(report) {
+  try {
+    await summary.addRaw(report).write();
+  } catch (err) {
+    info(`Failed to write job summary: ${err}`);
+  }
+}
 async function upsertComment(octokit, prNumber, body) {
   const { owner, repo } = context2.repo;
   const existingCommentId = await findExistingComment(octokit, prNumber);
@@ -25348,12 +25356,10 @@ async function analyzeAndComment() {
     );
     scanForReplacements(messages, baseDependencies, currentDependencies);
   }
-  const commentBody = messages.length === 0 ? `${COMMENT_TAG}
-## e18e dependency analysis
-
-No dependency warnings found.
-` : `${COMMENT_TAG}
-${messages.join("\n\n")}`;
+  const report = messages.length === 0 ? "## e18e dependency analysis\n\nNo dependency warnings found.\n" : messages.join("\n\n");
+  const commentBody = `${COMMENT_TAG}
+${report}`;
+  await writeJobSummary(report);
   if (mode === "artifact") {
     const tmpDir = join2(baseWorkspace, ".e18e-tmp");
     const outputPath = join2(tmpDir, ARTIFACT_FILENAME);
