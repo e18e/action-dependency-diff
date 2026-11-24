@@ -9,6 +9,7 @@ This action compares dependencies between your base branch and current branch, a
 - 🔒 **Package trust levels** - Detects decreases in package trust levels (provenance and trusted publisher status)
 - 📈 **Dependency growth** - Warns when dependency count increases significantly
 - 📦 **Install size** - Warns when package size increases significantly
+- 🛠️ **Install scripts** - Warns when a new or upgraded package introduces install scripts
 - 🔄 **Duplicate versions** - Detects when multiple versions of a package are introduced
 - ⚠️ **Module replacements** - Identifies new packages that have community-recommended alternatives
 
@@ -50,6 +51,7 @@ jobs:
 | `pack-size-threshold`      | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |
 | `detect-replacements`      | Detect modules which have community suggested alternatives                                                                 | No       | `true`                                    |
 | `detect-license-changes`   | Detect when a dependency changes its license between versions                                                              | No       | `true`                                    |
+| `detect-install-scripts`   | Detect when a newly added or upgraded dependency introduces install scripts                                                | No       | `true`                                    |
 | `exclude-dev-dependencies` | Exclude devDependencies and their exclusive transitive dependencies from analysis                                          | No       | `false`                                   |
 | `exclude-packages`         | Comma-separated package names or wildcard patterns (e.g., `"@types/*, eslint-*"`) to exclude with their dependency trees   | No       | None                                      |
 | `working-directory`        | Working directory to scan for package lock file                                                                            | No       | None                                      |
@@ -127,6 +129,21 @@ The recommendations come from the [e18e community](https://e18e.dev) and include
 
 > [!NOTE]
 > Module replacement suggestions are advisory and may not always be straightforward migrations. Review each recommendation carefully and use the `exclude-packages` input if needed.
+
+## Install Scripts
+
+This action warns when a dependency introduces install scripts, which run arbitrary code during `npm install`. This includes newly added packages (often transitive dependencies pulled in by an upgrade) and upgraded packages that add a script they did not previously have.
+
+The `preinstall`, `install` and `postinstall` lifecycle scripts are checked. Packages that already ran install scripts in the base branch are not reported unless they add a new script.
+
+You can disable this check with:
+
+```yaml
+- name: Create Diff
+  uses: e18e/action-dependency-diff@v1
+  with:
+    detect-install-scripts: false
+```
 
 ## Supported package managers
 

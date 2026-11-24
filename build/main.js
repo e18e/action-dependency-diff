@@ -24304,6 +24304,26 @@ function getTrustLevelName(status) {
 }
 
 // src/npm.ts
+var installScriptNames = ["preinstall", "install", "postinstall"];
+function getInstallScriptNames(metadata) {
+  if (!metadata?.scripts) {
+    return [];
+  }
+  return installScriptNames.filter((name) => {
+    const script = metadata.scripts?.[name];
+    return typeof script === "string" && script.trim() !== "";
+  });
+}
+async function getInstallScriptsForPackageVersions(packageName, versions) {
+  const result = /* @__PURE__ */ new Map();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, getInstallScriptNames(metadata));
+    }
+  }
+  return result;
+}
 async function getProvenanceForPackageVersions(packageName, versions) {
   const result = /* @__PURE__ */ new Map();
   for (const version of versions) {
@@ -25064,6 +25084,65 @@ ${licenseRows.join("\n")}`
   }
 }
 
+// src/checks/install-scripts.ts
+async function scanForInstallScripts(messages, currentDeps, baseDeps) {
+  const installScriptRows = [];
+  for (const [packageName, currentVersionSet] of currentDeps) {
+    const baseVersionSet = baseDeps.get(packageName);
+    if (baseVersionSet && currentVersionSet.isSubsetOf(baseVersionSet)) {
+      continue;
+    }
+    try {
+      const baseScripts = /* @__PURE__ */ new Set();
+      if (baseVersionSet) {
+        const baseScriptsMap = await getInstallScriptsForPackageVersions(
+          packageName,
+          baseVersionSet
+        );
+        for (const scripts of baseScriptsMap.values()) {
+          for (const script of scripts) {
+            baseScripts.add(script);
+          }
+        }
+      }
+      const currentScriptsMap = await getInstallScriptsForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+      for (const [version, scripts] of currentScriptsMap) {
+        if (baseVersionSet?.has(version)) {
+          continue;
+        }
+        const addedScripts = scripts.filter(
+          (script) => !baseScripts.has(script)
+        );
+        if (addedScripts.length === 0) {
+          continue;
+        }
+        const change = baseVersionSet ? "Upgraded" : "New package";
+        const scriptsText = addedScripts.map((script) => `\`${script}\``).join(", ");
+        installScriptRows.push(
+          `| ${packageName}@${version} | ${change} | ${scriptsText} |`
+        );
+      }
+    } catch (err) {
+      info(`Failed to check install scripts for ${packageName}: ${err}`);
+    }
+  }
+  if (installScriptRows.length > 0) {
+    messages.push(
+      `## \u26A0\uFE0F Install Scripts Added
+
+> [!WARNING]
+> These packages run scripts during \`npm install\`. New install scripts can execute arbitrary code and increase supply chain risk. Please review them carefully.
+
+| \u{1F4E6} Package | \u{1F504} Change | \u{1F527} Added Install Scripts |
+| --- | --- | --- |
+${installScriptRows.join("\n")}`
+    );
+  }
+}
+
 // src/checks/bundle-size.ts
 function formatBytesSigned(bytes) {
   return `${bytes > 0 ? "+" : ""}${formatBytes(bytes)}`;
@@ -25191,6 +25270,7 @@ async function analyzeAndComment() {
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
   const detectReplacements = getBooleanInput("detect-replacements");
   const detectLicenseChanges = getBooleanInput("detect-license-changes");
+  const detectInstallScripts = getBooleanInput("detect-install-scripts");
   const excludeDevDependencies = getBooleanInput(
     "exclude-dev-dependencies"
   );
@@ -25312,6 +25392,9 @@ async function analyzeAndComment() {
     parsedBaseLock
   );
   await scanForProvenance(messages, currentDeps, baseDeps);
+  if (detectInstallScripts) {
+    await scanForInstallScripts(messages, currentDeps, baseDeps);
+  }
   if (detectLicenseChanges) {
     await scanForLicenses(messages, currentDeps, baseDeps);
   }

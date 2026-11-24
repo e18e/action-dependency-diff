@@ -25,6 +25,7 @@ import {scanForDependencyCount} from './checks/dependency-count.js';
 import {scanForDependencySize} from './checks/dependency-size.js';
 import {scanForProvenance} from './checks/provenance.js';
 import {scanForLicenses} from './checks/license.js';
+import {scanForInstallScripts} from './checks/install-scripts.js';
 import {scanForBundleSize} from './checks/bundle-size.js';
 import {formatBytes, parseCommaList} from './common.js';
 import {ARTIFACT_FILENAME, COMMENT_TAG} from './constants.js';
@@ -73,6 +74,7 @@ async function analyzeAndComment(): Promise<void> {
   const prNumber = parseInt(core.getInput('pr-number', {required: true}), 10);
   const detectReplacements = core.getBooleanInput('detect-replacements');
   const detectLicenseChanges = core.getBooleanInput('detect-license-changes');
+  const detectInstallScripts = core.getBooleanInput('detect-install-scripts');
   const excludeDevDependencies = core.getBooleanInput(
     'exclude-dev-dependencies'
   );
@@ -209,6 +211,10 @@ async function analyzeAndComment(): Promise<void> {
     parsedBaseLock
   );
   await scanForProvenance(messages, currentDeps, baseDeps);
+
+  if (detectInstallScripts) {
+    await scanForInstallScripts(messages, currentDeps, baseDeps);
+  }
 
   if (detectLicenseChanges) {
     await scanForLicenses(messages, currentDeps, baseDeps);
