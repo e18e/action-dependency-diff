@@ -48,6 +48,10 @@ inputs:
     description: 'Detect when a dependency changes its license between versions'
     required: false
     default: true
+  detect-engine-changes:
+    description: 'Detect when an upgraded dependency tightens its Node.js engine requirement'
+    required: false
+    default: true
   detect-install-scripts:
     description: 'Detect when a newly added or upgraded dependency introduces install scripts'
     required: false

@@ -13,6 +13,7 @@ export interface PackageMetadata {
   name: string;
   version: string;
   license?: string;
+  engines?: {node?: string};
   scripts?: Record<string, string>;
   os?: string[];
   cpu?: string[];
@@ -263,6 +264,20 @@ export function isSupportedArchitecture(
   const libcMatches =
     pkg.libc === undefined || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
+}
+
+export async function getNodeEnginesForPackageVersions(
+  packageName: string,
+  versions: Set<string>
+): Promise<Map<string, string | null>> {
+  const result = new Map<string, string | null>();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, metadata.engines?.node?.trim() || null);
+    }
+  }
+  return result;
 }
 
 export async function getLicensesForPackageVersions(

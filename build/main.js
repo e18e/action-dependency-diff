@@ -19309,7 +19309,7 @@ var require_fast_content_type_parse = __commonJS({
     var defaultContentType = { type: "", parameters: new NullObject() };
     Object.freeze(defaultContentType.parameters);
     Object.freeze(defaultContentType);
-    function parse3(header) {
+    function parse4(header) {
       if (typeof header !== "string") {
         throw new TypeError("argument header is required and must be a string");
       }
@@ -19385,8 +19385,8 @@ var require_fast_content_type_parse = __commonJS({
       }
       return result;
     }
-    module.exports.default = { parse: parse3, safeParse: safeParse2 };
-    module.exports.parse = parse3;
+    module.exports.default = { parse: parse4, safeParse: safeParse2 };
+    module.exports.parse = parse4;
     module.exports.safeParse = safeParse2;
     module.exports.defaultContentType = defaultContentType;
   }
@@ -24461,6 +24461,16 @@ function isSupportedArchitecture(pkg, os5, cpu, libc) {
   const libcMatches = pkg.libc === void 0 || pkg.libc.length === 0 || pkg.libc.includes(libc);
   return osMatches && cpuMatches && libcMatches;
 }
+async function getNodeEnginesForPackageVersions(packageName, versions) {
+  const result = /* @__PURE__ */ new Map();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, metadata.engines?.node?.trim() || null);
+    }
+  }
+  return result;
+}
 async function getLicensesForPackageVersions(packageName, versions) {
   const result = /* @__PURE__ */ new Map();
   for (const version of versions) {
@@ -25084,6 +25094,454 @@ ${licenseRows.join("\n")}`
   }
 }
 
+// node_modules/verkit/dist/comparison-CmVirWIW.js
+var LETTER_DASH_NUMBER = "[a-zA-Z0-9-]";
+var NUMERIC_IDENTIFIER = String.raw`0|[1-9]\d*`;
+var NUMERIC_IDENTIFIER_LOOSE = String.raw`\d+`;
+var NON_NUMERIC_IDENTIFIER = String.raw`\d*[a-zA-Z-]${LETTER_DASH_NUMBER}*`;
+var MAIN_VERSION = String.raw`(${NUMERIC_IDENTIFIER})\.(${NUMERIC_IDENTIFIER})\.(${NUMERIC_IDENTIFIER})`;
+var MAIN_VERSION_LOOSE = String.raw`(${NUMERIC_IDENTIFIER_LOOSE})\.(${NUMERIC_IDENTIFIER_LOOSE})\.(${NUMERIC_IDENTIFIER_LOOSE})`;
+var PRERELEASE_IDENTIFIER = `(?:${NON_NUMERIC_IDENTIFIER}|${NUMERIC_IDENTIFIER})`;
+var PRERELEASE_IDENTIFIER_LOOSE = `(?:${NON_NUMERIC_IDENTIFIER}|${NUMERIC_IDENTIFIER_LOOSE})`;
+var PRERELEASE = String.raw`(?:-(${PRERELEASE_IDENTIFIER}(?:\.${PRERELEASE_IDENTIFIER})*))`;
+var PRERELEASE_LOOSE = String.raw`(?:-?(${PRERELEASE_IDENTIFIER_LOOSE}(?:\.${PRERELEASE_IDENTIFIER_LOOSE})*))`;
+var BUILD_IDENTIFIER = `${LETTER_DASH_NUMBER}+`;
+var BUILD = String.raw`(?:\+(${BUILD_IDENTIFIER}(?:\.${BUILD_IDENTIFIER})*))`;
+var FULL_PLAIN = `v?${MAIN_VERSION}${PRERELEASE}?${BUILD}?`;
+var LOOSE_PLAIN = String.raw`[v=\s]*${MAIN_VERSION_LOOSE}${PRERELEASE_LOOSE}?${BUILD}?`;
+var GREATER_LESS_THAN = "((?:<|>)?=?)";
+var XRANGE_IDENTIFIER = String.raw`${NUMERIC_IDENTIFIER}|x|X|\*`;
+var XRANGE_IDENTIFIER_LOOSE = String.raw`${NUMERIC_IDENTIFIER_LOOSE}|x|X|\*`;
+var XRANGE_PLAIN = String.raw`[v=\s]*(${XRANGE_IDENTIFIER})(?:\.(${XRANGE_IDENTIFIER})(?:\.(${XRANGE_IDENTIFIER})(?:${PRERELEASE})?${BUILD}?)?)?`;
+var XRANGE_PLAIN_LOOSE = String.raw`[v=\s]*(${XRANGE_IDENTIFIER_LOOSE})(?:\.(${XRANGE_IDENTIFIER_LOOSE})(?:\.(${XRANGE_IDENTIFIER_LOOSE})(?:${PRERELEASE_LOOSE})?${BUILD}?)?)?`;
+var LONE_TILDE = "(?:~>?)";
+var LONE_CARET = String.raw`(?:\^)`;
+var COERCE_PLAIN = String.raw`(^|[^\d])(\d{1,${16}})(?:\.(\d{1,${16}}))?(?:\.(\d{1,${16}}))?`;
+var COERCE = String.raw`${COERCE_PLAIN}(?:$|[^\d])`;
+var COERCE_FULL = String.raw`${COERCE_PLAIN}(?:${PRERELEASE})?(?:${BUILD})?(?:$|[^\d])`;
+function makeSafeRegexSource(source) {
+  const replacements = [
+    [String.raw`\s`, 1],
+    [String.raw`\d`, 256],
+    [LETTER_DASH_NUMBER, 250]
+  ];
+  for (const [token, maximum] of replacements) source = source.split(`${token}*`).join(`${token}{0,${maximum}}`).split(`${token}+`).join(`${token}{1,${maximum}}`);
+  return source;
+}
+function safeRegex(source, flags) {
+  return new RegExp(makeSafeRegexSource(source), flags);
+}
+var FULL = safeRegex(`^${FULL_PLAIN}$`);
+var LOOSE = safeRegex(`^${LOOSE_PLAIN}$`);
+var NUMERIC$1 = /^\d+$/;
+function formatComparableVersion(version) {
+  const base = `${version.major}.${version.minor}.${version.patch}`;
+  return version.prerelease?.length ? `${base}-${version.prerelease.join(".")}` : base;
+}
+function parse3(version, options = {}) {
+  if (typeof version !== "string") return version;
+  if (version.length > 256) throw new TypeError(`Version exceeds the maximum length of 256 characters`);
+  const match = version.trim().match(options.loose ? LOOSE : FULL);
+  if (!match) throw new TypeError(`Invalid version syntax: ${version}`);
+  const major = Number(match[1]);
+  const minor = Number(match[2]);
+  const patch = Number(match[3]);
+  if (major > Number.MAX_SAFE_INTEGER || major < 0) throw new TypeError(`Invalid major version: ${match[1]}`);
+  if (minor > Number.MAX_SAFE_INTEGER || minor < 0) throw new TypeError(`Invalid minor version: ${match[2]}`);
+  if (patch > Number.MAX_SAFE_INTEGER || patch < 0) throw new TypeError(`Invalid patch version: ${match[3]}`);
+  const prerelease = match[4] ? match[4].split(".").map((identifier) => {
+    if (NUMERIC$1.test(identifier)) {
+      const numeric = Number(identifier);
+      if (numeric >= 0 && numeric < Number.MAX_SAFE_INTEGER) return numeric;
+    }
+    return identifier;
+  }) : void 0;
+  return {
+    build: match[5]?.split("."),
+    major,
+    minor,
+    patch,
+    prerelease
+  };
+}
+var NUMERIC = /^\d+$/;
+function compareIdentifiers(left, right) {
+  if (typeof left === "number" && typeof right === "number") return left === right ? 0 : left < right ? -1 : 1;
+  const leftNumeric = NUMERIC.test(String(left));
+  const rightNumeric = NUMERIC.test(String(right));
+  const normalizedLeft = leftNumeric ? Number(left) : left;
+  const normalizedRight = rightNumeric ? Number(right) : right;
+  return normalizedLeft === normalizedRight ? 0 : leftNumeric && !rightNumeric ? -1 : rightNumeric && !leftNumeric ? 1 : normalizedLeft < normalizedRight ? -1 : 1;
+}
+function compareMainParsed(left, right) {
+  return left.major === right.major ? left.minor === right.minor ? left.patch === right.patch ? 0 : left.patch < right.patch ? -1 : 1 : left.minor < right.minor ? -1 : 1 : left.major < right.major ? -1 : 1;
+}
+function comparePrereleaseParsed(left, right) {
+  const leftPrerelease = left.prerelease;
+  const rightPrerelease = right.prerelease;
+  if (leftPrerelease?.length && !rightPrerelease?.length) return -1;
+  if (!leftPrerelease?.length && rightPrerelease?.length) return 1;
+  if (!leftPrerelease?.length && !rightPrerelease?.length) return 0;
+  for (let index = 0; ; index++) {
+    const leftIdentifier = leftPrerelease?.[index];
+    const rightIdentifier = rightPrerelease?.[index];
+    if (leftIdentifier === void 0 && rightIdentifier === void 0) return 0;
+    if (rightIdentifier === void 0) return 1;
+    if (leftIdentifier === void 0) return -1;
+    if (leftIdentifier !== rightIdentifier) return compareIdentifiers(leftIdentifier, rightIdentifier);
+  }
+}
+function compareParsed(left, right) {
+  return compareMainParsed(left, right) || comparePrereleaseParsed(left, right);
+}
+
+// node_modules/verkit/dist/set-BGFWKKE8.js
+var STRICT_COMPARATOR = safeRegex(String.raw`^${GREATER_LESS_THAN}\s*(${FULL_PLAIN})$|^$`);
+var LOOSE_COMPARATOR = safeRegex(String.raw`^${GREATER_LESS_THAN}\s*(${LOOSE_PLAIN})$|^$`);
+function formatComparator(comparator) {
+  return comparator.version ? `${comparator.operator}${formatComparableVersion(comparator.version)}` : "";
+}
+function parseComparator(comparator, options = {}) {
+  if (typeof comparator !== "string") return comparator;
+  const normalized = comparator.trim().replaceAll(/\s+/g, " ");
+  const match = normalized.match(options.loose ? LOOSE_COMPARATOR : STRICT_COMPARATOR);
+  if (!match) throw new TypeError(`Invalid comparator: ${normalized}`);
+  const operator = match[1] === "=" ? "" : match[1] || "";
+  const version = match[2] ? parse3(match[2], options) : null;
+  return {
+    operator,
+    options,
+    value: version ? `${operator}${formatComparableVersion(version)}` : "",
+    version
+  };
+}
+function testParsedComparator(comparator, version) {
+  if (!comparator.version) return true;
+  const comparison = compareParsed(version, comparator.version);
+  switch (comparator.operator) {
+    case "":
+      return comparison === 0;
+    case ">":
+      return comparison > 0;
+    case ">=":
+      return comparison >= 0;
+    case "<":
+      return comparison < 0;
+    case "<=":
+      return comparison <= 0;
+  }
+}
+function comparatorAllowsPrerelease(comparator, version) {
+  const allowed = comparator.version;
+  return allowed !== null && !!allowed.prerelease?.length && allowed.major === version.major && allowed.minor === version.minor && allowed.patch === version.patch;
+}
+function testComparatorSet(set, version, options) {
+  if (set.some((comparator) => !testParsedComparator(comparator, version))) return false;
+  return !version.prerelease?.length || !!options.includePrerelease || set.some((comparator) => comparatorAllowsPrerelease(comparator, version));
+}
+
+// node_modules/verkit/dist/range-C5wjdo9a.js
+function formatRange(range) {
+  return range.sets.map((set) => set.map(formatComparator).join(" ")).join("||");
+}
+var BUILD_STRIP = new RegExp(BUILD, "g");
+var BUILD_SAFE = safeRegex(BUILD);
+var STRICT_HYPHEN = safeRegex(String.raw`^\s*(${XRANGE_PLAIN})\s+-\s+(${XRANGE_PLAIN})\s*$`);
+var LOOSE_HYPHEN = safeRegex(String.raw`^\s*(${XRANGE_PLAIN_LOOSE})\s+-\s+(${XRANGE_PLAIN_LOOSE})\s*$`);
+var COMPARATOR_TRIM = safeRegex(String.raw`(\s*)${GREATER_LESS_THAN}\s*(${LOOSE_PLAIN}|${XRANGE_PLAIN})`, "g");
+var TILDE_TRIM = safeRegex(String.raw`(\s*)${LONE_TILDE}\s+`, "g");
+var CARET_TRIM = safeRegex(String.raw`(\s*)${LONE_CARET}\s+`, "g");
+var STRICT_TILDE = safeRegex(`^${LONE_TILDE}${XRANGE_PLAIN}$`);
+var LOOSE_TILDE = safeRegex(`^${LONE_TILDE}${XRANGE_PLAIN_LOOSE}$`);
+var STRICT_CARET = safeRegex(`^${LONE_CARET}${XRANGE_PLAIN}$`);
+var LOOSE_CARET = safeRegex(`^${LONE_CARET}${XRANGE_PLAIN_LOOSE}$`);
+var STRICT_XRANGE = safeRegex(String.raw`^${GREATER_LESS_THAN}\s*${XRANGE_PLAIN}$`);
+var LOOSE_XRANGE = safeRegex(String.raw`^${GREATER_LESS_THAN}\s*${XRANGE_PLAIN_LOOSE}$`);
+var STAR = safeRegex(String.raw`(<|>)?=?\s*\*`);
+var GTE_ZERO = /^\s*>=\s*0\.0\.0\s*$/;
+var GTE_ZERO_PRERELEASE = /^\s*>=\s*0\.0\.0-0\s*$/;
+var LOOSE_COMPARATOR2 = safeRegex(String.raw`^${GREATER_LESS_THAN}\s*(${LOOSE_PLAIN})$|^$`);
+function isWildcard(value) {
+  return !value || String(value).toLowerCase() === "x" || String(value) === "*";
+}
+function hasInvalidWildcardOrder(major, minor, patch) {
+  return isWildcard(major) && !isWildcard(minor) || isWildcard(minor) && Boolean(patch) && !isWildcard(patch);
+}
+function replaceTilde(comparator, options) {
+  const expression = options.loose ? LOOSE_TILDE : STRICT_TILDE;
+  const lowerPrerelease = options.includePrerelease ? "-0" : "";
+  return comparator.replace(expression, (_match, major, minor, patch, prerelease) => {
+    if (isWildcard(major)) return "";
+    if (isWildcard(minor)) return `>=${major}.0.0${lowerPrerelease} <${Number(major) + 1}.0.0-0`;
+    if (isWildcard(patch)) return `>=${major}.${minor}.0${lowerPrerelease} <${major}.${Number(minor) + 1}.0-0`;
+    return prerelease ? `>=${major}.${minor}.${patch}-${prerelease} <${major}.${Number(minor) + 1}.0-0` : `>=${major}.${minor}.${patch} <${major}.${Number(minor) + 1}.0-0`;
+  });
+}
+function replaceTildes(comparator, options) {
+  return comparator.trim().split(/\s+/).map((part) => replaceTilde(part, options)).join(" ");
+}
+function replaceCaret(comparator, options) {
+  const expression = options.loose ? LOOSE_CARET : STRICT_CARET;
+  const lowerPrerelease = options.includePrerelease ? "-0" : "";
+  return comparator.replace(expression, (_match, major, minor, patch, prerelease) => {
+    if (isWildcard(major)) return "";
+    if (isWildcard(minor)) return `>=${major}.0.0${lowerPrerelease} <${Number(major) + 1}.0.0-0`;
+    if (isWildcard(patch)) return major === "0" ? `>=${major}.${minor}.0${lowerPrerelease} <${major}.${Number(minor) + 1}.0-0` : `>=${major}.${minor}.0${lowerPrerelease} <${Number(major) + 1}.0.0-0`;
+    if (prerelease) return major === "0" ? minor === "0" ? `>=${major}.${minor}.${patch}-${prerelease} <${major}.${minor}.${Number(patch) + 1}-0` : `>=${major}.${minor}.${patch}-${prerelease} <${major}.${Number(minor) + 1}.0-0` : `>=${major}.${minor}.${patch}-${prerelease} <${Number(major) + 1}.0.0-0`;
+    return major === "0" ? minor === "0" ? `>=${major}.${minor}.${patch} <${major}.${minor}.${Number(patch) + 1}-0` : `>=${major}.${minor}.${patch} <${major}.${Number(minor) + 1}.0-0` : `>=${major}.${minor}.${patch} <${Number(major) + 1}.0.0-0`;
+  });
+}
+function replaceCarets(comparator, options) {
+  return comparator.trim().split(/\s+/).map((part) => replaceCaret(part, options)).join(" ");
+}
+function replaceXRange(comparator, options) {
+  const expression = options.loose ? LOOSE_XRANGE : STRICT_XRANGE;
+  return comparator.trim().replace(expression, (match, rawOperator, rawMajor, rawMinor, rawPatch) => {
+    let operator = rawOperator;
+    let major = rawMajor;
+    let minor = rawMinor;
+    let patch = rawPatch;
+    if (hasInvalidWildcardOrder(String(major), minor === void 0 ? void 0 : String(minor), patch === void 0 ? void 0 : String(patch))) return comparator;
+    const wildcardMajor = isWildcard(major);
+    const wildcardMinor = wildcardMajor || isWildcard(minor);
+    const wildcardPatch = wildcardMinor || isWildcard(patch);
+    if (operator === "=" && wildcardPatch) operator = "";
+    if (wildcardMajor) return operator === ">" || operator === "<" ? "<0.0.0-0" : "*";
+    let prerelease = options.includePrerelease ? "-0" : "";
+    if (operator && wildcardPatch) {
+      if (wildcardMinor) minor = 0;
+      patch = 0;
+      if (operator === ">") {
+        operator = ">=";
+        if (wildcardMinor) {
+          major = Number(major) + 1;
+          minor = 0;
+        } else minor = Number(minor) + 1;
+      } else if (operator === "<=") {
+        operator = "<";
+        if (wildcardMinor) major = Number(major) + 1;
+        else minor = Number(minor) + 1;
+      }
+      if (operator === "<") prerelease = "-0";
+      return `${operator}${major}.${minor}.${patch}${prerelease}`;
+    }
+    if (wildcardMinor) return `>=${major}.0.0${prerelease} <${Number(major) + 1}.0.0-0`;
+    if (wildcardPatch) return `>=${major}.${minor}.0${prerelease} <${major}.${Number(minor) + 1}.0-0`;
+    return match;
+  });
+}
+function replaceXRanges(comparator, options) {
+  return comparator.split(/\s+/).map((part) => replaceXRange(part, options)).join(" ");
+}
+function replaceHyphenRange(range, options) {
+  const expression = options.loose ? LOOSE_HYPHEN : STRICT_HYPHEN;
+  return range.replace(expression, (_match, rawFrom, fromMajor, fromMinor, fromPatch, fromPrerelease, _fromBuild, rawTo, toMajor, toMinor, toPatch, toPrerelease) => {
+    let from = rawFrom;
+    let to = rawTo;
+    if (isWildcard(fromMajor)) from = "";
+    else if (isWildcard(fromMinor)) from = `>=${fromMajor}.0.0${options.includePrerelease ? "-0" : ""}`;
+    else if (isWildcard(fromPatch)) from = `>=${fromMajor}.${fromMinor}.0${options.includePrerelease ? "-0" : ""}`;
+    else if (fromPrerelease) from = `>=${from}`;
+    else from = `>=${from}${options.includePrerelease ? "-0" : ""}`;
+    if (isWildcard(toMajor)) to = "";
+    else if (isWildcard(toMinor)) to = `<${Number(toMajor) + 1}.0.0-0`;
+    else if (isWildcard(toPatch)) to = `<${toMajor}.${Number(toMinor) + 1}.0-0`;
+    else if (toPrerelease) to = `<=${toMajor}.${toMinor}.${toPatch}-${toPrerelease}`;
+    else if (options.includePrerelease) to = `<${toMajor}.${toMinor}.${Number(toPatch) + 1}-0`;
+    else to = `<=${to}`;
+    return `${from} ${to}`.trim();
+  });
+}
+function expandComparator(comparator, options) {
+  return replaceXRanges(replaceTildes(replaceCarets(comparator.replace(BUILD_SAFE, ""), options), options), options).trim().replace(STAR, "");
+}
+function parseSimpleRange(input, options) {
+  let parts = replaceHyphenRange(input.replace(BUILD_STRIP, ""), options).replace(COMPARATOR_TRIM, "$1$2$3").replace(TILDE_TRIM, "$1~").replace(CARET_TRIM, "$1^").split(" ").map((part) => expandComparator(part, options)).join(" ").split(/\s+/).map((part) => part.trim().replace(options.includePrerelease ? GTE_ZERO_PRERELEASE : GTE_ZERO, ""));
+  if (options.loose) parts = parts.filter((part) => LOOSE_COMPARATOR2.test(part));
+  const unique = /* @__PURE__ */ new Map();
+  for (const comparator of parts.map((part) => parseComparator(part, options))) {
+    if (comparator.value === "<0.0.0-0") return [comparator];
+    unique.set(comparator.value, comparator);
+  }
+  if (unique.size > 1) unique.delete("");
+  return [...unique.values()];
+}
+function parseRange(range, options = {}) {
+  if (typeof range !== "string") return range;
+  const parsedOptions = { ...options };
+  const normalizedRange = range.trim().replaceAll(/\s+/g, " ");
+  let sets = normalizedRange.split("||").map((part) => parseSimpleRange(part.trim(), parsedOptions)).filter((set) => set.length);
+  if (!sets.length) throw new TypeError(`Range contains no valid comparator sets: ${normalizedRange}`);
+  if (sets.length > 1) {
+    const first = sets[0];
+    sets = sets.filter((set) => set[0]?.value !== "<0.0.0-0");
+    if (!sets.length) sets = [first];
+    else if (sets.length > 1) {
+      const any = sets.find((set) => set.length === 1 && set[0]?.value === "");
+      if (any) sets = [any];
+    }
+  }
+  return {
+    options: parsedOptions,
+    sets
+  };
+}
+function tryParseRange(range, options = {}) {
+  try {
+    return parseRange(range, options);
+  } catch {
+    return null;
+  }
+}
+function normalizeRange(range, options = {}) {
+  const parsed = tryParseRange(range, options);
+  return parsed ? formatRange(parsed) || "*" : null;
+}
+function higherLowerBound(left, right) {
+  if (!left) return right;
+  const comparison = compareParsed(left.version, right.version);
+  return comparison > 0 ? left : comparison < 0 || right.operator === ">" && left.operator === ">=" ? right : left;
+}
+function lowerUpperBound(left, right) {
+  if (!left) return right;
+  const comparison = compareParsed(left.version, right.version);
+  return comparison < 0 ? left : comparison > 0 || right.operator === "<" && left.operator === "<=" ? right : left;
+}
+function simpleRangeSubset(rawSubset, rawSuperset, options) {
+  let subset = rawSubset;
+  let superset = rawSuperset;
+  const subsetAny = subset.length === 1 && !subset[0].version;
+  const supersetAny = superset.length === 1 && !superset[0].version;
+  if (subsetAny) {
+    if (supersetAny) return true;
+    subset = [parseComparator(options.includePrerelease ? ">=0.0.0-0" : ">=0.0.0")];
+  }
+  if (supersetAny) {
+    if (options.includePrerelease) return true;
+    superset = [parseComparator(">=0.0.0")];
+  }
+  const equal = /* @__PURE__ */ new Map();
+  let lower;
+  let upper;
+  for (const comparator of subset) if (comparator.operator === ">" || comparator.operator === ">=") lower = higherLowerBound(lower, comparator);
+  else if (comparator.operator === "<" || comparator.operator === "<=") upper = lowerUpperBound(upper, comparator);
+  else if (comparator.version) equal.set(formatComparableVersion(comparator.version), comparator.version);
+  if (equal.size > 1) return null;
+  let boundsComparison;
+  if (lower && upper) {
+    boundsComparison = compareParsed(lower.version, upper.version);
+    if (boundsComparison > 0) return null;
+    if (boundsComparison === 0 && (lower.operator !== ">=" || upper.operator !== "<=")) return null;
+  }
+  for (const version of equal.values()) {
+    if (lower && !testParsedComparator(lower, version)) return null;
+    if (upper && !testParsedComparator(upper, version)) return null;
+    return testComparatorSet(superset, version, options);
+  }
+  let needsLowerPrerelease = lower && !options.includePrerelease && lower.version.prerelease?.length ? lower.version : null;
+  let needsUpperPrerelease = upper && !options.includePrerelease && upper.version.prerelease?.length ? upper.version : null;
+  const upperPrerelease = needsUpperPrerelease?.prerelease;
+  if (upperPrerelease?.length === 1 && upper?.operator === "<" && upperPrerelease[0] === 0) needsUpperPrerelease = null;
+  let hasSupersetLower = false;
+  let hasSupersetUpper = false;
+  for (const comparator of superset) {
+    hasSupersetLower ||= comparator.operator === ">" || comparator.operator === ">=";
+    hasSupersetUpper ||= comparator.operator === "<" || comparator.operator === "<=";
+    if (lower) {
+      if (needsLowerPrerelease && comparatorAllowsPrerelease(comparator, needsLowerPrerelease)) needsLowerPrerelease = null;
+      if (comparator.operator === ">" || comparator.operator === ">=") {
+        const higher = higherLowerBound(lower, comparator);
+        if (higher === comparator && higher !== lower) return false;
+      } else if (lower.operator === ">=" && !testParsedComparator(comparator, lower.version)) return false;
+    }
+    if (upper) {
+      if (needsUpperPrerelease && comparatorAllowsPrerelease(comparator, needsUpperPrerelease)) needsUpperPrerelease = null;
+      if (comparator.operator === "<" || comparator.operator === "<=") {
+        const lowerBound = lowerUpperBound(upper, comparator);
+        if (lowerBound === comparator && lowerBound !== upper) return false;
+      } else if (upper.operator === "<=" && !testParsedComparator(comparator, upper.version)) return false;
+    }
+    if (comparator.operator === "" && (lower || upper) && boundsComparison !== 0) return false;
+  }
+  if (lower && hasSupersetUpper && !upper && boundsComparison !== 0) return false;
+  if (upper && hasSupersetLower && !lower && boundsComparison !== 0) return false;
+  return !needsLowerPrerelease && !needsUpperPrerelease;
+}
+function isRangeSubset(subset, superset, options = {}) {
+  if (subset === superset) return true;
+  const parsedSubset = parseRange(subset, options);
+  const parsedSuperset = parseRange(superset, options);
+  const effectiveOptions = {
+    ...parsedSubset.options,
+    ...parsedSuperset.options,
+    ...options
+  };
+  let sawNonNull = false;
+  for (const subsetSet of parsedSubset.sets) {
+    let matched = false;
+    for (const supersetSet of parsedSuperset.sets) {
+      const result = simpleRangeSubset(subsetSet, supersetSet, effectiveOptions);
+      sawNonNull ||= result !== null;
+      if (result) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && sawNonNull) return false;
+  }
+  return true;
+}
+
+// src/checks/engines.ts
+async function scanForEngineChanges(messages, currentDeps, baseDeps) {
+  const engineRows = [];
+  for (const [packageName, currentVersionSet] of currentDeps) {
+    const baseVersionSet = baseDeps.get(packageName);
+    if (!baseVersionSet || currentVersionSet.isSubsetOf(baseVersionSet)) {
+      continue;
+    }
+    try {
+      const baseEngines = await getNodeEnginesForPackageVersions(
+        packageName,
+        baseVersionSet
+      );
+      const currentEngines = await getNodeEnginesForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+      for (const [version, currentRange] of currentEngines) {
+        if (baseVersionSet.has(version) || !currentRange) {
+          continue;
+        }
+        const normalizedCurrentRange = normalizeRange(currentRange);
+        if (!normalizedCurrentRange) {
+          continue;
+        }
+        const tighterThan = Array.from(baseEngines).filter(([baseVersion]) => baseVersionSet.has(baseVersion)).map(([, baseRange]) => baseRange ?? "*").find((baseRange) => {
+          const normalizedBaseRange = normalizeRange(baseRange);
+          return normalizedBaseRange !== null && isRangeSubset(normalizedCurrentRange, normalizedBaseRange) && !isRangeSubset(normalizedBaseRange, normalizedCurrentRange);
+        });
+        if (tighterThan !== void 0) {
+          engineRows.push(
+            `| ${packageName}@${version} | ${tighterThan} | ${currentRange} |`
+          );
+        }
+      }
+    } catch (err) {
+      info(`Failed to check Node.js engine for ${packageName}: ${err}`);
+    }
+  }
+  if (engineRows.length > 0) {
+    messages.push(
+      `## \u26A0\uFE0F Node.js Engine Changes
+
+| \u{1F4E6} Package | Previous Node.js Engine | New Node.js Engine |
+| --- | --- | --- |
+${engineRows.join("\n")}`
+    );
+  }
+}
+
 // src/checks/install-scripts.ts
 async function scanForInstallScripts(messages, currentDeps, baseDeps) {
   const installScriptRows = [];
@@ -25270,6 +25728,7 @@ async function analyzeAndComment() {
   const prNumber = parseInt(getInput("pr-number", { required: true }), 10);
   const detectReplacements = getBooleanInput("detect-replacements");
   const detectLicenseChanges = getBooleanInput("detect-license-changes");
+  const detectEngineChanges = getBooleanInput("detect-engine-changes");
   const detectInstallScripts = getBooleanInput("detect-install-scripts");
   const excludeDevDependencies = getBooleanInput(
     "exclude-dev-dependencies"
@@ -25397,6 +25856,9 @@ async function analyzeAndComment() {
   }
   if (detectLicenseChanges) {
     await scanForLicenses(messages, currentDeps, baseDeps);
+  }
+  if (detectEngineChanges) {
+    await scanForEngineChanges(messages, currentDeps, baseDeps);
   }
   const basePackagesPattern = getInput("base-packages");
   const sourcePackagesPattern = getInput("source-packages");
