@@ -24313,6 +24313,16 @@ function getInstallScriptNames(metadata) {
     return typeof script === "string" && script.trim() !== "";
   });
 }
+async function getInstallScriptsForPackageVersions(packageName, versions) {
+  const result = /* @__PURE__ */ new Map();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, getInstallScriptNames(metadata));
+    }
+  }
+  return result;
+}
 async function getProvenanceForPackageVersions(packageName, versions) {
   const result = /* @__PURE__ */ new Map();
   for (const version of versions) {
@@ -25078,34 +25088,40 @@ async function scanForInstallScripts(messages, currentDeps, baseDeps) {
   const installScriptRows = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
-    const newVersions = Array.from(currentVersionSet).filter(
-      (version) => !baseVersionSet?.has(version)
-    );
-    if (newVersions.length === 0) {
+    if (baseVersionSet && currentVersionSet.isSubsetOf(baseVersionSet)) {
       continue;
     }
     try {
       const baseScripts = /* @__PURE__ */ new Set();
       if (baseVersionSet) {
-        for (const version of baseVersionSet) {
-          const metadata = await fetchPackageMetadata(packageName, version);
-          for (const script of getInstallScriptNames(metadata)) {
+        const baseScriptsMap = await getInstallScriptsForPackageVersions(
+          packageName,
+          baseVersionSet
+        );
+        for (const scripts of baseScriptsMap.values()) {
+          for (const script of scripts) {
             baseScripts.add(script);
           }
         }
       }
-      for (const version of newVersions) {
-        const metadata = await fetchPackageMetadata(packageName, version);
-        const addedScripts = getInstallScriptNames(metadata).filter(
+      const currentScriptsMap = await getInstallScriptsForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+      for (const [version, scripts] of currentScriptsMap) {
+        if (baseVersionSet?.has(version)) {
+          continue;
+        }
+        const addedScripts = scripts.filter(
           (script) => !baseScripts.has(script)
         );
         if (addedScripts.length === 0) {
           continue;
         }
         const change = baseVersionSet ? "Upgraded" : "New package";
-        const scripts = addedScripts.map((script) => `\`${script}\``).join(", ");
+        const scriptsText = addedScripts.map((script) => `\`${script}\``).join(", ");
         installScriptRows.push(
-          `| ${packageName}@${version} | ${change} | ${scripts} |`
+          `| ${packageName}@${version} | ${change} | ${scriptsText} |`
         );
       }
     } catch (err) {

@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import {fetchPackageMetadata, getInstallScriptNames} from '../npm.js';
+import {getInstallScriptsForPackageVersions} from '../npm.js';
 
 export async function scanForInstallScripts(
   messages: string[],
@@ -11,27 +11,34 @@ export async function scanForInstallScripts(
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
 
-    const newVersions = Array.from(currentVersionSet).filter(
-      (version) => !baseVersionSet?.has(version)
-    );
-    if (newVersions.length === 0) {
+    if (baseVersionSet && currentVersionSet.isSubsetOf(baseVersionSet)) {
       continue;
     }
 
     try {
       const baseScripts = new Set<string>();
       if (baseVersionSet) {
-        for (const version of baseVersionSet) {
-          const metadata = await fetchPackageMetadata(packageName, version);
-          for (const script of getInstallScriptNames(metadata)) {
+        const baseScriptsMap = await getInstallScriptsForPackageVersions(
+          packageName,
+          baseVersionSet
+        );
+        for (const scripts of baseScriptsMap.values()) {
+          for (const script of scripts) {
             baseScripts.add(script);
           }
         }
       }
 
-      for (const version of newVersions) {
-        const metadata = await fetchPackageMetadata(packageName, version);
-        const addedScripts = getInstallScriptNames(metadata).filter(
+      const currentScriptsMap = await getInstallScriptsForPackageVersions(
+        packageName,
+        currentVersionSet
+      );
+
+      for (const [version, scripts] of currentScriptsMap) {
+        if (baseVersionSet?.has(version)) {
+          continue;
+        }
+        const addedScripts = scripts.filter(
           (script) => !baseScripts.has(script)
         );
         if (addedScripts.length === 0) {
@@ -39,11 +46,11 @@ export async function scanForInstallScripts(
         }
 
         const change = baseVersionSet ? 'Upgraded' : 'New package';
-        const scripts = addedScripts
+        const scriptsText = addedScripts
           .map((script) => `\`${script}\``)
           .join(', ');
         installScriptRows.push(
-          `| ${packageName}@${version} | ${change} | ${scripts} |`
+          `| ${packageName}@${version} | ${change} | ${scriptsText} |`
         );
       }
     } catch (err) {

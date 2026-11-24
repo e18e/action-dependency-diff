@@ -50,6 +50,20 @@ export function getInstallScriptNames(
   });
 }
 
+export async function getInstallScriptsForPackageVersions(
+  packageName: string,
+  versions: Set<string>
+): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  for (const version of versions) {
+    const metadata = await fetchPackageMetadata(packageName, version);
+    if (metadata) {
+      result.set(version, getInstallScriptNames(metadata));
+    }
+  }
+  return result;
+}
+
 export async function getProvenanceForPackageVersions(
   packageName: string,
   versions: Set<string>
