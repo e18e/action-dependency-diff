@@ -144,6 +144,8 @@ permissions:
   pull-requests: write # To comment on pull requests
 ```
 
+The report is also written to the [job summary](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-commands#adding-a-job-summary) of the workflow run, which doesn't need any extra permissions.
+
 ## Artifact Mode
 
 By default, the action posts a comment directly to the pull request. This requires `pull-requests: write` permission in the workflow that runs the analysis, which typically means using `pull_request_target` for fork PRs.

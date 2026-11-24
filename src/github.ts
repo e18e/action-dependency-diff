@@ -34,6 +34,14 @@ export async function findExistingComment(
   return undefined;
 }
 
+export async function writeJobSummary(report: string): Promise<void> {
+  try {
+    await core.summary.addRaw(report).write();
+  } catch (err) {
+    core.info(`Failed to write job summary: ${err}`);
+  }
+}
+
 export async function upsertComment(
   octokit: Octokit,
   prNumber: number,
