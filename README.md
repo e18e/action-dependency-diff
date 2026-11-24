@@ -51,6 +51,7 @@ jobs:
 | `pack-size-threshold`      | Threshold (in bytes) for warning about significant increase in total pack size. Set to `-1` to always report size changes. | No       | `50000`                                   |
 | `detect-replacements`      | Detect modules which have community suggested alternatives                                                                 | No       | `true`                                    |
 | `detect-license-changes`   | Detect when a dependency changes its license between versions                                                              | No       | `true`                                    |
+| `detect-engine-changes`    | Detect when an upgraded dependency tightens its Node.js engine requirement                                                 | No       | `true`                                    |
 | `detect-install-scripts`   | Detect when a newly added or upgraded dependency introduces install scripts                                                | No       | `true`                                    |
 | `exclude-dev-dependencies` | Exclude devDependencies and their exclusive transitive dependencies from analysis                                          | No       | `false`                                   |
 | `exclude-packages`         | Comma-separated package names or wildcard patterns (e.g., `"@types/*, eslint-*"`) to exclude with their dependency trees   | No       | None                                      |
