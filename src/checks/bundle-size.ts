@@ -1,16 +1,16 @@
 import {formatBytes} from '../common.js';
 import {comparePackSizes, type PackInfo} from '../packs.js';
+import type {CheckResult} from './result.js';
 
 function formatBytesSigned(bytes: number): string {
   return `${bytes > 0 ? '+' : ''}${formatBytes(bytes)}`;
 }
 
 export async function scanForBundleSize(
-  messages: string[],
   basePacks: PackInfo[],
   sourcePacks: PackInfo[],
   threshold: number
-): Promise<void> {
+): Promise<CheckResult | undefined> {
   if (basePacks.length === 0 && sourcePacks.length === 0) {
     return;
   }
@@ -21,8 +21,11 @@ export async function scanForBundleSize(
   );
 
   if (threshold === -1 && packWarnings.length === 0) {
-    messages.push(`## 📦 Package Bundle Size\n\nNo bundle size changes.`);
-    return;
+    return {
+      check: 'bundle-size',
+      breached: false,
+      message: `## 📦 Package Bundle Size\n\nNo bundle size changes.`
+    };
   }
 
   if (packWarnings.length > 0) {
@@ -50,12 +53,14 @@ export async function scanForBundleSize(
         ? ''
         : `\nThese packages exceed the size change threshold of ${formatBytes(threshold)}:\n`;
 
-    messages.push(
-      `${heading}
+    return {
+      check: 'bundle-size',
+      breached: threshold !== -1 && hasIncreases,
+      message: `${heading}
 ${thresholdText}
 | 📦 Package | 📏 Base Size | 📏 Source Size | 📈 Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
-    );
+    };
   }
 }

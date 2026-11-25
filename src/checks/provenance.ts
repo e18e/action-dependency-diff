@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
 import {getMinTrustLevel, getProvenanceForPackageVersions} from '../npm.js';
+import type {CheckResult} from './result.js';
 
 export async function scanForProvenance(
-  messages: string[],
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>
-): Promise<void> {
+): Promise<CheckResult | undefined> {
   const provenanceRows: string[] = [];
 
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -47,8 +47,10 @@ export async function scanForProvenance(
   }
 
   if (provenanceRows.length > 0) {
-    messages.push(
-      `## ⚠️ Package Trust Level Decreased
+    return {
+      check: 'provenance',
+      breached: true,
+      message: `## ⚠️ Package Trust Level Decreased
 
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
@@ -56,6 +58,6 @@ export async function scanForProvenance(
 | 📦 Package | 🔒 Before | 🔓 After |
 | --- | --- | --- |
 ${provenanceRows.join('\n')}`
-    );
+    };
   }
 }

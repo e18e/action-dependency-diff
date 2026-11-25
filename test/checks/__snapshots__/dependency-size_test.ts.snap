@@ -15,8 +15,10 @@ exports[`scanForDependencySize > should not report changes below the threshold 1
 `;
 
 exports[`scanForDependencySize > should report negative upgrades on one line 1`] = `
-[
-  "## 📊 Dependency Size Changes
+{
+  "breached": false,
+  "check": "dependency-size",
+  "message": "## 📊 Dependency Size Changes
 
 > [!NOTE]
 > :tada: This PR removes 138.5 kB of dependencies.
@@ -26,7 +28,7 @@ exports[`scanForDependencySize > should report negative upgrades on one line 1`]
 | chai@5.0.0 → chai@5.0.2 | -138.5 kB |
 
 **Total size change:** -138.5 kB",
-]
+}
 `;
 
 exports[`scanForDependencySize > should report negative upgrades on one line 2`] = `
@@ -45,8 +47,10 @@ exports[`scanForDependencySize > should report negative upgrades on one line 2`]
 `;
 
 exports[`scanForDependencySize > should report new dependencies exceeding the threshold 1`] = `
-[
-  "## 📊 Dependency Size Changes
+{
+  "breached": true,
+  "check": "dependency-size",
+  "message": "## 📊 Dependency Size Changes
 
 > [!WARNING]
 > This PR adds 23.6 MB of new dependencies, which exceeds the threshold of 1 kB.
@@ -56,7 +60,7 @@ exports[`scanForDependencySize > should report new dependencies exceeding the th
 | typescript@5.9.3 | 23.6 MB |
 
 **Total size change:** 23.6 MB",
-]
+}
 `;
 
 exports[`scanForDependencySize > should report new dependencies exceeding the threshold 2`] = `
@@ -74,8 +78,10 @@ exports[`scanForDependencySize > should report new dependencies exceeding the th
 `;
 
 exports[`scanForDependencySize > should report removals when threshold is -1 1`] = `
-[
-  "## 📊 Dependency Size Changes
+{
+  "breached": false,
+  "check": "dependency-size",
+  "message": "## 📊 Dependency Size Changes
 
 > [!NOTE]
 > :tada: This PR removes 27 kB of dependencies.
@@ -85,7 +91,7 @@ exports[`scanForDependencySize > should report removals when threshold is -1 1`]
 | tinyexec@1.0.0 | -27 kB |
 
 **Total size change:** -27 kB",
-]
+}
 `;
 
 exports[`scanForDependencySize > should report removals when threshold is -1 2`] = `
@@ -103,8 +109,10 @@ exports[`scanForDependencySize > should report removals when threshold is -1 2`]
 `;
 
 exports[`scanForDependencySize > should report upgrades on one line 1`] = `
-[
-  "## 📊 Dependency Size Changes
+{
+  "breached": true,
+  "check": "dependency-size",
+  "message": "## 📊 Dependency Size Changes
 
 > [!WARNING]
 > This PR adds 137.8 kB of new dependencies, which exceeds the threshold of 1 B.
@@ -114,7 +122,7 @@ exports[`scanForDependencySize > should report upgrades on one line 1`] = `
 | chai@5.0.2 → chai@5.0.3 | 137.8 kB |
 
 **Total size change:** 137.8 kB",
-]
+}
 `;
 
 exports[`scanForDependencySize > should report upgrades on one line 2`] = `

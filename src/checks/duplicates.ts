@@ -1,4 +1,5 @@
 import {type ParsedLockFile, traverse, type VisitorFn} from 'lockparse';
+import type {CheckResult} from './result.js';
 
 function getLsCommand(
   lockfilePath: string,
@@ -53,13 +54,12 @@ function computeParentPaths(
 }
 
 export function scanForDuplicates(
-  messages: string[],
   threshold: number,
   dependencyMap: Map<string, Set<string>>,
   baseDependencyMap: Map<string, Set<string>>,
   lockfilePath: string,
   lockfile: ParsedLockFile
-): void {
+): CheckResult | undefined {
   const duplicateRows: string[] = [];
   const duplicateDependencyNames = new Set<string>();
 
@@ -130,12 +130,14 @@ export function scanForDuplicates(
     const helpMessage = exampleCommand
       ? `\n\n💡 To find out what depends on a specific package, run: \`${exampleCommand}\``
       : '';
-    messages.push(
-      `## ⚠️ New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
+    return {
+      check: 'duplicates',
+      breached: true,
+      message: `## ⚠️ New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
 
 | 📦 Package | 📋 Versions |
 | --- | --- |
 ${duplicateRows.join('\n')}${helpMessage}`
-    );
+    };
   }
 }

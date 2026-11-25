@@ -19896,6 +19896,9 @@ function setFailed(message) {
 function error(message, properties = {}) {
   issueCommand("error", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
+function warning(message, properties = {}) {
+  issueCommand("warning", toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+}
 function info(message) {
   process.stdout.write(message + os4.EOL);
 }
@@ -24634,7 +24637,7 @@ var all = {
 };
 
 // src/checks/replacements.ts
-function scanForReplacements(messages, baseDependencies, currentDependencies) {
+function scanForReplacements(baseDependencies, currentDependencies) {
   const replacementMessages = [];
   for (const [name] of currentDependencies) {
     if (!baseDependencies.has(name)) {
@@ -24674,8 +24677,10 @@ function scanForReplacements(messages, baseDependencies, currentDependencies) {
     }
   }
   if (replacementMessages.length > 0) {
-    messages.push(
-      `## \u26A0\uFE0F Recommended Package Replacements
+    return {
+      check: "replacements",
+      breached: true,
+      message: `## \u26A0\uFE0F Recommended Package Replacements
 
 The following new packages or versions have community recommended replacements:
 
@@ -24688,7 +24693,7 @@ ${replacementMessages.join("\n")}
 > They may not always be a straightforward migration, so please review carefully
 > and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
-    );
+    };
   }
 }
 
@@ -24733,7 +24738,7 @@ function computeParentPaths(lockfile, duplicateDependencyNames, dependencyMap) {
   traverse(lockfile.root, visitor);
   return parentPaths;
 }
-function scanForDuplicates(messages, threshold, dependencyMap, baseDependencyMap, lockfilePath, lockfile) {
+function scanForDuplicates(threshold, dependencyMap, baseDependencyMap, lockfilePath, lockfile) {
   const duplicateRows = [];
   const duplicateDependencyNames = /* @__PURE__ */ new Set();
   for (const [packageName, currentVersionSet] of dependencyMap) {
@@ -24791,18 +24796,20 @@ function scanForDuplicates(messages, threshold, dependencyMap, baseDependencyMap
     const helpMessage = exampleCommand ? `
 
 \u{1F4A1} To find out what depends on a specific package, run: \`${exampleCommand}\`` : "";
-    messages.push(
-      `## \u26A0\uFE0F New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
+    return {
+      check: "duplicates",
+      breached: true,
+      message: `## \u26A0\uFE0F New Duplicate Dependencies (found: ${duplicateRows.length}, threshold: ${threshold})
 
 | \u{1F4E6} Package | \u{1F4CB} Versions |
 | --- | --- |
 ${duplicateRows.join("\n")}${helpMessage}`
-    );
+    };
   }
 }
 
 // src/checks/dependency-count.ts
-function scanForDependencyCount(messages, threshold, currentDeps, baseDeps) {
+function scanForDependencyCount(threshold, currentDeps, baseDeps) {
   const currentDepCount = Array.from(currentDeps.values()).reduce(
     (sum, versions) => sum + versions.size,
     0
@@ -24816,11 +24823,14 @@ function scanForDependencyCount(messages, threshold, currentDeps, baseDeps) {
   info(`Current dependency count: ${currentDepCount}`);
   info(`Dependency count increase: ${depIncrease}`);
   if (depIncrease >= threshold) {
-    messages.push(
-      `## \u26A0\uFE0F Dependency Count
+    return {
+      check: "dependency-count",
+      // a threshold of 0 or less would otherwise fail PRs that add nothing
+      breached: depIncrease > 0,
+      message: `## \u26A0\uFE0F Dependency Count
 
 This PR adds ${depIncrease} new dependencies (${baseDepCount} \u2192 ${currentDepCount}), which exceeds the threshold of ${threshold}.`
-    );
+    };
   }
 }
 
@@ -24896,7 +24906,7 @@ async function removeUnsupportedOptionalDependencies(lockFile, versionInfo) {
     }
   }
 }
-async function scanForDependencySize(messages, threshold, currentDeps, baseDeps, currentLockFile, baseLockFile) {
+async function scanForDependencySize(threshold, currentDeps, baseDeps, currentLockFile, baseLockFile) {
   const newVersions = [];
   const removedVersions = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -24948,8 +24958,9 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
       const packageRows = displayEntries.map(
         ({ label, size }) => `| ${label} | ${size === null ? "_Unknown_" : formatBytes(size)} |`
       ).join("\n");
+      const breached = threshold !== -1 && sizeData.totalSize > 0 && sizeData.totalSize >= threshold;
       let alert = "";
-      if (threshold !== -1 && sizeData.totalSize >= threshold) {
+      if (breached) {
         alert = `> [!WARNING]
 > This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.
 
@@ -24960,15 +24971,17 @@ async function scanForDependencySize(messages, threshold, currentDeps, baseDeps,
 
 `;
       }
-      messages.push(
-        `## \u{1F4CA} Dependency Size Changes
+      return {
+        check: "dependency-size",
+        breached,
+        message: `## \u{1F4CA} Dependency Size Changes
 
 ${alert}| \u{1F4E6} Package | \u{1F4CF} Size |
 | --- | --- |
 ${packageRows}
 
 **Total size change:** ${formatBytes(sizeData.totalSize)}`
-      );
+      };
     }
   } catch (err) {
     info(`Failed to calculate total dependency size increase: ${err}`);
@@ -24976,7 +24989,7 @@ ${packageRows}
 }
 
 // src/checks/provenance.ts
-async function scanForProvenance(messages, currentDeps, baseDeps) {
+async function scanForProvenance(currentDeps, baseDeps) {
   const provenanceRows = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
@@ -25010,8 +25023,10 @@ async function scanForProvenance(messages, currentDeps, baseDeps) {
     }
   }
   if (provenanceRows.length > 0) {
-    messages.push(
-      `## \u26A0\uFE0F Package Trust Level Decreased
+    return {
+      check: "provenance",
+      breached: true,
+      message: `## \u26A0\uFE0F Package Trust Level Decreased
 
 > [!CAUTION]
 > Decreased trust levels may indicate a higher risk of supply chain attacks. Please review these changes carefully.
@@ -25019,12 +25034,12 @@ async function scanForProvenance(messages, currentDeps, baseDeps) {
 | \u{1F4E6} Package | \u{1F512} Before | \u{1F513} After |
 | --- | --- | --- |
 ${provenanceRows.join("\n")}`
-    );
+    };
   }
 }
 
 // src/checks/license.ts
-async function scanForLicenses(messages, currentDeps, baseDeps) {
+async function scanForLicenses(currentDeps, baseDeps) {
   const licenseRows = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
@@ -25074,18 +25089,20 @@ async function scanForLicenses(messages, currentDeps, baseDeps) {
     }
   }
   if (licenseRows.length > 0) {
-    messages.push(
-      `## \u26A0\uFE0F License Changes
+    return {
+      check: "license",
+      breached: true,
+      message: `## \u26A0\uFE0F License Changes
 
 | \u{1F4E6} Package | \u{1F4DC} Previous License | \u{1F4DC} New License |
 | --- | --- | --- |
 ${licenseRows.join("\n")}`
-    );
+    };
   }
 }
 
 // src/checks/install-scripts.ts
-async function scanForInstallScripts(messages, currentDeps, baseDeps) {
+async function scanForInstallScripts(currentDeps, baseDeps) {
   const installScriptRows = [];
   for (const [packageName, currentVersionSet] of currentDeps) {
     const baseVersionSet = baseDeps.get(packageName);
@@ -25130,8 +25147,10 @@ async function scanForInstallScripts(messages, currentDeps, baseDeps) {
     }
   }
   if (installScriptRows.length > 0) {
-    messages.push(
-      `## \u26A0\uFE0F Install Scripts Added
+    return {
+      check: "install-scripts",
+      breached: true,
+      message: `## \u26A0\uFE0F Install Scripts Added
 
 > [!WARNING]
 > These packages run scripts during \`npm install\`. New install scripts can execute arbitrary code and increase supply chain risk. Please review them carefully.
@@ -25139,7 +25158,7 @@ async function scanForInstallScripts(messages, currentDeps, baseDeps) {
 | \u{1F4E6} Package | \u{1F504} Change | \u{1F527} Added Install Scripts |
 | --- | --- | --- |
 ${installScriptRows.join("\n")}`
-    );
+    };
   }
 }
 
@@ -25147,7 +25166,7 @@ ${installScriptRows.join("\n")}`
 function formatBytesSigned(bytes) {
   return `${bytes > 0 ? "+" : ""}${formatBytes(bytes)}`;
 }
-async function scanForBundleSize(messages, basePacks, sourcePacks, threshold) {
+async function scanForBundleSize(basePacks, sourcePacks, threshold) {
   if (basePacks.length === 0 && sourcePacks.length === 0) {
     return;
   }
@@ -25156,10 +25175,13 @@ async function scanForBundleSize(messages, basePacks, sourcePacks, threshold) {
     (change) => change.exceedsThreshold
   );
   if (threshold === -1 && packWarnings.length === 0) {
-    messages.push(`## \u{1F4E6} Package Bundle Size
+    return {
+      check: "bundle-size",
+      breached: false,
+      message: `## \u{1F4E6} Package Bundle Size
 
-No bundle size changes.`);
-    return;
+No bundle size changes.`
+    };
   }
   if (packWarnings.length > 0) {
     const hasDecreases = packWarnings.some((c) => c.sizeChange < 0);
@@ -25174,14 +25196,46 @@ No bundle size changes.`);
     const thresholdText = threshold === -1 ? "" : `
 These packages exceed the size change threshold of ${formatBytes(threshold)}:
 `;
-    messages.push(
-      `${heading}
+    return {
+      check: "bundle-size",
+      breached: threshold !== -1 && hasIncreases,
+      message: `${heading}
 ${thresholdText}
 | \u{1F4E6} Package | \u{1F4CF} Base Size | \u{1F4CF} Source Size | \u{1F4C8} Size Change |
 | --- | --- | --- | --- |
 ${packRows}`
-    );
+    };
   }
+}
+
+// src/checks/result.ts
+var checkNames = [
+  "dependency-count",
+  "dependency-size",
+  "duplicates",
+  "provenance",
+  "license",
+  "install-scripts",
+  "bundle-size",
+  "replacements"
+];
+function isCheckName(name) {
+  return checkNames.includes(name);
+}
+function parseFailOn(input) {
+  const checks = /* @__PURE__ */ new Set();
+  for (const name of parseCommaList(input)) {
+    if (!isCheckName(name)) {
+      throw new Error(
+        `Unknown check "${name}" in fail-on. Valid checks are: ${checkNames.join(", ")}`
+      );
+    }
+    checks.add(name);
+  }
+  return checks;
+}
+function getFailedChecks(results, failOn) {
+  return results.filter((result) => result.breached && failOn.has(result.check)).map((result) => result.check);
 }
 
 // src/constants.ts
@@ -25291,6 +25345,7 @@ async function analyzeAndComment() {
     getInput("pack-size-threshold") || "50000",
     10
   );
+  const failOn = parseFailOn(getInput("fail-on"));
   if (Number.isNaN(prNumber) || prNumber < 1) {
     info("No valid pull request number was found. Skipping.");
     return;
@@ -25371,32 +25426,39 @@ async function analyzeAndComment() {
   info(`Size threshold set to ${formatBytes(sizeThreshold)}`);
   info(`Duplicate threshold set to ${duplicateThreshold}`);
   info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
-  const messages = [];
-  scanForDependencyCount(messages, dependencyThreshold, currentDeps, baseDeps);
+  const results = [];
+  const addResult = (result) => {
+    if (result) {
+      results.push(result);
+    }
+  };
+  addResult(scanForDependencyCount(dependencyThreshold, currentDeps, baseDeps));
   if (duplicateThreshold > 0) {
-    scanForDuplicates(
-      messages,
-      duplicateThreshold,
-      currentDeps,
-      baseDeps,
-      lockfilePath,
-      parsedCurrentLock
+    addResult(
+      scanForDuplicates(
+        duplicateThreshold,
+        currentDeps,
+        baseDeps,
+        lockfilePath,
+        parsedCurrentLock
+      )
     );
   }
-  await scanForDependencySize(
-    messages,
-    sizeThreshold,
-    currentDeps,
-    baseDeps,
-    parsedCurrentLock,
-    parsedBaseLock
+  addResult(
+    await scanForDependencySize(
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock,
+      parsedBaseLock
+    )
   );
-  await scanForProvenance(messages, currentDeps, baseDeps);
+  addResult(await scanForProvenance(currentDeps, baseDeps));
   if (detectInstallScripts) {
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    addResult(await scanForInstallScripts(currentDeps, baseDeps));
   }
   if (detectLicenseChanges) {
-    await scanForLicenses(messages, currentDeps, baseDeps);
+    addResult(await scanForLicenses(currentDeps, baseDeps));
   }
   const basePackagesPattern = getInput("base-packages");
   const sourcePackagesPattern = getInput("source-packages");
@@ -25410,11 +25472,8 @@ async function analyzeAndComment() {
       info(
         `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
       );
-      await scanForBundleSize(
-        messages,
-        basePacks,
-        sourcePacks,
-        packSizeThreshold
+      addResult(
+        await scanForBundleSize(basePacks, sourcePacks, packSizeThreshold)
       );
     } catch (err) {
       info(`Failed to compare pack sizes: ${err}`);
@@ -25437,8 +25496,25 @@ async function analyzeAndComment() {
       depTypes,
       excludePackages
     );
-    scanForReplacements(messages, baseDependencies, currentDependencies);
+    addResult(scanForReplacements(baseDependencies, currentDependencies));
   }
+  const disabledChecks = [];
+  if (duplicateThreshold <= 0) disabledChecks.push("duplicates");
+  if (!detectInstallScripts) disabledChecks.push("install-scripts");
+  if (!detectLicenseChanges) disabledChecks.push("license");
+  if (!detectReplacements) disabledChecks.push("replacements");
+  if (!basePackagesPattern || !sourcePackagesPattern) {
+    disabledChecks.push("bundle-size");
+  }
+  for (const check of disabledChecks) {
+    if (failOn.has(check)) {
+      warning(
+        `fail-on includes "${check}", but that check is disabled so it can't fail the action`
+      );
+    }
+  }
+  const messages = results.map((result) => result.message);
+  const failedChecks = getFailedChecks(results, failOn);
   const report = messages.length === 0 ? "## e18e dependency analysis\n\nNo dependency warnings found.\n" : messages.join("\n\n");
   const commentBody = `${COMMENT_TAG}
 ${report}`;
@@ -25453,19 +25529,17 @@ ${report}`;
     );
     setOutput("artifact-path", outputPath);
     info(`Wrote artifact to ${outputPath}`);
-    return;
-  }
-  const octokit = getOctokit(token);
-  if (messages.length === 0) {
-    const existingCommentId = await findExistingComment(octokit, prNumber);
-    if (existingCommentId) {
+  } else {
+    const octokit = getOctokit(token);
+    if (messages.length > 0 || await findExistingComment(octokit, prNumber)) {
       await upsertComment(octokit, prNumber, commentBody);
     } else {
       info("No dependency warnings found. Skipping comment creation.");
     }
-    return;
   }
-  await upsertComment(octokit, prNumber, commentBody);
+  if (failedChecks.length > 0) {
+    setFailed(`Dependency checks failed: ${failedChecks.join(", ")}`);
+  }
 }
 async function run() {
   try {

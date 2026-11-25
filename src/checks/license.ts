@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
 import {getLicensesForPackageVersions} from '../npm.js';
+import type {CheckResult} from './result.js';
 
 export async function scanForLicenses(
-  messages: string[],
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>
-): Promise<void> {
+): Promise<CheckResult | undefined> {
   const licenseRows: string[] = [];
 
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -65,12 +65,14 @@ export async function scanForLicenses(
   }
 
   if (licenseRows.length > 0) {
-    messages.push(
-      `## ⚠️ License Changes
+    return {
+      check: 'license',
+      breached: true,
+      message: `## ⚠️ License Changes
 
 | 📦 Package | 📜 Previous License | 📜 New License |
 | --- | --- | --- |
 ${licenseRows.join('\n')}`
-    );
+    };
   }
 }
