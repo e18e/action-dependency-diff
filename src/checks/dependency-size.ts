@@ -6,6 +6,7 @@ import {
   isSupportedArchitecture
 } from '../npm.js';
 import {formatBytes} from '../common.js';
+import type {CheckResult} from './result.js';
 
 interface PackageGroup {
   added: Array<{version: string; size: number | null}>;
@@ -118,13 +119,12 @@ async function removeUnsupportedOptionalDependencies(
 }
 
 export async function scanForDependencySize(
-  messages: string[],
   threshold: number,
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>,
   currentLockFile: ParsedLockFile,
   baseLockFile: ParsedLockFile
-): Promise<void> {
+): Promise<CheckResult | undefined> {
   const newVersions: Array<{
     name: string;
     version: string;
@@ -204,22 +204,25 @@ export async function scanForDependencySize(
         )
         .join('\n');
 
+      const breached = threshold !== -1 && sizeData.totalSize >= threshold;
       let alert = '';
-      if (threshold !== -1 && sizeData.totalSize >= threshold) {
+      if (breached) {
         alert = `> [!WARNING]\n> This PR adds ${formatBytes(sizeData.totalSize)} of new dependencies, which exceeds the threshold of ${formatBytes(threshold)}.\n\n`;
       } else if (sizeData.totalSize < 0) {
         alert = `> [!NOTE]\n> :tada: This PR removes ${formatBytes(Math.abs(sizeData.totalSize))} of dependencies.\n\n`;
       }
 
-      messages.push(
-        `## 📊 Dependency Size Changes
+      return {
+        check: 'dependency-size',
+        breached,
+        message: `## 📊 Dependency Size Changes
 
 ${alert}| 📦 Package | 📏 Size |
 | --- | --- |
 ${packageRows}
 
 **Total size change:** ${formatBytes(sizeData.totalSize)}`
-      );
+      };
     }
   } catch (err) {
     core.info(`Failed to calculate total dependency size increase: ${err}`);

@@ -28,6 +28,11 @@ import {scanForLicenses} from './checks/license.js';
 import {scanForInstallScripts} from './checks/install-scripts.js';
 import {scanForBundleSize} from './checks/bundle-size.js';
 import {formatBytes, parseCommaList} from './common.js';
+import {
+  type CheckResult,
+  getFailedChecks,
+  parseFailOn
+} from './checks/result.js';
 import {ARTIFACT_FILENAME, COMMENT_TAG} from './constants.js';
 import {findExistingComment, upsertComment, writeJobSummary} from './github.js';
 
@@ -95,6 +100,7 @@ async function analyzeAndComment(): Promise<void> {
     core.getInput('pack-size-threshold') || '50000',
     10
   );
+  const failOn = parseFailOn(core.getInput('fail-on'));
 
   if (Number.isNaN(prNumber) || prNumber < 1) {
     core.info('No valid pull request number was found. Skipping.');
@@ -187,37 +193,44 @@ async function analyzeAndComment(): Promise<void> {
   core.info(`Duplicate threshold set to ${duplicateThreshold}`);
   core.info(`Pack size threshold set to ${formatBytes(packSizeThreshold)}`);
 
-  const messages: string[] = [];
+  const results: CheckResult[] = [];
+  const addResult = (result: CheckResult | undefined): void => {
+    if (result) {
+      results.push(result);
+    }
+  };
 
-  scanForDependencyCount(messages, dependencyThreshold, currentDeps, baseDeps);
+  addResult(scanForDependencyCount(dependencyThreshold, currentDeps, baseDeps));
 
   if (duplicateThreshold > 0) {
-    scanForDuplicates(
-      messages,
-      duplicateThreshold,
-      currentDeps,
-      baseDeps,
-      lockfilePath,
-      parsedCurrentLock
+    addResult(
+      scanForDuplicates(
+        duplicateThreshold,
+        currentDeps,
+        baseDeps,
+        lockfilePath,
+        parsedCurrentLock
+      )
     );
   }
 
-  await scanForDependencySize(
-    messages,
-    sizeThreshold,
-    currentDeps,
-    baseDeps,
-    parsedCurrentLock,
-    parsedBaseLock
+  addResult(
+    await scanForDependencySize(
+      sizeThreshold,
+      currentDeps,
+      baseDeps,
+      parsedCurrentLock,
+      parsedBaseLock
+    )
   );
-  await scanForProvenance(messages, currentDeps, baseDeps);
+  addResult(await scanForProvenance(currentDeps, baseDeps));
 
   if (detectInstallScripts) {
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    addResult(await scanForInstallScripts(currentDeps, baseDeps));
   }
 
   if (detectLicenseChanges) {
-    await scanForLicenses(messages, currentDeps, baseDeps);
+    addResult(await scanForLicenses(currentDeps, baseDeps));
   }
 
   const basePackagesPattern = core.getInput('base-packages');
@@ -236,11 +249,8 @@ async function analyzeAndComment(): Promise<void> {
         `Found ${basePacks.length} base packs and ${sourcePacks.length} source packs`
       );
 
-      await scanForBundleSize(
-        messages,
-        basePacks,
-        sourcePacks,
-        packSizeThreshold
+      addResult(
+        await scanForBundleSize(basePacks, sourcePacks, packSizeThreshold)
       );
     } catch (err) {
       core.info(`Failed to compare pack sizes: ${err}`);
@@ -269,8 +279,11 @@ async function analyzeAndComment(): Promise<void> {
       excludePackages
     );
 
-    scanForReplacements(messages, baseDependencies, currentDependencies);
+    addResult(scanForReplacements(baseDependencies, currentDependencies));
   }
+
+  const messages = results.map((result) => result.message);
+  const failedChecks = getFailedChecks(results, failOn);
 
   const report =
     messages.length === 0
@@ -292,22 +305,21 @@ async function analyzeAndComment(): Promise<void> {
 
     core.setOutput('artifact-path', outputPath);
     core.info(`Wrote artifact to ${outputPath}`);
-    return;
-  }
+  } else {
+    const octokit = github.getOctokit(token);
 
-  const octokit = github.getOctokit(token);
-
-  if (messages.length === 0) {
-    const existingCommentId = await findExistingComment(octokit, prNumber);
-    if (existingCommentId) {
+    if (messages.length > 0 || (await findExistingComment(octokit, prNumber))) {
       await upsertComment(octokit, prNumber, commentBody);
     } else {
       core.info('No dependency warnings found. Skipping comment creation.');
     }
-    return;
   }
 
-  await upsertComment(octokit, prNumber, commentBody);
+  // fail after the comment or artifact is written, so the report still
+  // shows up on the pull request
+  if (failedChecks.length > 0) {
+    core.setFailed(`Dependency checks failed: ${failedChecks.join(', ')}`);
+  }
 }
 
 async function run(): Promise<void> {

@@ -1,10 +1,10 @@
 import {all as allReplacements, resolveDocUrl} from 'module-replacements';
+import type {CheckResult} from './result.js';
 
 export function scanForReplacements(
-  messages: string[],
   baseDependencies: Map<string, string>,
   currentDependencies: Map<string, string>
-): void {
+): CheckResult | undefined {
   const replacementMessages: string[] = [];
 
   for (const [name] of currentDependencies) {
@@ -55,8 +55,10 @@ export function scanForReplacements(
   }
 
   if (replacementMessages.length > 0) {
-    messages.push(
-      `## ⚠️ Recommended Package Replacements
+    return {
+      check: 'replacements',
+      breached: true,
+      message: `## ⚠️ Recommended Package Replacements
 
 The following new packages or versions have community recommended replacements:
 
@@ -69,6 +71,6 @@ ${replacementMessages.join('\n')}
 > They may not always be a straightforward migration, so please review carefully
 > and use the \`exclude-packages\` input if you want to ignore any of them in future.
 `
-    );
+    };
   }
 }

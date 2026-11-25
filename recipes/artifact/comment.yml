@@ -9,7 +9,8 @@ on:
 jobs:
   post_comment:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
+    # also post the report when `fail-on` failed the analyze run
+    if: github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure'
     permissions:
       pull-requests: write
       actions: read
