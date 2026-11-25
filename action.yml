@@ -52,6 +52,9 @@ inputs:
     description: 'Detect when a newly added or upgraded dependency introduces install scripts'
     required: false
     default: true
+  fail-on:
+    description: 'Comma-separated list of checks that fail the action when they warn (dependency-count, dependency-size, duplicates, provenance, license, install-scripts, bundle-size, replacements). The comment or artifact is still written first.'
+    required: false
   exclude-dev-dependencies:
     description: 'Exclude devDependencies and their exclusive transitive dependencies from analysis'
     required: false

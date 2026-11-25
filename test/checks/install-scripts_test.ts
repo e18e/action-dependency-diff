@@ -22,15 +22,14 @@ describe('scanForInstallScripts', () => {
       createMeta('pkg-new', '1.0.0', {postinstall: 'node install.js'})
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map<string, Set<string>>();
     const currentDeps = new Map([['pkg-new', new Set(['1.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain('## ⚠️ Install Scripts Added');
-    expect(messages[0]).toContain(
+    expect(result).toBeDefined();
+    expect(result?.message).toContain('## ⚠️ Install Scripts Added');
+    expect(result?.message).toContain(
       '| pkg-new@1.0.0 | New package | `postinstall` |'
     );
   });
@@ -45,14 +44,13 @@ describe('scanForInstallScripts', () => {
       })
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map([['pkg-upgrade', new Set(['1.0.0'])]]);
     const currentDeps = new Map([['pkg-upgrade', new Set(['2.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain(
+    expect(result).toBeDefined();
+    expect(result?.message).toContain(
       '| pkg-upgrade@2.0.0 | Upgraded | `install`, `postinstall` |'
     );
   });
@@ -70,14 +68,13 @@ describe('scanForInstallScripts', () => {
       })
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map([['pkg-added-script', new Set(['1.0.0'])]]);
     const currentDeps = new Map([['pkg-added-script', new Set(['2.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(1);
-    expect(messages[0]).toContain(
+    expect(result).toBeDefined();
+    expect(result?.message).toContain(
       '| pkg-added-script@2.0.0 | Upgraded | `preinstall` |'
     );
   });
@@ -92,13 +89,12 @@ describe('scanForInstallScripts', () => {
       createMeta('pkg-existing', '2.0.0', {postinstall: 'node install.js'})
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map([['pkg-existing', new Set(['1.0.0'])]]);
     const currentDeps = new Map([['pkg-existing', new Set(['2.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should ignore non-install lifecycle scripts', async () => {
@@ -111,25 +107,23 @@ describe('scanForInstallScripts', () => {
       })
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map<string, Set<string>>();
     const currentDeps = new Map([['pkg-other-scripts', new Set(['1.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should skip packages with no metadata', async () => {
     metaCache.set('pkg-missing@1.0.0', null);
 
-    const messages: string[] = [];
     const baseDeps = new Map<string, Set<string>>();
     const currentDeps = new Map([['pkg-missing', new Set(['1.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should not report packages that were not upgraded', async () => {
@@ -138,12 +132,11 @@ describe('scanForInstallScripts', () => {
       createMeta('pkg-unchanged', '1.0.0', {postinstall: 'node install.js'})
     );
 
-    const messages: string[] = [];
     const baseDeps = new Map([['pkg-unchanged', new Set(['1.0.0'])]]);
     const currentDeps = new Map([['pkg-unchanged', new Set(['1.0.0'])]]);
 
-    await scanForInstallScripts(messages, currentDeps, baseDeps);
+    const result = await scanForInstallScripts(currentDeps, baseDeps);
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 });

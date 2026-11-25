@@ -75,13 +75,11 @@ describe('scanForDependencySize', () => {
   });
 
   it('should do nothing if no dependency changes', async () => {
-    const messages: string[] = [];
     const threshold = 1;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects({}, {});
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -89,11 +87,10 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should report new dependencies exceeding the threshold', async () => {
-    const messages: string[] = [];
     const threshold = 1000;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects(
@@ -103,8 +100,7 @@ describe('scanForDependencySize', () => {
         }
       );
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -112,12 +108,11 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
     expect(coreLogs).toMatchSnapshot();
   });
 
   it('should report removals when threshold is -1', async () => {
-    const messages: string[] = [];
     const threshold = -1;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects(
@@ -127,8 +122,7 @@ describe('scanForDependencySize', () => {
         {}
       );
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -136,12 +130,11 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
     expect(coreLogs).toMatchSnapshot();
   });
 
   it('should not report changes below the threshold', async () => {
-    const messages: string[] = [];
     const threshold = 50_000;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects(
@@ -151,8 +144,7 @@ describe('scanForDependencySize', () => {
         }
       );
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -160,12 +152,11 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
     expect(coreLogs).toMatchSnapshot();
   });
 
   it('should report upgrades on one line', async () => {
-    const messages: string[] = [];
     const threshold = 1;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects(
@@ -177,8 +168,7 @@ describe('scanForDependencySize', () => {
         }
       );
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -186,12 +176,11 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
     expect(coreLogs).toMatchSnapshot();
   });
 
   it('should report negative upgrades on one line', async () => {
-    const messages: string[] = [];
     const threshold = -1;
     const {currentDeps, baseDeps, currentLockFile, baseLockFile} =
       createMockObjects(
@@ -203,8 +192,7 @@ describe('scanForDependencySize', () => {
         }
       );
 
-    await scanForDependencySize(
-      messages,
+    const result = await scanForDependencySize(
       threshold,
       currentDeps,
       baseDeps,
@@ -212,7 +200,7 @@ describe('scanForDependencySize', () => {
       baseLockFile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
     expect(coreLogs).toMatchSnapshot();
   });
 });

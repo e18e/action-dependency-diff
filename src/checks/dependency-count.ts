@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
+import type {CheckResult} from './result.js';
 
 export function scanForDependencyCount(
-  messages: string[],
   threshold: number,
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>
-): void {
+): CheckResult | undefined {
   const currentDepCount = Array.from(currentDeps.values()).reduce(
     (sum, versions) => sum + versions.size,
     0
@@ -20,10 +20,13 @@ export function scanForDependencyCount(
   core.info(`Dependency count increase: ${depIncrease}`);
 
   if (depIncrease >= threshold) {
-    messages.push(
-      `## ⚠️ Dependency Count
+    return {
+      check: 'dependency-count',
+      // a threshold of 0 or less would otherwise fail PRs that add nothing
+      breached: depIncrease > 0,
+      message: `## ⚠️ Dependency Count
 
 This PR adds ${depIncrease} new dependencies (${baseDepCount} → ${currentDepCount}), which exceeds the threshold of ${threshold}.`
-    );
+    };
   }
 }

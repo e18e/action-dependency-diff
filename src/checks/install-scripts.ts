@@ -1,11 +1,11 @@
 import * as core from '@actions/core';
 import {getInstallScriptsForPackageVersions} from '../npm.js';
+import type {CheckResult} from './result.js';
 
 export async function scanForInstallScripts(
-  messages: string[],
   currentDeps: Map<string, Set<string>>,
   baseDeps: Map<string, Set<string>>
-): Promise<void> {
+): Promise<CheckResult | undefined> {
   const installScriptRows: string[] = [];
 
   for (const [packageName, currentVersionSet] of currentDeps) {
@@ -59,8 +59,10 @@ export async function scanForInstallScripts(
   }
 
   if (installScriptRows.length > 0) {
-    messages.push(
-      `## ⚠️ Install Scripts Added
+    return {
+      check: 'install-scripts',
+      breached: true,
+      message: `## ⚠️ Install Scripts Added
 
 > [!WARNING]
 > These packages run scripts during \`npm install\`. New install scripts can execute arbitrary code and increase supply chain risk. Please review them carefully.
@@ -68,6 +70,6 @@ export async function scanForInstallScripts(
 | 📦 Package | 🔄 Change | 🔧 Added Install Scripts |
 | --- | --- | --- |
 ${installScriptRows.join('\n')}`
-    );
+    };
   }
 }

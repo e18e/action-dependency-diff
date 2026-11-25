@@ -52,6 +52,7 @@ jobs:
 | `detect-replacements`      | Detect modules which have community suggested alternatives                                                                 | No       | `true`                                    |
 | `detect-license-changes`   | Detect when a dependency changes its license between versions                                                              | No       | `true`                                    |
 | `detect-install-scripts`   | Detect when a newly added or upgraded dependency introduces install scripts                                                | No       | `true`                                    |
+| `fail-on`                  | Comma-separated list of checks that fail the action when they warn (see [Failing on Warnings](#failing-on-warnings))       | No       | None                                      |
 | `exclude-dev-dependencies` | Exclude devDependencies and their exclusive transitive dependencies from analysis                                          | No       | `false`                                   |
 | `exclude-packages`         | Comma-separated package names or wildcard patterns (e.g., `"@types/*, eslint-*"`) to exclude with their dependency trees   | No       | None                                      |
 | `working-directory`        | Working directory to scan for package lock file                                                                            | No       | None                                      |
@@ -145,6 +146,21 @@ You can disable this check with:
     detect-install-scripts: false
 ```
 
+## Failing on Warnings
+
+By default the action only reports, so the check always passes. To fail the action when certain checks warn, list them in `fail-on`. You can then mark the job as a required status check to block merging.
+
+```yaml
+- name: Create Diff
+  uses: e18e/action-dependency-diff@v1
+  with:
+    fail-on: dependency-count, dependency-size
+```
+
+The available checks are `dependency-count`, `dependency-size`, `duplicates`, `provenance`, `license`, `install-scripts`, `bundle-size` and `replacements`. Checks that aren't listed stay advisory.
+
+The comment (or artifact) is written before the action fails, so the report still shows up on the pull request. Size decreases, and reports shown because a threshold is `-1`, never fail the action.
+
 ## Supported package managers
 
 - npm (package-lock.json)
@@ -186,6 +202,8 @@ If you'd prefer not to use `pull_request_target`, you can use a two-workflow set
   with:
     mode: comment-from-artifact
 ```
+
+If you use `fail-on` with artifact mode, the analyze workflow fails when a listed check warns. Make sure the artifact is still uploaded and the comment workflow runs for failed runs too, as the recipes do.
 
 See the [`recipes/artifact/`](./recipes/artifact/) directory for complete workflow files.
 

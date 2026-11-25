@@ -4,7 +4,6 @@ import type {ParsedLockFile, ParsedDependency} from 'lockparse';
 
 describe('scanForDuplicates', () => {
   it('should do nothing if no duplicates are found', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0'])],
@@ -24,8 +23,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       new Map(),
@@ -33,11 +31,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should report duplicates when threshold is exceeded', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])],
@@ -81,8 +78,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       new Map(),
@@ -90,11 +86,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
   });
 
   it('should do nothing when duplicates are below threshold', () => {
-    const messages: string[] = [];
     const threshold = 2;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])],
@@ -138,8 +133,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       new Map(),
@@ -147,11 +141,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should truncate long parent paths in the report', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])]
@@ -202,8 +195,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       new Map(),
@@ -211,11 +203,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
   });
 
   it('should not report duplicates which already exist in the base', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])]
@@ -237,8 +228,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       baseDependencyMap,
@@ -246,11 +236,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should not report duplicates when the version count is unchanged', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.2.0'])]
@@ -272,8 +261,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       baseDependencyMap,
@@ -281,11 +269,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should not report duplicates when versions are removed', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])]
@@ -307,8 +294,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       baseDependencyMap,
@@ -316,11 +302,10 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toHaveLength(0);
+    expect(result).toBeUndefined();
   });
 
   it('should only report packages with more versions than the base', () => {
-    const messages: string[] = [];
     const threshold = 1;
     const dependencyMap = new Map<string, Set<string>>([
       ['package-a', new Set(['1.0.0', '1.1.0'])],
@@ -384,8 +369,7 @@ describe('scanForDuplicates', () => {
       }
     };
 
-    scanForDuplicates(
-      messages,
+    const result = scanForDuplicates(
       threshold,
       dependencyMap,
       baseDependencyMap,
@@ -393,6 +377,6 @@ describe('scanForDuplicates', () => {
       lockfile
     );
 
-    expect(messages).toMatchSnapshot();
+    expect(result).toMatchSnapshot();
   });
 });
