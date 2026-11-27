@@ -25217,7 +25217,7 @@ async function writeJobSummary(report) {
     info(`Failed to write job summary: ${err}`);
   }
 }
-async function upsertComment(octokit, prNumber, body) {
+async function upsertComment(octokit, prNumber, body, { createIfMissing = true } = {}) {
   const { owner, repo } = context2.repo;
   const existingCommentId = await findExistingComment(octokit, prNumber);
   if (existingCommentId) {
@@ -25228,7 +25228,7 @@ async function upsertComment(octokit, prNumber, body) {
       body
     });
     info(`Updated existing dependency diff comment #${existingCommentId}`);
-  } else {
+  } else if (createIfMissing) {
     await octokit.rest.issues.createComment({
       owner,
       repo,
@@ -25236,6 +25236,8 @@ async function upsertComment(octokit, prNumber, body) {
       body
     });
     info("Created new dependency diff comment");
+  } else {
+    info("No existing dependency diff comment, skipping creation");
   }
 }
 
@@ -25254,7 +25256,9 @@ async function postCommentFromArtifact() {
   );
   info(`Posting comment to PR #${result.pr_number}`);
   const octokit = getOctokit(token);
-  await upsertComment(octokit, result.pr_number, result.body);
+  await upsertComment(octokit, result.pr_number, result.body, {
+    createIfMissing: result.has_warnings !== false
+  });
 }
 async function analyzeAndComment() {
   const baseWorkspace = process2.env.GITHUB_WORKSPACE || process2.cwd();
@@ -25449,23 +25453,20 @@ ${report}`;
     await fs4.mkdir(tmpDir, { recursive: true });
     await fs4.writeFile(
       outputPath,
-      JSON.stringify({ pr_number: prNumber, body: commentBody })
+      JSON.stringify({
+        pr_number: prNumber,
+        body: commentBody,
+        has_warnings: messages.length > 0
+      })
     );
     setOutput("artifact-path", outputPath);
     info(`Wrote artifact to ${outputPath}`);
     return;
   }
   const octokit = getOctokit(token);
-  if (messages.length === 0) {
-    const existingCommentId = await findExistingComment(octokit, prNumber);
-    if (existingCommentId) {
-      await upsertComment(octokit, prNumber, commentBody);
-    } else {
-      info("No dependency warnings found. Skipping comment creation.");
-    }
-    return;
-  }
-  await upsertComment(octokit, prNumber, commentBody);
+  await upsertComment(octokit, prNumber, commentBody, {
+    createIfMissing: messages.length > 0
+  });
 }
 async function run() {
   try {

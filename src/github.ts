@@ -45,7 +45,8 @@ export async function writeJobSummary(report: string): Promise<void> {
 export async function upsertComment(
   octokit: Octokit,
   prNumber: number,
-  body: string
+  body: string,
+  {createIfMissing = true}: {createIfMissing?: boolean} = {}
 ): Promise<void> {
   const {owner, repo} = github.context.repo;
   const existingCommentId = await findExistingComment(octokit, prNumber);
@@ -58,7 +59,7 @@ export async function upsertComment(
       body
     });
     core.info(`Updated existing dependency diff comment #${existingCommentId}`);
-  } else {
+  } else if (createIfMissing) {
     await octokit.rest.issues.createComment({
       owner,
       repo,
@@ -66,5 +67,7 @@ export async function upsertComment(
       body
     });
     core.info('Created new dependency diff comment');
+  } else {
+    core.info('No existing dependency diff comment, skipping creation');
   }
 }

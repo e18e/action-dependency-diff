@@ -1,9 +1,11 @@
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as process from 'process';
-import {writeJobSummary} from '../src/github.js';
+import * as github from '@actions/github';
+import {upsertComment, writeJobSummary} from '../src/github.js';
+import {COMMENT_TAG} from '../src/constants.js';
 import {coreLogs, clearCoreLogs} from './util.js';
 
 describe('writeJobSummary', () => {
@@ -35,5 +37,70 @@ describe('writeJobSummary', () => {
 
     await expect(writeJobSummary('report')).resolves.toBeUndefined();
     expect(coreLogs.info.join('\n')).toContain('Failed to write job summary');
+  });
+});
+
+describe('upsertComment', () => {
+  function createOctokit(comments: Array<{id: number; body: string}>) {
+    const createComment = vi.fn();
+    const updateComment = vi.fn();
+    const listComments = vi.fn();
+    const octokit = {
+      paginate: {
+        iterator: async function* () {
+          yield {
+            data: comments.map((c) => ({
+              ...c,
+              user: {login: 'github-actions[bot]'}
+            }))
+          };
+        }
+      },
+      rest: {issues: {createComment, updateComment, listComments}}
+    } as unknown as ReturnType<typeof github.getOctokit>;
+    return {octokit, createComment, updateComment};
+  }
+
+  beforeEach(() => {
+    vi.stubEnv('GITHUB_REPOSITORY', 'e18e/test-repo');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    clearCoreLogs();
+  });
+
+  it('should create a comment if none exists', async () => {
+    const {octokit, createComment, updateComment} = createOctokit([]);
+
+    await upsertComment(octokit, 1, 'body');
+
+    expect(createComment).toHaveBeenCalledOnce();
+    expect(updateComment).not.toHaveBeenCalled();
+  });
+
+  it('should update an existing comment', async () => {
+    const {octokit, createComment, updateComment} = createOctokit([
+      {id: 42, body: `${COMMENT_TAG}\nold`}
+    ]);
+
+    await upsertComment(octokit, 1, 'body', {createIfMissing: false});
+
+    expect(updateComment).toHaveBeenCalledWith(
+      expect.objectContaining({comment_id: 42, body: 'body'})
+    );
+    expect(createComment).not.toHaveBeenCalled();
+  });
+
+  it('should not create a comment when createIfMissing is false', async () => {
+    const {octokit, createComment, updateComment} = createOctokit([
+      {id: 7, body: 'someone else'}
+    ]);
+
+    await upsertComment(octokit, 1, 'body', {createIfMissing: false});
+
+    expect(createComment).not.toHaveBeenCalled();
+    expect(updateComment).not.toHaveBeenCalled();
+    expect(coreLogs.info.join('\n')).toContain('skipping creation');
   });
 });
