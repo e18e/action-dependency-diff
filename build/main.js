@@ -25237,7 +25237,7 @@ async function upsertComment(octokit, prNumber, body, { createIfMissing = true }
     });
     info("Created new dependency diff comment");
   } else {
-    info("No dependency warnings found. Skipping comment creation.");
+    info("No existing dependency diff comment, skipping creation");
   }
 }
 

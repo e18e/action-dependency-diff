@@ -62,11 +62,11 @@ describe('upsertComment', () => {
   }
 
   beforeEach(() => {
-    process.env['GITHUB_REPOSITORY'] = 'e18e/test-repo';
+    vi.stubEnv('GITHUB_REPOSITORY', 'e18e/test-repo');
   });
 
   afterEach(() => {
-    delete process.env['GITHUB_REPOSITORY'];
+    vi.unstubAllEnvs();
     clearCoreLogs();
   });
 
@@ -101,6 +101,6 @@ describe('upsertComment', () => {
 
     expect(createComment).not.toHaveBeenCalled();
     expect(updateComment).not.toHaveBeenCalled();
-    expect(coreLogs.info.join('\n')).toContain('Skipping comment creation');
+    expect(coreLogs.info.join('\n')).toContain('skipping creation');
   });
 });

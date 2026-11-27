@@ -68,6 +68,6 @@ export async function upsertComment(
     });
     core.info('Created new dependency diff comment');
   } else {
-    core.info('No dependency warnings found. Skipping comment creation.');
+    core.info('No existing dependency diff comment, skipping creation');
   }
 }
