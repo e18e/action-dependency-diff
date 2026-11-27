@@ -29,11 +29,13 @@ import {scanForInstallScripts} from './checks/install-scripts.js';
 import {scanForBundleSize} from './checks/bundle-size.js';
 import {formatBytes, parseCommaList} from './common.js';
 import {ARTIFACT_FILENAME, COMMENT_TAG} from './constants.js';
-import {findExistingComment, upsertComment, writeJobSummary} from './github.js';
+import {upsertComment, writeJobSummary} from './github.js';
 
 interface ArtifactResult {
   pr_number: number;
   body: string;
+  // Missing in artifacts written by older versions, which always commented.
+  has_warnings?: boolean;
 }
 
 async function postCommentFromArtifact(): Promise<void> {
@@ -55,7 +57,9 @@ async function postCommentFromArtifact(): Promise<void> {
   core.info(`Posting comment to PR #${result.pr_number}`);
 
   const octokit = github.getOctokit(token);
-  await upsertComment(octokit, result.pr_number, result.body);
+  await upsertComment(octokit, result.pr_number, result.body, {
+    createIfMissing: result.has_warnings !== false
+  });
 }
 
 async function analyzeAndComment(): Promise<void> {
@@ -287,7 +291,11 @@ async function analyzeAndComment(): Promise<void> {
     await fs.mkdir(tmpDir, {recursive: true});
     await fs.writeFile(
       outputPath,
-      JSON.stringify({pr_number: prNumber, body: commentBody})
+      JSON.stringify({
+        pr_number: prNumber,
+        body: commentBody,
+        has_warnings: messages.length > 0
+      } satisfies ArtifactResult)
     );
 
     core.setOutput('artifact-path', outputPath);
@@ -296,18 +304,9 @@ async function analyzeAndComment(): Promise<void> {
   }
 
   const octokit = github.getOctokit(token);
-
-  if (messages.length === 0) {
-    const existingCommentId = await findExistingComment(octokit, prNumber);
-    if (existingCommentId) {
-      await upsertComment(octokit, prNumber, commentBody);
-    } else {
-      core.info('No dependency warnings found. Skipping comment creation.');
-    }
-    return;
-  }
-
-  await upsertComment(octokit, prNumber, commentBody);
+  await upsertComment(octokit, prNumber, commentBody, {
+    createIfMissing: messages.length > 0
+  });
 }
 
 async function run(): Promise<void> {
